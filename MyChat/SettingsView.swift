@@ -52,6 +52,7 @@ struct SettingsView: View {
                             Text("Faster rendering with streaming, math, tables, code, artifacts slot").font(.footnote).foregroundStyle(.secondary)
                         }
                     }
+                    .onChange(of: store.useWebCanvas) { _, _ in store.save() }
                 }
                 Section("Defaults") {
                     Picker("Default Provider", selection: $store.defaultProvider) {
@@ -69,12 +70,12 @@ struct SettingsView: View {
                     }
                     .pickerStyle(.menu)
                     .disabled(modelsForSelectedProvider().isEmpty)
-                    .onAppear { ensureValidDefaultModel() }
-                    .onChange(of: store.defaultProvider) { _, _ in ensureValidDefaultModel() }
-                    .onChange(of: store.openAIEnabled) { _, _ in if store.defaultProvider == "openai" { ensureValidDefaultModel() } }
-                    .onChange(of: store.anthropicEnabled) { _, _ in if store.defaultProvider == "anthropic" { ensureValidDefaultModel() } }
-                    .onChange(of: store.googleEnabled) { _, _ in if store.defaultProvider == "google" { ensureValidDefaultModel() } }
-                    .onChange(of: store.xaiEnabled) { _, _ in if store.defaultProvider == "xai" { ensureValidDefaultModel() } }
+                    .onAppear { ensureValidDefaultModel(); store.save() }
+                    .onChange(of: store.defaultProvider) { _, _ in ensureValidDefaultModel(); store.save() }
+                    .onChange(of: store.openAIEnabled) { _, _ in if store.defaultProvider == "openai" { ensureValidDefaultModel(); store.save() } }
+                    .onChange(of: store.anthropicEnabled) { _, _ in if store.defaultProvider == "anthropic" { ensureValidDefaultModel(); store.save() } }
+                    .onChange(of: store.googleEnabled) { _, _ in if store.defaultProvider == "google" { ensureValidDefaultModel(); store.save() } }
+                    .onChange(of: store.xaiEnabled) { _, _ in if store.defaultProvider == "xai" { ensureValidDefaultModel(); store.save() } }
                 }
             }
             .navigationTitle("Settings")
@@ -156,6 +157,8 @@ private struct ProviderDetailView: View {
     let provider: ProviderID
     @Environment(SettingsStore.self) private var store
     @State private var apiKey: String = ""
+    @State private var originalKey: String = ""
+    @State private var showKeySaveBar: Bool = false
     @State private var available: [String] = []
     @State private var verifying = false
     @State private var verified: Bool? = nil
@@ -169,6 +172,17 @@ private struct ProviderDetailView: View {
                 SecureField("API Key", text: $apiKey)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+                if showKeySaveBar {
+                    InlineSaveBar(onSave: {
+                        writeAPIKey(apiKey)
+                        originalKey = apiKey
+                        store.save()
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { showKeySaveBar = false }
+                    }, onCancel: {
+                        apiKey = originalKey
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { showKeySaveBar = false }
+                    })
+                }
                 VerificationBar(verifying: verifying, verified: verified)
                 HStack {
                     Button {
@@ -207,12 +221,17 @@ private struct ProviderDetailView: View {
             ModelSettingsView(providerID: provider.rawValue, modelID: selected.id)
         }
         .onAppear {
-            apiKey = readAPIKey()
+            let current = readAPIKey()
+            apiKey = current
+            originalKey = current
             available = enabledModelsAll()
         }
         .onDisappear {
             writeAPIKey(apiKey)
             store.save()
+        }
+        .onChange(of: apiKey) { _, newVal in
+            showKeySaveBar = (newVal != originalKey)
         }
     }
 
@@ -221,22 +240,22 @@ private struct ProviderDetailView: View {
         case .openai:
             return Binding(
                 get: { store.openAIEnabled.contains(m) },
-                set: { v in if v { _ = store.openAIEnabled.insert(m) } else { _ = store.openAIEnabled.remove(m) } }
+                set: { v in if v { _ = store.openAIEnabled.insert(m) } else { _ = store.openAIEnabled.remove(m) }; store.save() }
             )
         case .anthropic:
             return Binding(
                 get: { store.anthropicEnabled.contains(m) },
-                set: { v in if v { _ = store.anthropicEnabled.insert(m) } else { _ = store.anthropicEnabled.remove(m) } }
+                set: { v in if v { _ = store.anthropicEnabled.insert(m) } else { _ = store.anthropicEnabled.remove(m) }; store.save() }
             )
         case .google:
             return Binding(
                 get: { store.googleEnabled.contains(m) },
-                set: { v in if v { _ = store.googleEnabled.insert(m) } else { _ = store.googleEnabled.remove(m) } }
+                set: { v in if v { _ = store.googleEnabled.insert(m) } else { _ = store.googleEnabled.remove(m) }; store.save() }
             )
         case .xai:
             return Binding(
                 get: { store.xaiEnabled.contains(m) },
-                set: { v in if v { _ = store.xaiEnabled.insert(m) } else { _ = store.xaiEnabled.remove(m) } }
+                set: { v in if v { _ = store.xaiEnabled.insert(m) } else { _ = store.xaiEnabled.remove(m) }; store.save() }
             )
         }
     }
@@ -367,6 +386,35 @@ private struct VerificationBar: View {
             }
         }
         .padding(.top, 4)
+    }
+}
+
+// MARK: - Inline Save Bar (for important changes like API keys)
+private struct InlineSaveBar: View {
+    @Environment(\.tokens) private var T
+    var onSave: () -> Void
+    var onCancel: () -> Void
+    var body: some View {
+        HStack(spacing: 10) {
+            Button(action: onCancel) {
+                Text("Cancel").font(.callout)
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 12).padding(.vertical, 8)
+            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(T.surfaceElevated))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(T.borderSoft))
+
+            Button(action: onSave) {
+                HStack(spacing: 6) { AppIcon.checkCircle(true, size: 14); Text("Save").font(.callout.weight(.semibold)) }
+                    .foregroundStyle(T.accent)
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 12).padding(.vertical, 8)
+            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(T.accentSoft))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(T.borderSoft))
+        }
+        .padding(.top, 6)
+        .transition(.move(edge: .top).combined(with: .opacity))
     }
 }
 
@@ -680,6 +728,7 @@ private struct InterfaceSettingsView: View {
                 Text("Choose whether the app follows system appearance or forces light/dark.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+                .onChange(of: store.interfaceTheme) { _, _ in store.save() }
             }
 
             Section("Font") {
@@ -704,10 +753,12 @@ private struct InterfaceSettingsView: View {
                         .accessibilityAddTraits(store.interfaceFontStyle == opt.id ? .isSelected : [])
                     }
                 }
+                .onChange(of: store.interfaceFontStyle) { _, _ in store.save() }
 
                 VStack(alignment: .leading, spacing: 8) {
                     HStack { Text("Text Size"); Spacer(); Text(sizeLabels[Int(store.interfaceTextSizeIndex)]) }
                     Slider(value: Binding(get: { Double(store.interfaceTextSizeIndex) }, set: { store.interfaceTextSizeIndex = Int($0.rounded()) }), in: 0...4, step: 1)
+                        .onChange(of: store.interfaceTextSizeIndex) { _, _ in store.save() }
                     // Previews under the slider positions
                     HStack(spacing: 12) {
                         ForEach(0..<5) { i in
@@ -736,7 +787,7 @@ private struct InterfaceSettingsView: View {
             Section("Theme Palette") {
                 HStack(spacing: 12) {
                     ForEach(bubblePaletteIDs, id: \.self) { id in
-                        Button(action: { store.chatBubbleColorID = id }) {
+                        Button(action: { store.chatBubbleColorID = id; store.save() }) {
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
                                 .fill(previewColor(for: id))
                                 .frame(width: 36, height: 36)

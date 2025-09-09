@@ -14,15 +14,15 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
     }
 
     func listModels() async throws -> [String] {
-        // Keep it simple; you can implement /models later.
-        // Provide a common set of useful defaults.
+        // Default shortlist — stable, widely available via API as of 2025-09-09.
+        // Sources: OpenAI releases for GPT-4o mini (2024-07-18) and o3/o4-mini (2025-04-16).
+        // Prefer these over speculative IDs like "gpt-5-*" to avoid 400s from /v1/responses.
         return [
-            "gpt-5",
-            "gpt-5-mini",
-            "gpt-5-nano",
             "gpt-4o-mini",
             "gpt-4o",
-            "gpt-4.1-mini"
+            "o4-mini",
+            "o3-mini",
+            "o3"
         ]
     }
 

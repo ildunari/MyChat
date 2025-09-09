@@ -1,5 +1,6 @@
 import SwiftUI
 import WebKit
+import Combine
 
 // Controller object used to send commands into the WebCanvas once ready.
 @MainActor

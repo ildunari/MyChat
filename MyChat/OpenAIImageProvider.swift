@@ -1,5 +1,6 @@
 // Providers/OpenAIImageProvider.swift
 import Foundation
+import Combine
 
 struct OpenAIImageProvider: ImageProvider {
     let id = "openai-images"

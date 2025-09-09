@@ -1,9 +1,7 @@
 // Views/AIResponseView.swift
 import SwiftUI
 
-#if canImport(MarkdownUI)
-import MarkdownUI
-#endif
+// MarkdownUI removed in favor of Down renderer
 
 #if canImport(Highlightr)
 import Highlightr
@@ -124,26 +122,20 @@ private struct MarkdownSegment: View {
 
     var body: some View {
         Group {
-            #if canImport(MarkdownUI)
             if text.contains("$") {
                 // Use our inline math renderer when inline $...$ detected
                 InlineMathParagraph(text: text)
             } else {
-                // Prefer GitHub-like theme; horizontally scroll tables to avoid crushing
-                let md = Markdown(text)
-                    .markdownTheme(.chatApp(T))
+                // Down-based renderer → AttributedString → SwiftUI Text
+                let attributed = renderMarkdownAttributed(text)
                 if containsTable {
                     ScrollView(.horizontal, showsIndicators: true) {
-                        md
+                        Text(attributed)
                     }
                 } else {
-                    md
+                    Text(attributed)
                 }
             }
-            #else
-            // Fallback: still render inline math tokens; plain Text otherwise
-            InlineMathParagraph(text: text)
-            #endif
         }
     }
 }
@@ -219,8 +211,8 @@ private struct HighlightedCodeView: UIViewRepresentable {
         }
     }
 }
-#elseif canImport(HighlighterSwift)
-import HighlighterSwift
+#elseif canImport(Highlighter)
+import Highlighter
 private struct HighlightedCodeView: UIViewRepresentable {
     let code: String
     let language: String?
@@ -233,11 +225,14 @@ private struct HighlightedCodeView: UIViewRepresentable {
         return tv
     }
     func updateUIView(_ uiView: UITextView, context: Context) {
-        let highlighter = HighlighterSwift()
         // Attempt a common theme; fall back gracefully
-        let highlighted = highlighter.highlight(code: code, as: language ?? "") ?? NSAttributedString(string: code)
-        uiView.attributedText = highlighted
-        uiView.textColor = UIColor.label
+        if let highlighter = Highlighter() {
+            let highlighted = highlighter.highlight(code, as: language ?? "") ?? NSAttributedString(string: code)
+            uiView.attributedText = highlighted
+            uiView.textColor = UIColor.label
+        } else {
+            uiView.text = code
+        }
     }
 }
 #endif

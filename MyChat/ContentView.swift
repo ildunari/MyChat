@@ -61,18 +61,18 @@ struct ContentView: View {
                 }
             }
             .sheet(isPresented: $showingSettings) {
-                SettingsView(context: modelContext)
+                SettingsView()
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
                     .interactiveDismissDisabled(false)
             }
             .onAppear { ensureInitialChatIfNeeded() }
-        }
-        .navigationDestination(isPresented: $showInitialChat) {
-            if let chat = initialChat {
-                ChatView(chat: chat)
-            } else {
-                EmptyView()
+            .navigationDestination(isPresented: $showInitialChat) {
+                if let chat = initialChat {
+                    ChatView(chat: chat)
+                } else {
+                    EmptyView()
+                }
             }
         }
         .theme(tokens)

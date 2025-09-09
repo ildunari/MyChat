@@ -1,42 +1,44 @@
 // Services/SettingsStore.swift
 import Foundation
 import SwiftData
+import Observation
 
 @MainActor
-final class SettingsStore: ObservableObject {
-    @Published var defaultProvider: String
-    @Published var defaultModel: String
-    @Published var openAIAPIKey: String
-    @Published var anthropicAPIKey: String
-    @Published var googleAPIKey: String
-    @Published var xaiAPIKey: String
+@Observable
+final class SettingsStore {
+    var defaultProvider: String
+    var defaultModel: String
+    var openAIAPIKey: String
+    var anthropicAPIKey: String
+    var googleAPIKey: String
+    var xaiAPIKey: String
 
     // Default chat controls
-    @Published var systemPrompt: String
-    @Published var temperature: Double
-    @Published var maxTokens: Int
+    var systemPrompt: String
+    var temperature: Double
+    var maxTokens: Int
 
     // Enabled model lists per provider
-    @Published var openAIEnabled: Set<String>
-    @Published var anthropicEnabled: Set<String>
-    @Published var googleEnabled: Set<String>
-    @Published var xaiEnabled: Set<String>
+    var openAIEnabled: Set<String>
+    var anthropicEnabled: Set<String>
+    var googleEnabled: Set<String>
+    var xaiEnabled: Set<String>
 
     // Interface preferences
-    @Published var interfaceTheme: String // system | light | dark
-    @Published var interfaceFontStyle: String // system | serif | rounded | mono
-    @Published var interfaceTextSizeIndex: Int // 0...4
-    @Published var chatBubbleColorID: String // palette id
-    @Published var promptCachingEnabled: Bool
-    @Published var useWebCanvas: Bool
+    var interfaceTheme: String // system | light | dark
+    var interfaceFontStyle: String // system | serif | rounded | mono
+    var interfaceTextSizeIndex: Int // 0...4
+    var chatBubbleColorID: String // palette id
+    var promptCachingEnabled: Bool
+    var useWebCanvas: Bool
 
     private let OPENAI_KEY_KEYCHAIN = "openai_api_key"
     private let ANTHROPIC_KEY_KEYCHAIN = "anthropic_api_key"
     private let GOOGLE_KEY_KEYCHAIN = "google_api_key"
     private let XAI_KEY_KEYCHAIN = "xai_api_key"
 
-    private let context: ModelContext
-    private var settings: AppSettings
+    @ObservationIgnored private let context: ModelContext
+    @ObservationIgnored private var settings: AppSettings
 
     init(context: ModelContext) {
         self.context = context
@@ -75,7 +77,7 @@ final class SettingsStore: ObservableObject {
         }
         #endif
 
-        // Now assign all @Published stored properties
+        // Now assign all stored properties
         self.defaultProvider = settings.defaultProvider
         self.defaultModel = settings.defaultModel
 

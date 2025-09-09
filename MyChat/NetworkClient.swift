@@ -1,5 +1,6 @@
 // Networking/NetworkClient.swift
 import Foundation
+import Combine
 
 struct NetworkClient {
     let session: URLSession

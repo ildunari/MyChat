@@ -4,18 +4,15 @@ import SwiftData
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var store: SettingsStore
-
-    init(context: ModelContext) {
-        _store = StateObject(wrappedValue: SettingsStore(context: context))
-    }
+    @Environment(SettingsStore.self) private var store
 
     var body: some View {
+        @Bindable var store = store
         NavigationStack {
             List {
                 Section {
                     NavigationLink {
-                        ProvidersSettingsView(store: store)
+                        ProvidersSettingsView()
                     } label: {
                         HStack(spacing: 12) {
                             AppIcon.info(18).foregroundStyle(.blue)
@@ -26,7 +23,7 @@ struct SettingsView: View {
                         }
                     }
                     NavigationLink {
-                        DefaultChatSettingsView(store: store)
+                        DefaultChatSettingsView()
                     } label: {
                         HStack(spacing: 12) {
                             AppIcon.info(18).foregroundStyle(.purple)
@@ -39,7 +36,7 @@ struct SettingsView: View {
                 }
                 Section("Interface") {
                     NavigationLink {
-                        InterfaceSettingsView(store: store)
+                        InterfaceSettingsView()
                     } label: {
                         HStack(spacing: 12) {
                             AppIcon.info(18).foregroundStyle(.orange)
@@ -110,21 +107,21 @@ private extension SettingsView {
 }
 
 private struct ProvidersSettingsView: View {
-    @ObservedObject var store: SettingsStore
+    @Environment(SettingsStore.self) private var store
 
     var body: some View {
         List {
             ProviderRow(title: ProviderID.openai.displayName, symbol: "bolt.horizontal.circle.fill") {
-                ProviderDetailView(provider: .openai, store: store)
+                ProviderDetailView(provider: .openai)
             }
             ProviderRow(title: ProviderID.anthropic.displayName, symbol: "a.circle.fill") {
-                ProviderDetailView(provider: .anthropic, store: store)
+                ProviderDetailView(provider: .anthropic)
             }
             ProviderRow(title: ProviderID.google.displayName, symbol: "g.circle.fill") {
-                ProviderDetailView(provider: .google, store: store)
+                ProviderDetailView(provider: .google)
             }
             ProviderRow(title: ProviderID.xai.displayName, symbol: "x.circle.fill") {
-                ProviderDetailView(provider: .xai, store: store)
+                ProviderDetailView(provider: .xai)
             }
         }
         .navigationTitle("Providers")
@@ -157,7 +154,7 @@ private struct ProviderRow<Destination: View>: View {
 
 private struct ProviderDetailView: View {
     let provider: ProviderID
-    @ObservedObject var store: SettingsStore
+    @Environment(SettingsStore.self) private var store
     @State private var apiKey: String = ""
     @State private var available: [String] = []
     @State private var verifying = false
@@ -374,11 +371,12 @@ private struct VerificationBar: View {
 }
 
 private struct DefaultChatSettingsView: View {
-    @ObservedObject var store: SettingsStore
+    @Environment(SettingsStore.self) private var store
     @State private var tempLocal: Double = 1.0
     @State private var tokensLocal: Double = 1024
 
     var body: some View {
+        @Bindable var store = store
         Form {
             Section("System Prompt") {
                 TextEditor(text: $store.systemPrompt)
@@ -623,7 +621,7 @@ struct ModelSettingsView: View {
 // MARK: - Interface Settings
 
 private struct InterfaceSettingsView: View {
-    @ObservedObject var store: SettingsStore
+    @Environment(SettingsStore.self) private var store
     @State private var sizeIndex: Double = 2
 
     private let sizeLabels = ["XS", "S", "M", "L", "XL"]
@@ -670,6 +668,7 @@ private struct InterfaceSettingsView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
+        @Bindable var store = store
         Form {
             Section("Theme") {
                 Picker("Color Scheme", selection: $store.interfaceTheme) {
@@ -866,13 +865,16 @@ private struct FontOptionCard: View {
 }
 
 #Preview {
-    if let container = try? ModelContainer(for: Chat.self, Message.self, AppSettings.self) {
-        let context = ModelContext(container)
+    do {
+        let container = try ModelContainer(for: Schema([Chat.self, Message.self, AppSettings.self]),
+                                           configurations: [ModelConfiguration(isStoredInMemoryOnly: true)])
+        let store = SettingsStore(context: container.mainContext)
         return AnyView(
-            SettingsView(context: context)
+            SettingsView()
+                .environment(store)
                 .modelContainer(container)
         )
-    } else {
-        return AnyView(Text("Preview unavailable"))
+    } catch {
+        return AnyView(Text("Preview unavailable: \(String(describing: error))"))
     }
 }

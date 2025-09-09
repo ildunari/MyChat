@@ -89,7 +89,16 @@ struct ChatView: View {
 
     // MARK: - WebCanvas integration
     private var useWebCanvasFlag: Bool {
-        settingsQuery.first?.useWebCanvas ?? true
+        // Only use WebCanvas when user enabled it AND the assets are bundled.
+        (settingsQuery.first?.useWebCanvas ?? true) && isWebCanvasAvailable
+    }
+
+    private var isWebCanvasAvailable: Bool {
+        // Detect either new or legacy bundle locations for the compiled WebCanvas assets.
+        let main = Bundle.main
+        if main.url(forResource: "index", withExtension: "html", subdirectory: "WebCanvas/dist") != nil { return true }
+        if main.url(forResource: "index", withExtension: "html", subdirectory: "ChatApp/WebCanvas/dist") != nil { return true }
+        return false
     }
 
     private var currentThemeForCanvas: CanvasTheme {

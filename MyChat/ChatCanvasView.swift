@@ -92,6 +92,11 @@ struct ChatCanvasView: UIViewRepresentable {
         } else if let alt = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "ChatApp/WebCanvas/dist") {
             let bundleRoot = Bundle.main.bundleURL
             web.loadFileURL(alt, allowingReadAccessTo: bundleRoot)
+        } else {
+            // WebCanvas assets are optional. If not present, we intentionally don't load anything here.
+            // The consumer view gates usage behind a feature flag (Settings.useWebCanvas).
+            // Leaving the WKWebView empty avoids crashes and preserves portability.
+            web.loadHTMLString("<html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></head><body style='background:transparent;margin:0'></body></html>", baseURL: nil)
         }
 
         return web

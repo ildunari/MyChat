@@ -1,6 +1,6 @@
 // Networking/NetworkClient.swift
 import Foundation
-import Combine
+import Combine // TODO: Temporary import to unblock build; remove after Observation-based Settings migration finalizes if unused.
 
 struct NetworkClient {
     let session: URLSession

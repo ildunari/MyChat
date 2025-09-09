@@ -185,9 +185,9 @@ Update flow per session:
 - Views (SwiftUI)
   - `MyChat/ContentView.swift` — Chat list (NavigationStack), creates initial chat on first launch.
   - `MyChat/ChatView.swift` — Chat screen with suggestions, photo picker attachments, streaming responses, model menu in toolbar.
-  - `MyChat/AIResponseView.swift` — Segments assistant content into Markdown, Code, and Math blocks; currently uses conditional MarkdownUI imports (TO BE REPLACED WITH DOWN).
+  - `MyChat/AIResponseView.swift` — Segments assistant content into Markdown, Code, and Math blocks; uses Down-backed MarkdownRenderer and optional syntax highlighting.
   - `MyChat/ChatUI.swift` — `SuggestionChips`, `InputBar` components.
-  - `MyChat/ChatStyles.swift` — Markdown theme and shared visual constants (TO BE UPDATED FOR DOWN).
+  - `MyChat/ChatStyles.swift` — Shared visual constants for chat; Markdown theming handled via Down output styling.
   - `MyChat/MathWebView.swift` — KaTeX WebView fallback for math rendering.
   - `MyChat/ChatCanvasView.swift` — WebCanvas feature for transcript rendering.
   - `MyChat/SettingsView.swift` — Providers, default chat, and interface settings flows (nested screens).
@@ -236,10 +236,11 @@ Update flow per session:
 - After adding a package, explicitly add the required product to the `MyChat` target under `Frameworks, Libraries, and Embedded Content`.
 
 - Schemes: `MyChat` (primary)
-- SPM Dependencies (TO BE ADDED):
-  - **Down**: Markdown parsing and rendering (replacing MarkdownUI)
-  - **Highlightr**: Code syntax highlighting (optional)
-  - **SwiftMath/iosMath**: Mathematical formula rendering (optional)
+- SPM Dependencies (present):
+  - **Down** (branch master): Markdown parsing and rendering (replaced MarkdownUI)
+  - **HighlighterSwift** (product: Highlighter) 1.1.7: Code syntax highlighting (optional)
+  - **SwiftMath** 1.7.3 and/or **iosMath**: Mathematical formula rendering (optional)
+  - **PhosphorSwift** 2.1.0: Icon set
 - Quick build check: `xcodebuild -project MyChat.xcodeproj -scheme MyChat -destination 'generic/platform=iOS Simulator' build`
 
 ## Key Flows
@@ -256,7 +257,7 @@ Update flow per session:
   - Providers screen verifies API keys and lists models via `ProviderAPIs`.
 
 - Rendering
-  - Markdown (TO BE: Down parser), code highlighting (optional Highlightr), math via SwiftMath/iosMath or KaTeX WebView fallback.
+  - Markdown (Down → AttributedString with tinted links and inline-code styling), code highlighting (Highlightr/Highlighter when available, monospaced fallback), math via iosMath or SwiftMath branch with KaTeX fallback.
 
 ## Migration Notes (from ChatApp to MyChat)
 
@@ -274,13 +275,14 @@ Update flow per session:
 
 ## Immediate TODOs (from porting.md)
 
-- [ ] Add Down package dependency via SPM
-- [ ] Update AIResponseView.swift to use Down instead of MarkdownUI
-- [ ] Update ChatStyles.swift for Down theming
-- [ ] Build project successfully
+- [x] Add Down package dependency via SPM
+- [x] Update AIResponseView.swift to use Down instead of MarkdownUI
+- [x] Update ChatStyles.swift (MarkdownUI theme removed)
+- [x] Add Highlighter adapter path (Highlightr/Highlighter)
+- [x] Fix math renderer tiers (iosMath → label, SwiftMath → KaTeX fallback, else KaTeX)
+- [x] Build project successfully on simulator
 - [ ] Test basic chat functionality with API keys
-- [ ] Add optional Highlightr for code syntax highlighting
-- [ ] Add optional SwiftMath/iosMath for LaTeX rendering
+- [ ] Add UI polish for code themes (optional)
 - [ ] Create test targets (MyChatTests, MyChatUITests)
 - [ ] Create MyChat.xctestplan
 

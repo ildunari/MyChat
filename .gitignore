@@ -1,0 +1,24 @@
+# macOS
+.DS_Store
+
+# Xcode / Swift / DerivedData
+DerivedData/
+build/
+Build/
+.swiftpm/
+
+# Xcode user data
+*.xccheckout
+*.xcuserstate
+*.xcscmblueprint
+*.xcworkspace/xcuserdata/
+MyChat.xcodeproj/project.xcworkspace/xcuserdata/
+MyChat.xcodeproj/xcuserdata/
+
+# Swift Package Manager artifacts
+/.build/
+
+# Env secrets (Debug-only bundle copy comes from this)
+MyChat/Env/.env
+MyChat/Env/*.env
+

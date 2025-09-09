@@ -13,12 +13,10 @@ Successfully transferred Swift code from ChatApp_FreshSource_2025-09-06 backup t
 ## Critical Changes Required
 
 ### 1. Markdown Rendering - Replace MarkdownUI with Down
-**Priority: HIGH**
-- Current code uses `MarkdownUI` package (see AIResponseView.swift line 5)
-- Need to replace with `Down` markdown package
-- Files affected:
-  - `AIResponseView.swift` - Lines 4-6, 127-143
-  - Any markdown theme configurations
+**Status: COMPLETED (2025-09-09)**
+- Replaced `MarkdownUI` with `Down` via a new `MarkdownRenderer.swift` that returns `AttributedString`.
+- `AIResponseView.swift` now uses `renderMarkdownAttributed()` and removes MarkdownUI references.
+- `ChatStyles.swift` no longer contains MarkdownUI theme code; styling comes from `ThemeTokens` and a light post‑process (link tint + inline code).
 
 ### 2. Update Bundle Identifier & App Name
 **Priority: HIGH**
@@ -64,11 +62,10 @@ The following Swift packages need to be added to the project:
 ## Potential Issues Found
 
 ### 1. Import Statements
-- Several conditional imports that may need verification:
-  - `#if canImport(MarkdownUI)` - Needs to change to Down
-  - `#if canImport(Highlightr)`
-  - `#if canImport(SwiftMath)`
-  - `#if canImport(iosMath)`
+- Conditional imports audited and updated:
+  - Removed MarkdownUI gates; added Down-based path.
+  - Code highlighting supports `Highlightr` or `Highlighter` (smittytone/HighlighterSwift) with safe fallback.
+  - Math rendering split: `iosMath` path uses `MTMathUILabel`; `SwiftMath` branch compiles without referencing `MTMathUILabel` and falls back to KaTeX.
 
 ### 2. Preview Providers
 - Preview providers reference in-memory model containers
@@ -80,18 +77,25 @@ The following Swift packages need to be added to the project:
 
 ## Testing Checklist
 
-- [ ] Add Down package dependency
-- [ ] Update AIResponseView.swift to use Down instead of MarkdownUI
-- [ ] Build project successfully
+- [x] Add Down package dependency
+- [x] Update AIResponseView.swift to use Down instead of MarkdownUI
+- [x] Build project successfully
 - [ ] Test chat creation and deletion
 - [ ] Test message sending (requires API keys)
 - [ ] Test settings view
 - [ ] Test theme switching
 - [ ] Test model selection
 - [ ] Test image attachments
-- [ ] Test markdown rendering
-- [ ] Test code highlighting (if package added)
-- [ ] Test math rendering (if package added)
+- [x] Test markdown rendering (basic)
+- [x] Code highlighting path present (HighlighterSwift); theme polish TBD
+- [ ] Test math rendering (iosMath when added; SwiftMath fallback verified compiles)
+
+## Status Updates (2025-09-09)
+
+- Down integration complete; MarkdownUI removed.
+- Highlighter/Highlightr adapter added with graceful fallback.
+- Math renderer fixed: iosMath preferred; SwiftMath branch compiles and falls back to KaTeX.
+- WebCanvas loader guarded: loads local `WebCanvas/dist/index.html` or `ChatApp/WebCanvas/dist/index.html`; otherwise no-op with comment.
 
 ## Next Steps
 

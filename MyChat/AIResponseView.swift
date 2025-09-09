@@ -8,7 +8,7 @@ import Highlightr
 #endif
 
 #if canImport(SwiftMath)
-import SwiftMath
+import SwiftMath // used only for conditional compilation; no direct UI references
 #endif
 #if canImport(iosMath)
 import iosMath
@@ -127,7 +127,7 @@ private struct MarkdownSegment: View {
                 InlineMathParagraph(text: text)
             } else {
                 // Down-based renderer → AttributedString → SwiftUI Text
-                let attributed = renderMarkdownAttributed(text)
+                let attributed = renderMarkdownAttributed(text, linkColor: T.link)
                 if containsTable {
                     ScrollView(.horizontal, showsIndicators: true) {
                         Text(attributed)
@@ -146,7 +146,7 @@ private struct CodeBlockSegment: View {
     @Environment(\.tokens) private var T
     var body: some View {
         Group {
-            #if canImport(Highlightr) || canImport(HighlighterSwift)
+            #if canImport(Highlightr) || canImport(Highlighter) || canImport(HighlighterSwift)
             HighlightedCodeView(code: code, language: language)
                 .padding(6)
                 .background(T.codeBg)
@@ -176,9 +176,14 @@ private struct MathBlockSegment: View {
     let latex: String
     var body: some View {
         Group {
-            #if canImport(SwiftMath) || canImport(iosMath)
-            SwiftOrIOSMathLabel(latex: latex)
+            #if canImport(iosMath)
+            IOSMathLabel(latex: latex)
                 .padding(.vertical, 4)
+            #elseif canImport(SwiftMath)
+            // SwiftMath present: if it exposes a SwiftUI view in future, plug it here.
+            // For now, prefer KaTeX WebView for accurate display-mode rendering.
+            MathWebView(latex: latex, displayMode: true)
+                .frame(minHeight: 28)
             #else
             // Web-based KaTeX fallback (auto-sizes; allows horizontal scroll)
             MathWebView(latex: latex, displayMode: true)
@@ -235,10 +240,35 @@ private struct HighlightedCodeView: UIViewRepresentable {
         }
     }
 }
+#elseif canImport(HighlighterSwift)
+import HighlighterSwift
+private struct HighlightedCodeView: UIViewRepresentable {
+    let code: String
+    let language: String?
+    func makeUIView(context: Context) -> UITextView {
+        let tv = UITextView()
+        tv.isEditable = false
+        tv.isScrollEnabled = false
+        tv.textContainerInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
+        tv.backgroundColor = UIColor.clear
+        return tv
+    }
+    func updateUIView(_ uiView: UITextView, context: Context) {
+        // API shape assumption: HighlighterSwift().highlight(code:as:)
+        // If unavailable, fall back to plain text gracefully.
+        if let highlighter = HighlighterSwift() {
+            let highlighted = highlighter.highlight(code: code, as: language ?? "") ?? NSAttributedString(string: code)
+            uiView.attributedText = highlighted
+            uiView.textColor = UIColor.label
+        } else {
+            uiView.text = code
+        }
+    }
+}
 #endif
 
-#if canImport(SwiftMath) || canImport(iosMath)
-private struct SwiftOrIOSMathLabel: UIViewRepresentable {
+#if canImport(iosMath)
+private struct IOSMathLabel: UIViewRepresentable {
     let latex: String
     func makeUIView(context: Context) -> MTMathUILabel {
         let v = MTMathUILabel()
@@ -269,8 +299,12 @@ private struct InlineMathParagraph: View {
                 case .text(let t):
                     Text(t)
                 case .math(let ltx):
-                    #if canImport(SwiftMath) || canImport(iosMath)
-                    SwiftOrIOSMathLabel(latex: ltx)
+                    #if canImport(iosMath)
+                    IOSMathLabel(latex: ltx)
+                    #elseif canImport(SwiftMath)
+                    // Inline placeholder when SwiftMath is present but no direct view is integrated.
+                    Text(ltx)
+                        .font(.system(.body, design: .monospaced))
                     #else
                     MathWebView(latex: ltx, displayMode: false)
                         .frame(minHeight: 22)

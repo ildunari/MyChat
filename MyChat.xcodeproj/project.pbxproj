@@ -6,13 +6,33 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		0A0484982E6F9A0400670BBE /* Down in Frameworks */ = {isa = PBXBuildFile; productRef = 0A0484972E6F9A0400670BBE /* Down */; };
+		0A04849B2E6F9A5A00670BBE /* Highlighter in Frameworks */ = {isa = PBXBuildFile; productRef = 0A04849A2E6F9A5A00670BBE /* Highlighter */; };
+		0A04849E2E6F9A9700670BBE /* SwiftMath in Frameworks */ = {isa = PBXBuildFile; productRef = 0A04849D2E6F9A9700670BBE /* SwiftMath */; };
+		0A0484E92E6FAC4900670BBE /* PhosphorSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 0A0484E82E6FAC4900670BBE /* PhosphorSwift */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		0A0484882E6F833800670BBE /* MyChat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		0A0484E62E6FA48D00670BBE /* Exceptions for "MyChat" folder in "MyChat" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 0A0484872E6F833800670BBE /* MyChat */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		0A04848A2E6F833800670BBE /* MyChat */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				0A0484E62E6FA48D00670BBE /* Exceptions for "MyChat" folder in "MyChat" target */,
+			);
 			path = MyChat;
 			sourceTree = "<group>";
 		};
@@ -23,6 +43,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0A04849B2E6F9A5A00670BBE /* Highlighter in Frameworks */,
+				0A0484E92E6FAC4900670BBE /* PhosphorSwift in Frameworks */,
+				0A0484982E6F9A0400670BBE /* Down in Frameworks */,
+				0A04849E2E6F9A9700670BBE /* SwiftMath in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +89,10 @@
 			);
 			name = MyChat;
 			packageProductDependencies = (
+				0A0484972E6F9A0400670BBE /* Down */,
+				0A04849A2E6F9A5A00670BBE /* Highlighter */,
+				0A04849D2E6F9A9700670BBE /* SwiftMath */,
+				0A0484E82E6FAC4900670BBE /* PhosphorSwift */,
 			);
 			productName = MyChat;
 			productReference = 0A0484882E6F833800670BBE /* MyChat.app */;
@@ -94,6 +122,12 @@
 			);
 			mainGroup = 0A04847F2E6F833800670BBE;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				0A0484962E6F9A0400670BBE /* XCRemoteSwiftPackageReference "Down" */,
+				0A0484992E6F9A5A00670BBE /* XCRemoteSwiftPackageReference "HighlighterSwift" */,
+				0A04849C2E6F9A9700670BBE /* XCRemoteSwiftPackageReference "SwiftMath" */,
+				0A0484E72E6FAC4900670BBE /* XCRemoteSwiftPackageReference "swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0A0484892E6F833800670BBE /* Products */;
 			projectDirPath = "";
@@ -256,6 +290,8 @@
 				DEVELOPMENT_TEAM = SV9Z2RG2A6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Allow saving generated images to your photo library.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Allow selecting images to include in AI prompts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -288,6 +324,8 @@
 				DEVELOPMENT_TEAM = SV9Z2RG2A6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Allow saving generated images to your photo library.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Allow selecting images to include in AI prompts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -332,6 +370,64 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		0A0484962E6F9A0400670BBE /* XCRemoteSwiftPackageReference "Down" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/johnxnguyen/Down";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
+		0A0484992E6F9A5A00670BBE /* XCRemoteSwiftPackageReference "HighlighterSwift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/smittytone/HighlighterSwift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.1.7;
+			};
+		};
+		0A04849C2E6F9A9700670BBE /* XCRemoteSwiftPackageReference "SwiftMath" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/mgriebling/SwiftMath";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.7.3;
+			};
+		};
+		0A0484E72E6FAC4900670BBE /* XCRemoteSwiftPackageReference "swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/phosphor-icons/swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0A0484972E6F9A0400670BBE /* Down */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0A0484962E6F9A0400670BBE /* XCRemoteSwiftPackageReference "Down" */;
+			productName = Down;
+		};
+		0A04849A2E6F9A5A00670BBE /* Highlighter */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0A0484992E6F9A5A00670BBE /* XCRemoteSwiftPackageReference "HighlighterSwift" */;
+			productName = Highlighter;
+		};
+		0A04849D2E6F9A9700670BBE /* SwiftMath */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0A04849C2E6F9A9700670BBE /* XCRemoteSwiftPackageReference "SwiftMath" */;
+			productName = SwiftMath;
+		};
+		0A0484E82E6FAC4900670BBE /* PhosphorSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0A0484E72E6FAC4900670BBE /* XCRemoteSwiftPackageReference "swift" */;
+			productName = PhosphorSwift;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 0A0484802E6F833800670BBE /* Project object */;
 }

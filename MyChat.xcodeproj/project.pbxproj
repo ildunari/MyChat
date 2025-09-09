@@ -85,6 +85,7 @@
 				0A0484842E6F833800670BBE /* Sources */,
 				0A0484852E6F833800670BBE /* Frameworks */,
 				0A0484862E6F833800670BBE /* Resources */,
+				A1B2C3D42E70000100000001 /* Copy DevSecrets.env (Debug only) */,
 			);
 			buildRules = (
 			);
@@ -163,6 +164,27 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		A1B2C3D42E70000100000001 /* Copy DevSecrets.env (Debug only) */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Copy DevSecrets.env (Debug only)";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\nif [ \"$CONFIGURATION\" = \"Debug\" ]; then\n  SRC=\"$SRCROOT/MyChat/Env/.env\"\n  DST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/DevSecrets.env\"\n  if [ -f \"$SRC\" ]; then\n    mkdir -p \"$(dirname \"$DST\")\"\n    cp -f \"$SRC\" \"$DST\"\n    echo \"Copied DevSecrets.env into app bundle\"\n  else\n    echo \"No MyChat/Env/.env present; skipping DevSecrets.env copy\"\n  fi\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
 		0A0484912E6F833A00670BBE /* Debug */ = {

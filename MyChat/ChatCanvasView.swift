@@ -107,6 +107,13 @@ struct ChatCanvasView: UIViewRepresentable {
         controller.setTheme(theme)
     }
 
+    static func dismantleUIView(_ uiView: WKWebView, coordinator: Coordinator) {
+        // Remove message handler to avoid callbacks after teardown
+        uiView.configuration.userContentController.removeScriptMessageHandler(forName: "bridge")
+        uiView.stopLoading()
+        uiView.navigationDelegate = nil
+    }
+
     final class Coordinator: NSObject, WKScriptMessageHandler {
         let controller: ChatCanvasController
         init(controller: ChatCanvasController) { self.controller = controller }

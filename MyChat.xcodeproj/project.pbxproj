@@ -174,15 +174,17 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
+				"$(SRCROOT)/MyChat/Env/.env",
 			);
 			name = "Copy DevSecrets.env (Debug only)";
 			outputFileListPaths = (
 			);
 			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/DevSecrets.env",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\nif [ \"$CONFIGURATION\" = \"Debug\" ]; then\n  SRC=\"$SRCROOT/MyChat/Env/.env\"\n  DST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/DevSecrets.env\"\n  if [ -f \"$SRC\" ]; then\n    mkdir -p \"$(dirname \"$DST\")\"\n    cp -f \"$SRC\" \"$DST\"\n    echo \"Copied DevSecrets.env into app bundle\"\n  else\n    echo \"No MyChat/Env/.env present; skipping DevSecrets.env copy\"\n  fi\nfi\n";
+			shellScript = "set -e\nif [ \"$CONFIGURATION\" = \"Debug\" ]; then\n  SRC=\"$SCRIPT_INPUT_FILE_0\"\n  DST=\"$SCRIPT_OUTPUT_FILE_0\"\n  if [ -f \"$SRC\" ]; then\n    mkdir -p \"$(dirname \"$DST\")\"\n    cp -f \"$SRC\" \"$DST\"\n    echo \"Copied DevSecrets.env into app bundle\"\n  else\n    echo \"No MyChat/Env/.env present; skipping DevSecrets.env copy\"\n  fi\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

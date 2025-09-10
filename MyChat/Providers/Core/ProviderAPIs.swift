@@ -164,11 +164,22 @@ struct ProviderAPIs {
             struct ModelList: Decodable { struct Item: Decodable { let id: String }
                 let data: [Item] }
             let decoded = try JSONDecoder().decode(ModelList.self, from: data)
-            // Conservative, well‑known defaults by common family name. Values are a best‑effort guide.
+            // Token limits are not included in /v1/models responses; map known models from public docs.
             func defaults(for id: String) -> (input: Int?, output: Int?, temp: Double, caching: Bool) {
-                // Anthropic does not return limits from /v1/models; use safe, generic defaults.
-                // Values here are conservative placeholders for UI bounds only.
-                return (input: nil, output: 8_192, temp: 2.0, caching: true)
+                // Claude 3/3.5/4 families expose a 200k input window and 4k output limit.
+                let limits: [String: (Int, Int)] = [
+                    "claude-3-opus-20240229": (200_000, 4_096),
+                    "claude-3-haiku-20240307": (200_000, 4_096),
+                    "claude-3-5-sonnet-20240620": (200_000, 4_096),
+                    "claude-3-5-sonnet-20241022": (200_000, 4_096),
+                    "claude-3-5-haiku-20241022": (200_000, 4_096),
+                    "claude-3-7-sonnet-20250219": (200_000, 4_096),
+                    "claude-sonnet-4-20250514": (200_000, 4_096),
+                    "claude-opus-4-20250514": (200_000, 4_096),
+                    "claude-opus-4-1-20250805": (200_000, 4_096)
+                ]
+                let (input, output) = limits[id] ?? (200_000, 4_096)
+                return (input, output, 2.0, true)
             }
             let infos = decoded.data.map { item in
                 let d = defaults(for: item.id)

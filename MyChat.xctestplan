@@ -1,0 +1,33 @@
+{
+  "configurations" : [
+    {
+      "id" : "AC2F8685-0000-0000-0000-000000000001",
+      "name" : "All Tests",
+      "options" : {
+        "language" : "",
+        "region" : ""
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : false,
+    "testTimeoutsEnabled" : false
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "MyChat.xcodeproj",
+        "identifier" : "MyChatTests",
+        "name" : "MyChatTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "MyChat.xcodeproj",
+        "identifier" : "MyChatUITests",
+        "name" : "MyChatUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

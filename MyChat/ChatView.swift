@@ -450,6 +450,8 @@ struct ChatView: View {
             }
             errorMessage = nil
         } catch {
+            // Any non-cancellation error: clear streaming state and surface message
+            streamingText = nil
             errorMessage = (error as NSError).localizedDescription
         }
     }

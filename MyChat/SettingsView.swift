@@ -700,6 +700,7 @@ private struct InterfaceSettingsView: View {
                             selected: store.interfaceFontStyle == opt.id,
                             onSelect: { store.interfaceFontStyle = opt.id }
                         )
+                        .fontDesign(.default) // ensure preview cards show their own design, not the global selection
                         .accessibilityLabel("\(opt.label) font")
                         .accessibilityAddTraits(store.interfaceFontStyle == opt.id ? .isSelected : [])
                     }

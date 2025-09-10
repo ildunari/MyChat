@@ -20,10 +20,19 @@ struct NetworkClient {
             req.setValue(v, forHTTPHeaderField: k)
         }
         req.httpBody = try JSONEncoder().encode(body)
+        #if DEBUG
+        Log.netReq("POST \(url.absoluteString)")
+        #endif
         let (data, resp) = try await session.data(for: req)
         guard let http = resp as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
         }
+        #if DEBUG
+        if !(200..<300).contains(http.statusCode) {
+            let snippet = String(data: data.prefix(600), encoding: .utf8) ?? "<non-utf8>"
+            Log.netErr("HTTP \(http.statusCode) for \(url.lastPathComponent): \(snippet)")
+        }
+        #endif
         return (data, http)
     }
 
@@ -33,10 +42,19 @@ struct NetworkClient {
         for (k, v) in headers {
             req.setValue(v, forHTTPHeaderField: k)
         }
+        #if DEBUG
+        Log.netReq("GET \(url.absoluteString)")
+        #endif
         let (data, resp) = try await session.data(for: req)
         guard let http = resp as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
         }
+        #if DEBUG
+        if !(200..<300).contains(http.statusCode) {
+            let snippet = String(data: data.prefix(600), encoding: .utf8) ?? "<non-utf8>"
+            Log.netErr("HTTP \(http.statusCode) for \(url.lastPathComponent): \(snippet)")
+        }
+        #endif
         return (data, http)
     }
 }

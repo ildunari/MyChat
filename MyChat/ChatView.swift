@@ -19,6 +19,7 @@ struct ChatView: View {
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var attachments: [(data: Data, mime: String)] = []
     @State private var streamingText: String? = nil
+    @State private var currentSendTask: Task<Void, Never>? = nil
 
     var body: some View {
         VStack(spacing: 0) {
@@ -47,8 +48,13 @@ struct ChatView: View {
                         .padding(.bottom, 16) // Add padding between suggestions and input bar
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
-                InputBar(text: $inputText, onSend: { Task { await send() } }, onMic: nil, onLive: nil, onPlus: { showPhotoPicker = true })
-                    .disabled(isSending)
+                InputBar(text: $inputText,
+                         onSend: { currentSendTask = Task { await send() } },
+                         isStreaming: streamingText != nil,
+                         onStop: { stopStreaming() },
+                         onMic: nil,
+                         onLive: nil,
+                         onPlus: { showPhotoPicker = true })
                     .padding(.top, 6) // Reduced padding above input bar
             }
             .background(
@@ -89,7 +95,15 @@ struct ChatView: View {
 
     // MARK: - WebCanvas integration
     private var useWebCanvasFlag: Bool {
-        settingsQuery.first?.useWebCanvas ?? true
+        let wantsWeb = settingsQuery.first?.useWebCanvas ?? true
+        return wantsWeb && hasWebCanvasAssets
+    }
+
+    private var hasWebCanvasAssets: Bool {
+        let b = Bundle.main
+        if b.url(forResource: "index", withExtension: "html", subdirectory: "WebCanvas/dist") != nil { return true }
+        if b.url(forResource: "index", withExtension: "html", subdirectory: "ChatApp/WebCanvas/dist") != nil { return true }
+        return false
     }
 
     private var currentThemeForCanvas: CanvasTheme {
@@ -159,7 +173,7 @@ struct ChatView: View {
                                 MessageRow(message: message)
                             }
                         }
-                if let partial = streamingText {
+                if let partial = streamingText, !partial.isEmpty {
                     StreamingRow(partial: partial)
                 } else if isSending {
                             HStack { ProgressView(); Text("Thinking…").foregroundStyle(.secondary) }
@@ -274,7 +288,7 @@ struct ChatView: View {
             }
         }
         ToolbarItem(placement: .navigationBarTrailing) {
-            Button { } label: { AppIcon.info(18) }
+            Button { showModelEditor = true } label: { AppIcon.info(18) }
         }
     }
 
@@ -328,6 +342,7 @@ struct ChatView: View {
 
     @MainActor
     private func send() async {
+        guard !isSending else { return }
         let userText = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !userText.isEmpty else { return }
         inputText = ""
@@ -340,13 +355,13 @@ struct ChatView: View {
         try? modelContext.save()
 
         isSending = true
-        defer { isSending = false }
+        defer { isSending = false; currentSendTask = nil }
 
         do {
             // Resolve provider from settings
             let settings = settingsQuery.first ?? AppSettings()
             let providerID = settings.defaultProvider
-            let model = settings.defaultModel
+            let model = effectiveModel(for: providerID)
 
             let provider = try makeProvider(id: providerID)
             var aiMessages: [AIMessage] = []
@@ -423,9 +438,38 @@ struct ChatView: View {
 
             try? modelContext.save()
             attachments.removeAll()
+        } catch is CancellationError {
+            // User stopped streaming. Finalize partial text if any, without surfacing an error.
+            if let partial = streamingText, !partial.isEmpty {
+                streamingText = nil
+                let aiMsg = Message(role: "assistant", content: partial, chat: chat)
+                modelContext.insert(aiMsg)
+                try? modelContext.save()
+            } else {
+                streamingText = nil
+            }
+            errorMessage = nil
         } catch {
             errorMessage = (error as NSError).localizedDescription
         }
+    }
+
+    // MARK: - Stop streaming
+    @MainActor
+    private func stopStreaming() {
+        // Cancel the in-flight send task, if any.
+        currentSendTask?.cancel()
+        // If there's partial streamed content, finalize it as a message for continuity.
+        if let partial = streamingText, !partial.isEmpty {
+            streamingText = nil
+            let aiMsg = Message(role: "assistant", content: partial, chat: chat)
+            modelContext.insert(aiMsg)
+            try? modelContext.save()
+        } else {
+            streamingText = nil
+        }
+        isSending = false
+        attachments.removeAll()
     }
 
     // MARK: - Provider header helpers
@@ -435,6 +479,23 @@ struct ChatView: View {
     }
     private var currentModel: String {
         settingsQuery.first?.defaultModel ?? ""
+    }
+
+    private func effectiveModel(for providerID: String) -> String {
+        let configured = settingsQuery.first?.defaultModel ?? ""
+        let allowed = availableModelsForCurrentProvider()
+        if allowed.contains(configured), !configured.isEmpty { return configured }
+        var fallback = configured
+        switch providerID {
+        case "openai": fallback = "gpt-4o-mini"
+        case "anthropic": fallback = "claude-3-5-sonnet-20240620"
+        case "google": fallback = "gemini-1.5-pro"
+        case "xai": fallback = "grok-2-mini"
+        default: break
+        }
+        if fallback.isEmpty { fallback = allowed.first ?? configured }
+        if var s = settingsQuery.first { s.defaultModel = fallback; try? modelContext.save() }
+        return fallback
     }
 
     @State private var showModelEditor: Bool = false

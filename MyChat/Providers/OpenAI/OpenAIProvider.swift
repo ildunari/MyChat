@@ -14,15 +14,13 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
     }
 
     func listModels() async throws -> [String] {
-        // Keep it simple; you can implement /models later.
-        // Provide a common set of useful defaults.
+        // Common, valid defaults; users can override in Settings.
         return [
-            "gpt-5",
-            "gpt-5-mini",
-            "gpt-5-nano",
             "gpt-4o-mini",
             "gpt-4o",
-            "gpt-4.1-mini"
+            "o4-mini",
+            "o3-mini",
+            "o3"
         ]
     }
 
@@ -173,6 +171,9 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
 
         var full = ""
         var streamedError: String? = nil
+        #if DEBUG
+        var evtCounts: [String: Int] = [:]
+        #endif
         let (bytes, response) = try await client.session.bytes(for: request)
         if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
             // Surface a helpful, user-facing error instead of NSURLError -1011
@@ -189,39 +190,46 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
             throw NSError(domain: "OpenAI", code: http.statusCode, userInfo: [NSLocalizedDescriptionKey: message])
         }
 
-        let decoder = SSEDecoder()
-        for try await line in bytes.lines {
-            // Reconstruct frames for SSEDecoder by appending newlines; it will split on \n\n
+        // Parse SSE per line to avoid relying on double-\n frame boundaries
+        for try await rawLine in bytes.lines {
+            let line = rawLine.trimmingCharacters(in: .whitespacesAndNewlines)
+            if line.isEmpty { continue }
             if line == "data: [DONE]" { break }
-            var li = line
-            li.append("\n")
-            if let data = li.data(using: .utf8) {
-                decoder.feed(data) { _, payload in
-                    guard payload.isEmpty == false else { return }
-                    if let env = try? JSONDecoder().decode(OpenAIStreamEnvelope.self, from: payload) {
-                        switch env.type {
-                        case "response.output_text.delta":
-                            let d = env.delta ?? ""
-                            full += d
-                            onDelta(d)
-                        case "response.output_text":
-                            let t = env.text ?? ""
-                            full += t
-                            onDelta(t)
-                        case "response.completed":
-                            break
-                        case "error":
-                            streamedError = env.error?.message ?? "Response error"
-                        default:
-                            break
-                        }
-                    }
+            guard line.hasPrefix("data:") else { continue }
+            let payloadString = line.dropFirst(5).trimmingCharacters(in: .whitespaces)
+            guard !payloadString.isEmpty else { continue }
+            guard let data = payloadString.data(using: .utf8) else { continue }
+            if let env = try? JSONDecoder().decode(OpenAIStreamEnvelope.self, from: data) {
+                #if DEBUG
+                evtCounts[env.type, default: 0] += 1
+                #endif
+                switch env.type {
+                case "response.output_text.delta", "response.delta":
+                    let d = env.delta ?? ""
+                    if !d.isEmpty { full += d; onDelta(d) }
+                case "response.output_text":
+                    let t = env.text ?? ""
+                    if !t.isEmpty { full += t; onDelta(t) }
+                case "response.completed":
+                    break
+                case "error":
+                    streamedError = env.error?.message ?? "Response error"
+                default:
+                    break
                 }
             }
         }
         if let err = streamedError, !err.isEmpty {
             throw NSError(domain: "OpenAI", code: -1, userInfo: [NSLocalizedDescriptionKey: err])
         }
-        return full
+        let trimmed = full.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            #if DEBUG
+            let summary = evtCounts.map { "\($0.key):\($0.value)" }.joined(separator: ", ")
+            Log.sseEvt("OpenAI stream finished empty. Events: [\(summary)]")
+            #endif
+            throw NSError(domain: "OpenAI", code: -2, userInfo: [NSLocalizedDescriptionKey: "Empty streamed response"]) 
+        }
+        return trimmed
     }
 }

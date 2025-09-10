@@ -15,6 +15,7 @@
 		5667C080976D668417E67332 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 16A29328F62006CAE4E535F9 /* Foundation.framework */; };
 		5F5127CFC55751AF308A724C /* MyChatUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBBF3A65AF88B6B6858C48F9 /* MyChatUITests.swift */; };
 		6D99CAF83A1666CDE5ED8E89 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 16A29328F62006CAE4E535F9 /* Foundation.framework */; };
+		B0D0D0D02F00000100000001 /* Down (Tests) in Frameworks */ = {isa = PBXBuildFile; productRef = B0D0D0CF2F00000100000001 /* Down (Tests) */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,9 +39,9 @@
 		0A0484882E6F833800670BBE /* MyChat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		16A29328F62006CAE4E535F9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		2793EC5F11618EE4BBE42D2B /* MyChatTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MyChatTests.swift; sourceTree = "<group>"; };
-		AE1A6FCCDA930B4FB0A8B50C /* MyChatTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = MyChatTests.xctest; path = MyChatTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AE1A6FCCDA930B4FB0A8B50C /* MyChatTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyChatTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D293B726E6C8B732C4B49CA5 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		E4773D774129CCD5AD4B7857 /* MyChatUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = MyChatUITests.xctest; path = MyChatUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E4773D774129CCD5AD4B7857 /* MyChatUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyChatUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		EBBF3A65AF88B6B6858C48F9 /* MyChatUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MyChatUITests.swift; sourceTree = "<group>"; };
 		F6C0B9CA3675C8D14DDB87A3 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -66,8 +67,6 @@
 		};
 		0A0484FE2E6FB87B00670BBE /* UIPlayground */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = UIPlayground;
 			sourceTree = "<group>";
 		};
@@ -98,6 +97,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6D99CAF83A1666CDE5ED8E89 /* Foundation.framework in Frameworks */,
+				B0D0D0D02F00000100000001 /* Down (Tests) in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -132,7 +132,7 @@
 				2793EC5F11618EE4BBE42D2B /* MyChatTests.swift */,
 				F6C0B9CA3675C8D14DDB87A3 /* Info.plist */,
 			);
-			name = MyChatTests;
+			path = MyChatTests;
 			sourceTree = "<group>";
 		};
 		F6644796AB1060B22C3F0AD6 /* MyChatUITests */ = {
@@ -141,7 +141,7 @@
 				EBBF3A65AF88B6B6858C48F9 /* MyChatUITests.swift */,
 				D293B726E6C8B732C4B49CA5 /* Info.plist */,
 			);
-			name = MyChatUITests;
+			path = MyChatUITests;
 			sourceTree = "<group>";
 		};
 		FBECCDE4F5BD53B128B90026 /* Frameworks */ = {
@@ -204,6 +204,9 @@
 				17C2F7E62DD6021645A3BC2D /* PBXTargetDependency */,
 			);
 			name = MyChatTests;
+			packageProductDependencies = (
+				B0D0D0CF2F00000100000001 /* Down (Tests) */,
+			);
 			productName = MyChatTests;
 			productReference = AE1A6FCCDA930B4FB0A8B50C /* MyChatTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -301,11 +304,13 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
+				"$(SRCROOT)/MyChat/Env/.env",
 			);
 			name = "Copy DevSecrets.env (Debug only)";
 			outputFileListPaths = (
 			);
 			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/DevSecrets.env",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -362,7 +367,9 @@
 				INFOPLIST_FILE = MyChatUITests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.MyChatUITests;
-				SDKROOT = iphoneos;
+				PRODUCT_NAME = MyChatUITests;
+				SDKROOT = iphonesimulator;
+				SUPPORTED_PLATFORMS = iphonesimulator;
 				SWIFT_VERSION = 5.0;
 				TEST_TARGET_NAME = MyChat;
 				VALIDATE_PRODUCT = YES;
@@ -561,14 +568,16 @@
 		9DEB619F100D2BFCD7A3A9B3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/MyChat.app/$(EXECUTABLE_NAME)";
+				BUNDLE_LOADER = "";
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				INFOPLIST_FILE = MyChatTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.MyChatTests;
-				SDKROOT = iphoneos;
+				PRODUCT_NAME = MyChatTests;
+				SDKROOT = iphonesimulator;
+				SUPPORTED_PLATFORMS = iphonesimulator;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUNDLE_LOADER)";
+				TEST_HOST = "";
 			};
 			name = Debug;
 		};
@@ -579,7 +588,9 @@
 				INFOPLIST_FILE = MyChatUITests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.MyChatUITests;
-				SDKROOT = iphoneos;
+				PRODUCT_NAME = MyChatUITests;
+				SDKROOT = iphonesimulator;
+				SUPPORTED_PLATFORMS = iphonesimulator;
 				SWIFT_VERSION = 5.0;
 				TEST_TARGET_NAME = MyChat;
 			};
@@ -588,14 +599,16 @@
 		F0AC1ED87DCDDA78FB345D60 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/MyChat.app/$(EXECUTABLE_NAME)";
+				BUNDLE_LOADER = "";
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				INFOPLIST_FILE = MyChatTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.MyChatTests;
-				SDKROOT = iphoneos;
+				PRODUCT_NAME = MyChatTests;
+				SDKROOT = iphonesimulator;
+				SUPPORTED_PLATFORMS = iphonesimulator;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUNDLE_LOADER)";
+				TEST_HOST = "";
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -696,6 +709,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 0A0484E72E6FAC4900670BBE /* XCRemoteSwiftPackageReference "swift" */;
 			productName = PhosphorSwift;
+		};
+		B0D0D0CF2F00000100000001 /* Down (Tests) */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0A0484962E6F9A0400670BBE /* XCRemoteSwiftPackageReference "Down" */;
+			productName = Down;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -48,6 +48,9 @@ private enum InputMetrics { // precise sizing
 struct InputBar: View {
     @Binding var text: String
     var onSend: () -> Void
+    // While streaming, show a Stop button instead of Send
+    var isStreaming: Bool = false
+    var onStop: (() -> Void)? = nil
     var onMic: (() -> Void)? = nil
     var onLive: (() -> Void)? = nil
     var onPlus: (() -> Void)? = nil
@@ -68,12 +71,20 @@ struct InputBar: View {
                     .lineLimit(1...6)
                     .focused($isTextFieldFocused)
                     .onSubmit {
-                        if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { onSend() }
+                        if !isStreaming, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { onSend() }
                     }
                     .submitLabel(.send)
 
                 // Trailing controls (mutually exclusive)
-                if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                if isStreaming {
+                    // Stop streaming button
+                    Button(action: { onStop?() }) {
+                        AppIcon.stop(18)
+                            .foregroundStyle(.red)
+                            .frame(width: InputMetrics.plusSize, height: InputMetrics.plusSize)
+                            .background(Circle().fill(Color.red.opacity(0.15)))
+                    }
+                } else if text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     // Voice controls when input is empty (match '+' button style)
                     Button(action: { onMic?() }) {
                         AppIcon.microphone(18)
@@ -89,7 +100,7 @@ struct InputBar: View {
                     }
                 } else {
                     // Send button only when there is text, styled like a small circle
-                    Button(action: onSend) {
+                    Button(action: { if !isStreaming { onSend() } }) {
                         AppIcon.paperPlane(18)
                             .foregroundStyle(T.accent)
                             .frame(width: InputMetrics.sendSize, height: InputMetrics.sendSize)

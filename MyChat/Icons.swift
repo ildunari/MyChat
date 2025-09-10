@@ -76,6 +76,10 @@ enum AppIcon {
         Image(systemName: "xmark").font(.system(size: size, weight: .bold))
         #endif
     }
+    @ViewBuilder static func stop(_ size: CGFloat = 18) -> some View {
+        // Prefer a consistent SF Symbol here to avoid dependency symbol mismatches
+        Image(systemName: "stop.fill").font(.system(size: size, weight: .bold))
+    }
     @ViewBuilder static func checkCircle(_ filled: Bool = true, size: CGFloat = 18) -> some View {
         #if canImport(PhosphorSwift)
         (filled ? Ph.checkCircle : Ph.circle).bold.frame(width: size, height: size)

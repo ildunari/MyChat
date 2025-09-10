@@ -78,6 +78,7 @@ struct ContentView: View {
         .theme(tokens)
         .fontDesign(fontDesignFromSettings())
         .dynamicTypeSize(dynamicTypeFromSettings())
+        .preferredColorScheme(effectiveColorScheme())
         .background(tokens.bg.ignoresSafeArea())
     }
 
@@ -124,7 +125,17 @@ private extension ContentView {
             default: return .terracotta
             }
         }()
-        return ThemeFactory.make(style: style, colorScheme: colorScheme)
+        let scheme = effectiveColorScheme() ?? colorScheme
+        return ThemeFactory.make(style: style, colorScheme: scheme)
+    }
+
+    // Honor Settings → Theme: system | light | dark
+    func effectiveColorScheme() -> ColorScheme? {
+        switch (settingsQuery.first?.interfaceTheme ?? "system").lowercased() {
+        case "light": return .light
+        case "dark":  return .dark
+        default:       return nil // follow system
+        }
     }
 
     func fontDesignFromSettings() -> Font.Design {

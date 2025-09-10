@@ -288,7 +288,6 @@ After any meaningful edit:
 ## Project Status Documentation
 
 **Maintain these files**:
-- `docs/PROJECT_STATUS.md`: Rolling status/handoff (update each session)
 - `docs/TODO.md`: Current task checklist
 - `porting.md`: Migration notes from ChatApp to MyChat
 - `TASKS.md`: Checkbox plan with ≤8 atomic steps

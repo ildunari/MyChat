@@ -6,12 +6,27 @@
       "options" : {
         "language" : "",
         "region" : ""
-      }
+      },
+      "testDestinations" : [
+        {
+          "device" : {
+            "platform" : "iOS Simulator",
+            "name" : "iPhone 16",
+            "id" : "F04E79C3-5634-474D-9D4B-64B2523130C1",
+            "os" : "iOS 26.0"
+          }
+        }
+      ]
     }
   ],
   "defaultOptions" : {
     "codeCoverage" : false,
-    "testTimeoutsEnabled" : false
+    "testTimeoutsEnabled" : false,
+    "targetForVariableExpansion" : {
+      "containerPath" : "MyChat.xcodeproj",
+      "identifier" : "MyChat",
+      "name" : "MyChat"
+    }
   },
   "testTargets" : [
     {

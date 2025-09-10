@@ -17,8 +17,7 @@ This guide helps contributors work efficiently in this SwiftUI iOS project.
 
 ## Project Status & Docs
 - **Migration Notes**: `porting.md` (migration from ChatApp to MyChat)
-- **Rolling Status/Handoff**: `docs/PROJECT_STATUS.md` (update each work session) - TO BE CREATED
-- **Rolling TODO**: `docs/TODO.md` (checklist; keep fresh) - TO BE CREATED
+- **Rolling TODO**: `docs/TODO.md` (checklist; keep fresh)
 
 Update flow per session:
 - Read `porting.md` for migration status
@@ -87,6 +86,17 @@ Update flow per session:
 - Test: Run unit/UI tests; capture failures and screenshots.
 - Clean: Remove temporary artifacts and debug flags.
 - Report: Summarize results with commands run, artifacts, next steps.
+
+## Live Plan & Updates (Always-On)
+
+To keep the human in the loop at all times, follow these rules in every session:
+
+- Start With a Plan: Before running tools or editing files, post a short plan (5–8 bullets) in chat. Mark exactly one step as in_progress. Use `update_plan` to keep it live.
+- Maintain a TODO: Alongside the plan, list the concrete TODO items you will complete. Update statuses as you go (completed/in_progress/pending).
+- Progress Pings: For long operations (builds, tests, multi‑file patches), post brief 1–2 sentence progress updates so the user knows what’s happening.
+- Summaries: After changes, summarize what changed, where, and why, with paths and any artifacts (build logs, screenshots). Include immediate next steps.
+- Ask vs Act: Ask only when a decision would materially change behavior, dependencies, or migration direction. Otherwise, proceed and report.
+- Exceptions: For truly trivial actions (single quick read or one‑liner), you may combine plan + result in one message—but still state the mini‑plan first.
 
 ## MCP Tooling & Routing
 - XcodeBuildMCP: Primary for build/test/run/simulators/logs.

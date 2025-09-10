@@ -197,6 +197,7 @@ private struct MathBlockSegment: View {
 private struct HighlightedCodeView: UIViewRepresentable {
     let code: String
     let language: String?
+    @Environment(\.colorScheme) private var colorScheme
     func makeUIView(context: Context) -> UITextView {
         let tv = UITextView()
         tv.isEditable = false
@@ -206,7 +207,8 @@ private struct HighlightedCodeView: UIViewRepresentable {
         return tv
     }
     func updateUIView(_ uiView: UITextView, context: Context) {
-        if let highlightr = Highlightr(), let theme = highlightr.setTheme(to: "xcode") {
+        if let highlightr = Highlightr(),
+           let theme = highlightr.setTheme(to: CodeTheme.current(for: colorScheme)) {
             highlightr.theme = theme
             let highlighted = highlightr.highlight(code, as: language)
             uiView.attributedText = highlighted
@@ -275,10 +277,12 @@ private struct IOSMathLabel: UIViewRepresentable {
         v.labelMode = .text
         v.textAlignment = .center
         v.latex = latex
+        v.textColor = .label
         return v
     }
     func updateUIView(_ uiView: MTMathUILabel, context: Context) {
         uiView.latex = latex
+        uiView.textColor = .label
     }
 }
 #endif

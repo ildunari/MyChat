@@ -180,10 +180,8 @@ private struct MathBlockSegment: View {
             IOSMathLabel(latex: latex)
                 .padding(.vertical, 4)
             #elseif canImport(SwiftMath)
-            // SwiftMath present: if it exposes a SwiftUI view in future, plug it here.
-            // For now, prefer KaTeX WebView for accurate display-mode rendering.
-            MathWebView(latex: latex, displayMode: true)
-                .frame(minHeight: 28)
+            SwiftMathLabel(latex: latex, labelMode: .display)
+                .padding(.vertical, 4)
             #else
             // Web-based KaTeX fallback (auto-sizes; allows horizontal scroll)
             MathWebView(latex: latex, displayMode: true)
@@ -283,6 +281,26 @@ private struct IOSMathLabel: UIViewRepresentable {
 }
 #endif
 
+#if canImport(SwiftMath)
+private struct SwiftMathLabel: UIViewRepresentable {
+    let latex: String
+    var labelMode: MTMathUILabelMode = .text
+
+    func makeUIView(context: Context) -> MTMathUILabel {
+        let v = MTMathUILabel()
+        v.labelMode = labelMode
+        v.textAlignment = .center
+        v.latex = latex
+        return v
+    }
+
+    func updateUIView(_ uiView: MTMathUILabel, context: Context) {
+        uiView.labelMode = labelMode
+        uiView.latex = latex
+    }
+}
+#endif
+
 // MARK: Inline math paragraph rendering
 
 private struct InlineMathParagraph: View {
@@ -302,9 +320,7 @@ private struct InlineMathParagraph: View {
                     #if canImport(iosMath)
                     IOSMathLabel(latex: ltx)
                     #elseif canImport(SwiftMath)
-                    // Inline placeholder when SwiftMath is present but no direct view is integrated.
-                    Text(ltx)
-                        .font(.system(.body, design: .monospaced))
+                    SwiftMathLabel(latex: ltx)
                     #else
                     MathWebView(latex: ltx, displayMode: false)
                         .frame(minHeight: 22)

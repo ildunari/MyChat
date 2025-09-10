@@ -7,7 +7,7 @@
 
 import SwiftUI
 import SwiftData
-import Combine
+import Observation
 
 // MARK: - Mock Data
 struct MockMessage {
@@ -18,12 +18,13 @@ struct MockMessage {
     let isStreaming: Bool = false
 }
 
-class MockChat: ObservableObject {
+@Observable
+class MockChat {
     let id = UUID()
-    @Published var title: String
-    @Published var messages: [MockMessage]
-    @Published var isWaitingForResponse = false
-    @Published var streamingContent = ""
+    var title: String
+    var messages: [MockMessage]
+    var isWaitingForResponse = false
+    var streamingContent = ""
     
     init(title: String, messages: [MockMessage] = []) {
         self.title = title
@@ -33,7 +34,7 @@ class MockChat: ObservableObject {
 
 // MARK: - Simplified Chat View for Testing
 struct ChatViewPlayground: View {
-    @StateObject private var chat = MockChat(
+    @State private var chat = MockChat(
         title: "Test Conversation",
         messages: [
             MockMessage(role: "user", content: "Hello! Can you help me understand SwiftUI?"),
@@ -299,7 +300,7 @@ struct ThinkingIndicator: View {
 
 #Preview("Empty Chat") {
     struct EmptyWrapper: View {
-        @StateObject private var chat = MockChat(title: "New Chat", messages: [])
+        @State private var chat = MockChat(title: "New Chat", messages: [])
         var body: some View {
             ChatViewPlayground()
         }
@@ -309,7 +310,7 @@ struct ThinkingIndicator: View {
 
 #Preview("Long Conversation") {
     struct LongWrapper: View {
-        @StateObject private var chat = MockChat(
+        @State private var chat = MockChat(
             title: "Extended Discussion",
             messages: (0..<20).map { i in
                 MockMessage(

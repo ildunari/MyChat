@@ -164,6 +164,11 @@ Use **context7** to pull current documentation:
 - Add Privacy Manifest if touching Required Reason APIs
 - All network requests through `NetworkClient` with timeouts
 
+#### Local Secrets Policy (Do Not Touch .env)
+- Never modify, move, delete, or stage `MyChat/Env/.env` unless the user explicitly instructs you to.
+- This file is developer‑local and is read only by a Debug‑only build phase that copies it into the app bundle as `DevSecrets.env` to prime the Keychain.
+- Ensure `.gitignore` continues to exclude `MyChat/Env/.env`; if any workflow suggests committing it, stop and ask the user.
+
 ## Testing Policy
 
 ### Unit Testing

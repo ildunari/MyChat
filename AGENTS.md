@@ -46,6 +46,12 @@ Update flow per session:
 - Do not commit secrets or personal data; review `Info.plist` diffs carefully.
 - Network code belongs in `NetworkClient`; add timeouts, error handling, and avoid blocking the main thread.
 
+### Local Secrets Policy (Do Not Touch .env)
+- Absolute rule: Do not create, edit, move, delete, stage, or commit `MyChat/Env/.env` unless the user explicitly asks.
+- Treat `MyChat/Env/.env` as developer‑local state. Only read it in the Debug build phase that copies it to the app bundle as `DevSecrets.env`.
+- If a cleanup, rebase, or script would affect this file, skip that step and ask first.
+- `.gitignore` already excludes `MyChat/Env/.env`; keep it that way. Never override this rule in commits or PRs.
+
 ## Agent Behavior (Xcode & MCP)
 - Control loop: Plan → Ask (if missing context) → Execute (small, safe batches) → Verify (build/test pass + logs) → Summarize → Confirm for high‑impact actions.
 - Tool routing (use in this order):

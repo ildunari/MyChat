@@ -20,3 +20,5 @@
 - Run on simulator, verify Settings changes persist via `SettingsStore.save()`.
 - Audit other views for `SettingsStore` usage (none found via ripgrep).
 - Add `docs/TODO.md` maintenance to ongoing workflow.
+- Remove temporary `Combine` imports once Observation migration completes.
+- Integrate SwiftMath inline view to replace placeholder in `AIResponseView`.

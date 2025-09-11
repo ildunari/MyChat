@@ -315,7 +315,7 @@ private struct InlineMathParagraph: View {
                     #if canImport(iosMath)
                     IOSMathLabel(latex: ltx)
                     #elseif canImport(SwiftMath)
-                    // Inline placeholder when SwiftMath is present but no direct view is integrated.
+                    // TODO: Integrate a SwiftMath view for inline formulas instead of this placeholder.
                     Text(ltx)
                         .font(.system(.body, design: .monospaced))
                     #else

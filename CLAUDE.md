@@ -105,7 +105,7 @@ This is a SwiftUI-based iOS chat application with AI provider integration, built
 #### context7 (Library Documentation)
 - **When**: Working with third-party dependencies
 - **Key Tools**: `resolve-library-id`, `get-library-docs`
-- **Current Dependencies**: Down (markdown), Highlightr (optional), SwiftMath/iosMath (optional)
+- **Current Dependencies**: Down (markdown), Highlightr (optional), SwiftMath (optional)
 
 #### desktop-commander (File Operations)
 - **When**: File reads/writes/edits, process control
@@ -136,7 +136,7 @@ Always verify with **sosumi.searchAppleDocumentation** before implementing:
 Use **context7** to pull current documentation:
 - Down for markdown rendering
 - Highlightr for code syntax highlighting (if added)
-- SwiftMath/iosMath for LaTeX rendering (if added)
+- SwiftMath for LaTeX rendering (if added)
 - Any new SPM dependencies
 
 ### Version Freshness
@@ -260,7 +260,7 @@ Use **context7** to pull current documentation:
 ### Swift Package Manager
 - **Down**: Markdown rendering (replacing MarkdownUI from old project)
 - **Highlightr**: Syntax highlighting for code blocks (optional)
-- **SwiftMath/iosMath**: Mathematical formula rendering (optional)
+- **SwiftMath**: Mathematical formula rendering (optional)
 
 ### System Frameworks
 - SwiftUI, SwiftData, Foundation, PhotosUI for core functionality

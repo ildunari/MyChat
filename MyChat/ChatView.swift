@@ -120,7 +120,7 @@ struct ChatView: View {
         let messages: [Message]
         let streamingText: String?
         let isSending: Bool
-        @StateObject private var controller = ChatCanvasController()
+        @State private var controller = ChatCanvasController()
         @Environment(\.colorScheme) private var colorScheme
         @State private var didStartStream = false
         var body: some View {

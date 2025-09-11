@@ -1,10 +1,8 @@
 import SwiftUI
 import WebKit
-import Combine
-
 // Controller object used to send commands into the WebCanvas once ready.
 @MainActor
-final class ChatCanvasController: ObservableObject {
+final class ChatCanvasController {
     fileprivate weak var webView: WKWebView?
     fileprivate var isReady: Bool = false
     fileprivate var pending: [() -> Void] = []
@@ -64,7 +62,7 @@ struct CanvasMessage: Codable {
 enum CanvasTheme: String, Codable { case light, dark }
 
 struct ChatCanvasView: UIViewRepresentable {
-    @ObservedObject var controller: ChatCanvasController
+    var controller: ChatCanvasController
     var theme: CanvasTheme
 
     func makeCoordinator() -> Coordinator { Coordinator(controller: controller) }

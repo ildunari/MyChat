@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import SwiftData
 
 struct ContentView: View {
@@ -12,6 +13,7 @@ struct ContentView: View {
     private enum SectionKind: Hashable { case chats, agents }
     @State private var sectionOrder: [SectionKind] = [.chats, .agents]
     @State private var dragOffsets: [SectionKind: CGFloat] = [:]
+    private let orderDefaultsKey = "home.sectionOrder"
     @State private var renamingChat: Chat? = nil
     @State private var newChatTitle: String = ""
     @State private var navNewChat: Chat? = nil
@@ -29,14 +31,17 @@ struct ContentView: View {
                                 count: kind == .chats ? chats.count : 0,
                                 isExpanded: kind == .chats ? $chatHistoryExpanded : $agentsExpanded,
                                 maxHeight: cap,
+                                draggedOffset: offsetY,
                                 onDragChanged: { value in dragOffsets[kind] = value.translation.height },
                                 onDragEnded: { value in
                                     withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
                                         let threshold: CGFloat = 40
                                         if value.translation.height < -threshold, let idx = sectionOrder.firstIndex(of: kind), idx > 0 {
                                             sectionOrder.swapAt(idx, idx-1)
+                                            Haptics.selection()
                                         } else if value.translation.height > threshold, let idx = sectionOrder.firstIndex(of: kind), idx < sectionOrder.count-1 {
                                             sectionOrder.swapAt(idx, idx+1)
+                                            Haptics.selection()
                                         }
                                         dragOffsets[kind] = 0
                                     }
@@ -86,6 +91,8 @@ struct ContentView: View {
                 }
             }
         }
+        .onAppear { loadOrder() }
+        .onChange(of: sectionOrder) { _, _ in saveOrder() }
     }
     
     // MARK: - Helper Views
@@ -244,6 +251,7 @@ private struct SectionContainer<Content: View>: View {
     let count: Int
     @Binding var isExpanded: Bool
     let maxHeight: CGFloat
+    let draggedOffset: CGFloat
     var onDragChanged: (DragGesture.Value) -> Void
     var onDragEnded: (DragGesture.Value) -> Void
     @ViewBuilder var content: () -> Content
@@ -272,6 +280,33 @@ private struct SectionContainer<Content: View>: View {
                     .clipped()
             }
         }
+        .scaleEffect(abs(draggedOffset) > 2 ? 1.02 : 1)
+        .shadow(color: T.shadow.opacity(abs(draggedOffset) > 2 ? 0.25 : 0), radius: 8, x: 0, y: 4)
+    }
+}
+
+// MARK: - Haptics helper
+private enum Haptics {
+    static func selection() {
+        let gen = UISelectionFeedbackGenerator()
+        gen.prepare(); gen.selectionChanged()
+    }
+}
+
+// MARK: - Persistence of section order
+private extension ContentView {
+    func saveOrder() {
+        let arr = sectionOrder.map { $0 == .chats ? "chats" : "agents" }
+        UserDefaults.standard.set(arr, forKey: orderDefaultsKey)
+    }
+    func loadOrder() {
+        guard let arr = UserDefaults.standard.array(forKey: orderDefaultsKey) as? [String], arr.count >= 2 else { return }
+        var out: [SectionKind] = []
+        for s in arr {
+            if s == "chats" { out.append(.chats) }
+            else if s == "agents" { out.append(.agents) }
+        }
+        if out.isEmpty == false { sectionOrder = out }
     }
 }
 

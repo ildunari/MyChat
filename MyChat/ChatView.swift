@@ -3,6 +3,7 @@ import SwiftUI
 import PhotosUI
 import SwiftData
 import UniformTypeIdentifiers
+import UIKit
 
 struct ChatView: View {
     @Environment(\.modelContext) private var modelContext
@@ -19,6 +20,7 @@ struct ChatView: View {
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var attachments: [(data: Data, mime: String)] = []
     @State private var streamingText: String? = nil
+    @State private var editingMessage: Message? = nil
     @State private var currentSendTask: Task<Void, Never>? = nil
 
     var body: some View {
@@ -33,7 +35,10 @@ struct ChatView: View {
                                  streamingText: streamingText,
                                  isSending: isSending,
                                  aiDisplayName: providerDisplayName,
-                                 aiModel: currentModel)
+                                 aiModel: currentModel,
+                                 onRetry: { msg in Task { await retryResponse(msg) } },
+                                 onCopy: { copyResponse($0) },
+                                 onEdit: { editMessage($0) })
             }
             if let error = errorMessage {
                 Text(error)
@@ -161,6 +166,9 @@ struct ChatView: View {
         let isSending: Bool
         var aiDisplayName: String
         var aiModel: String
+        var onRetry: (Message) -> Void
+        var onCopy: (Message) -> Void
+        var onEdit: (Message) -> Void
         var body: some View {
             ScrollViewReader { proxy in
                 ScrollView {
@@ -169,13 +177,16 @@ struct ChatView: View {
                             if message.role == "assistant" {
                                 MessageRow(message: message,
                                            aiDisplayName: aiDisplayName,
-                                           aiModel: aiModel)
+                                           aiModel: aiModel,
+                                           onRetry: { onRetry(message) },
+                                           onCopy: { onCopy(message) })
                             } else {
-                                MessageRow(message: message)
+                                MessageRow(message: message,
+                                           onEdit: { onEdit(message) })
                             }
                         }
                 if let partial = streamingText, !partial.isEmpty {
-                    StreamingRow(partial: partial)
+                    StreamingRow(partial: partial, aiDisplayName: aiDisplayName, aiModel: aiModel)
                 } else if isSending {
                             HStack { ProgressView(); Text("Thinking…").foregroundStyle(.secondary) }
                                 .padding(.horizontal)
@@ -198,6 +209,9 @@ struct ChatView: View {
         var aiDisplayName: String = "AI"
         var aiModel: String = ""
         @Environment(\.tokens) private var T
+        var onRetry: (() -> Void)? = nil
+        var onCopy: (() -> Void)? = nil
+        var onEdit: (() -> Void)? = nil
         var body: some View {
             Group {
                 if message.role == "assistant" {
@@ -212,6 +226,12 @@ struct ChatView: View {
                         }
                         AIResponseView(content: message.content)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                        HStack(spacing: 12) {
+                            Button("Retry") { onRetry?() }
+                            Button("Copy") { onCopy?() }
+                        }
+                        .font(.footnote)
+                        .padding(.top, 4)
                     }
                     .padding(.horizontal)
                 } else {
@@ -221,6 +241,8 @@ struct ChatView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .trailing)
+                        Button("Edit") { onEdit?() }
+                            .font(.footnote)
                         Text(message.content)
                             .font(.system(.body, design: .rounded)).fontWeight(.medium)
                             .padding(.horizontal, 12)
@@ -353,13 +375,23 @@ struct ChatView: View {
         errorMessage = nil
         withAnimation { showSuggestions = false }
 
-        // Add user message
-        let userMsg = Message(role: "user", content: userText, chat: chat)
-        modelContext.insert(userMsg)
-        try? modelContext.save()
+        // Insert or update user message
+        if let editing = editingMessage {
+            editing.content = userText
+            editing.createdAt = Date()
+            let msgs = chat.messages.sorted(by: { $0.createdAt < $1.createdAt })
+            if let idx = msgs.firstIndex(where: { $0.id == editing.id }) {
+                for m in msgs.suffix(from: idx + 1) { modelContext.delete(m) }
+            }
+            try? modelContext.save()
+        } else {
+            let userMsg = Message(role: "user", content: userText, chat: chat)
+            modelContext.insert(userMsg)
+            try? modelContext.save()
+        }
 
         isSending = true
-        defer { isSending = false; currentSendTask = nil }
+        defer { isSending = false; currentSendTask = nil; editingMessage = nil }
 
         do {
             // Resolve provider from settings
@@ -376,16 +408,18 @@ struct ChatView: View {
                 aiMessages.append(AIMessage(role: .system, content: sys))
             }
 
-            // Use all previous messages except the just-inserted user message
+            // Use all previous messages except the just-inserted user message (when not editing)
             var previous = chat.messages.sorted(by: { $0.createdAt < $1.createdAt })
-            if let last = previous.last, last.content == userText { previous.removeLast() }
+            if editingMessage == nil, let last = previous.last, last.content == userText { previous.removeLast() }
             aiMessages.append(contentsOf: previous.map { m in
                 AIMessage(role: m.role == "user" ? .user : .assistant, content: m.content)
             })
 
-            // Compose the current user message with optional image parts (preserve MIME)
-            let imageParts = attachments.map { AIMessage.Part.imageData($0.data, mime: $0.mime) }
-            aiMessages.append(AIMessage(role: .user, parts: [.text(userText)] + imageParts))
+            // Compose the current user message with optional image parts (preserve MIME) if not editing
+            if editingMessage == nil {
+                let imageParts = attachments.map { AIMessage.Part.imageData($0.data, mime: $0.mime) }
+                aiMessages.append(AIMessage(role: .user, parts: [.text(userText)] + imageParts))
+            }
 
             // Apply per-model overrides from ModelCapabilitiesStore
             let caps = ModelCapabilitiesStore.get(provider: providerID, model: model) // effective (user over default)
@@ -541,6 +575,27 @@ struct ChatView: View {
         default:
             throw NSError(domain: "Provider", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unsupported provider: \(id)"])
         }
+    }
+
+    // MARK: - Message actions
+    private func retryResponse(_ message: Message) async {
+        guard let idx = sortedMessages.firstIndex(where: { $0.id == message.id }) else { return }
+        modelContext.delete(message)
+        try? modelContext.save()
+        if let prevUser = sortedMessages[..<idx].last(where: { $0.role == "user" }) {
+            editingMessage = prevUser
+            inputText = prevUser.content
+            await send()
+        }
+    }
+
+    private func copyResponse(_ message: Message) {
+        UIPasteboard.general.string = message.content
+    }
+
+    private func editMessage(_ message: Message) {
+        editingMessage = message
+        inputText = message.content
     }
 }
 

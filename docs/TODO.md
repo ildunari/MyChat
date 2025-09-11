@@ -11,4 +11,6 @@ Updated: 2025-09-09
 - [ ] Create `MyChat.xctestplan`
 - [ ] Code theme polish (choose light/dark code themes)
 - [ ] Verify math with iosMath installed (block + inline)
+- [ ] Remove temporary `Combine` imports once Observation migration completes
+- [ ] Integrate SwiftMath inline view to replace placeholder in `AIResponseView`
 

@@ -260,7 +260,7 @@ private struct SectionContainer<Content: View>: View {
     @ViewBuilder var content: () -> Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 18) {
             HStack(spacing: 10) {
                 AppIcon.grabber(14).foregroundStyle(T.textSecondary)
                     .gesture(
@@ -321,9 +321,10 @@ struct ChatCard: View {
     let chat: Chat
     var fixedHeight: CGFloat? = nil
     let onRename: () -> Void
-    
+
     @Environment(\.tokens) private var T
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) private var scheme
     
     private var lastMessage: Message? {
         chat.messages.sorted { $0.createdAt > $1.createdAt }.first
@@ -425,7 +426,7 @@ struct ChatCard: View {
                 RoundedRectangle(cornerRadius: T.radiusLarge, style: .continuous)
                     .fill(LinearGradient(colors: [T.surface, T.surfaceElevated], startPoint: .topLeading, endPoint: .bottomTrailing))
                     .overlay(RoundedRectangle(cornerRadius: T.radiusLarge, style: .continuous).stroke(T.borderSoft, lineWidth: 1))
-                    .shadow(color: T.shadow.opacity(0.25), radius: 6, x: 0, y: 3)
+                    .shadow(color: T.shadow.opacity(0.25), radius: (scheme == .dark ? 4 : 6), x: 0, y: 3)
             )
         }
         .buttonStyle(PlainButtonStyle())

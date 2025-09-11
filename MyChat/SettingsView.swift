@@ -838,6 +838,18 @@ private struct InterfaceSettingsView: View {
             }
         }
         .navigationTitle("Appearance")
+        .toolbar {
+            ToolbarItem(placement: .bottomBar) {
+                Button("Restore Defaults") {
+                    store.interfaceTheme = "system"
+                    store.interfaceFontStyle = "rounded"
+                    store.interfaceTextSizeIndex = 2
+                    store.chatBubbleColorID = "coolSlate"
+                    store.save()
+                }
+                .buttonStyle(.bordered)
+            }
+        }
         .onAppear {
             sizeIndex = Double(store.interfaceTextSizeIndex)
         }

@@ -59,15 +59,15 @@ private struct DockTabBar: View {
                                     .matchedGeometryEffect(id: "hl", in: highlightNS)
                                     .frame(width: 64, height: 44)
                             }
-                            HStack(spacing: 6) {
+                            VStack(spacing: 4) {
                                 it.icon
                                     .foregroundStyle(selected == it.tab ? Color.white : T.textSecondary)
                                 Text(it.title)
-                                    .font(.footnote.weight(.semibold))
+                                    .font(.caption.weight(.semibold))
                                     .foregroundStyle(selected == it.tab ? Color.white : T.textSecondary)
                             }
-                            .frame(height: 44)
-                            .padding(.horizontal, 10)
+                            .frame(width: 72, height: 52)
+                            .padding(.horizontal, 4)
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -76,7 +76,7 @@ private struct DockTabBar: View {
             }
         }
         .padding(.horizontal, 0)
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
         .background(
             Rectangle()
                 .fill(T.surface)
@@ -94,6 +94,7 @@ private struct ChatRootView: View {
     @Query(sort: \Chat.createdAt, order: .reverse) private var chats: [Chat]
     @State private var current: Chat? = nil
     @State private var drawerX: CGFloat = -1 // -1 closed, 0 open (as fraction of width)
+    @State private var drawerOpen: Bool = false
 
     var body: some View {
         GeometryReader { geo in
@@ -120,6 +121,19 @@ private struct ChatRootView: View {
                         .ignoresSafeArea()
                         .onTapGesture { withAnimation(.spring()) { drawerX = -1 } }
                 }
+                if drawerX <= -0.98 { // edge affordance when closed
+                    HStack(spacing: 0) {
+                        VStack {
+                            Spacer()
+                            RoundedRectangle(cornerRadius: 3)
+                                .fill(T.borderHard)
+                                .frame(width: 4, height: 28)
+                            Spacer()
+                        }
+                        Spacer()
+                    }
+                    .allowsHitTesting(false)
+                }
             }
             .contentShape(Rectangle())
             .gesture(
@@ -133,6 +147,7 @@ private struct ChatRootView: View {
                     .onEnded { v in
                         let open = drawerX > -0.5 || v.velocity.width > 200
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) { drawerX = open ? 0 : -1 }
+                        if open != drawerOpen { Haptics.selection(); drawerOpen = open }
                     }
             )
             .onAppear { if current == nil { current = chats.first } }
@@ -229,5 +244,13 @@ private struct MediaPlaceholderView: View {
                 .foregroundStyle(T.textSecondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+// MARK: - Haptics helper (local)
+private enum Haptics {
+    static func selection() {
+        let gen = UISelectionFeedbackGenerator()
+        gen.prepare(); gen.selectionChanged()
     }
 }

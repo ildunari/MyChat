@@ -26,7 +26,7 @@ struct ContentView: View {
                                 itemCount: chats.count,
                                 maxHeight: cap
                             ) {
-                                ChatHistoryGrid()
+                                ChatHistoryGrid(maxHeight: cap)
                             }
 
                             HomeSection(
@@ -80,21 +80,25 @@ struct ContentView: View {
     // MARK: - Helper Views
     
     @ViewBuilder
-    private func ChatHistoryGrid() -> some View {
+    private func ChatHistoryGrid(maxHeight cap: CGFloat) -> some View {
         if chats.isEmpty {
             EmptyStateView(message: "No chats yet. Tap the + button to start your first conversation!")
         } else {
+            let gridSpacing: CGFloat = 12
+            let verticalPad: CGFloat = 8
+            let cardH = max(120, (cap - gridSpacing - verticalPad) / 2)
             LazyVGrid(columns: [
                 GridItem(.flexible(), spacing: 12),
                 GridItem(.flexible(), spacing: 12)
             ], spacing: 12) {
                 ForEach(chats.prefix(4)) { chat in
-                    ChatCard(chat: chat) {
+                    ChatCard(chat: chat, fixedHeight: cardH) {
                         renamingChat = chat
                         newChatTitle = chat.title
                     }
                 }
             }
+            .padding(.vertical, 4)
         }
     }
     
@@ -226,6 +230,7 @@ struct HomeSection<Content: View>: View {
 
 struct ChatCard: View {
     let chat: Chat
+    var fixedHeight: CGFloat? = nil
     let onRename: () -> Void
     
     @Environment(\.tokens) private var T
@@ -325,7 +330,7 @@ struct ChatCard: View {
                 }
             }
             .padding(16)
-            .frame(height: 140)
+            .frame(height: fixedHeight ?? 140)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: T.radiusLarge, style: .continuous)

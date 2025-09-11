@@ -94,7 +94,12 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { 
+                    Button("Save") { 
+                        store.save()
+                        dismiss() 
+                    }
+                }
             }
         }
     }

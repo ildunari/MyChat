@@ -24,8 +24,7 @@ struct RootView: View {
 
             // Custom dock bar
             DockTabBar(selected: $tab, highlightNS: highlightNS)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 10)
+                .padding(.bottom, 2)
                 .background(Color.clear.ignoresSafeArea(edges: .bottom))
         }
     }
@@ -56,7 +55,7 @@ private struct DockTabBar: View {
                         ZStack {
                             if selected == it.tab {
                                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .fill(scheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.9))
+                                    .fill(T.accent)
                                     .matchedGeometryEffect(id: "hl", in: highlightNS)
                                     .frame(width: 64, height: 44)
                             }
@@ -76,18 +75,14 @@ private struct DockTabBar: View {
                 .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 0)
         .padding(.vertical, 8)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            Rectangle()
                 .fill(T.surface)
-                .shadow(color: T.shadow.opacity(0.2), radius: 12, x: 0, y: 6)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(T.borderSoft, lineWidth: 1)
-                )
+                .shadow(color: T.shadow.opacity(0.08), radius: 10, x: 0, y: -2)
         )
-        .padding(.horizontal, 12)
+        .ignoresSafeArea(edges: .bottom)
     }
 }
 
@@ -149,6 +144,11 @@ private struct ChatRootView: View {
             HStack {
                 Text("History").font(.headline).foregroundStyle(T.text)
                 Spacer()
+                Button(role: .destructive, action: { showClearAll.toggle() }) {
+                    HStack(spacing: 6) { AppIcon.trash(14); Text("Clear All") }
+                }
+                .buttonStyle(.bordered)
+                .tint(Color.red)
                 Button(action: { withAnimation(.spring()) { drawerX = -1 } }) { AppIcon.close(14) }
                     .buttonStyle(.plain)
             }
@@ -183,7 +183,15 @@ private struct ChatRootView: View {
         }
         .background(T.surface)
         .overlay(RoundedRectangle(cornerRadius: 0).stroke(T.borderSoft, lineWidth: 1))
+        .confirmationDialog("Clear all chats?", isPresented: $showClearAll, titleVisibility: .visible) {
+            Button("Delete All Chats", role: .destructive) {
+                for c in chats { modelContext.delete(c) }
+                try? modelContext.save(); current = nil
+            }
+            Button("Cancel", role: .cancel) { }
+        }
     }
+    @State private var showClearAll = false
 
     private func relative(_ date: Date) -> String {
         let secs = max(1, Int(Date().timeIntervalSince(date)))
@@ -215,4 +223,3 @@ private struct MediaPlaceholderView: View {
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
-

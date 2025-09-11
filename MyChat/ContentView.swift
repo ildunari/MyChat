@@ -10,15 +10,12 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.colorScheme) private var colorScheme
     @Query(sort: \Chat.createdAt, order: .reverse) private var chats: [Chat]
-    @Query private var settingsQuery: [AppSettings]
     @State private var showingSettings = false
     @State private var initialChat: Chat? = nil
     @State private var showInitialChat = false
 
     var body: some View {
-        let tokens = resolvedTokens()
         NavigationStack {
             List {
                 ForEach(chats) { chat in
@@ -50,11 +47,11 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button { showingSettings = true } label: { AppIcon.gear() }
-                    .accessibilityLabel("Settings")
+                        .accessibilityLabel("Settings")
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button { addChat() } label: { AppIcon.plus() }
-                    .accessibilityLabel("New Chat")
+                        .accessibilityLabel("New Chat")
                 }
                 ToolbarItem(placement: .automatic) {
                     EditButton()
@@ -75,12 +72,6 @@ struct ContentView: View {
                 }
             }
         }
-        .theme(tokens)
-        .tint(tokens.accent)
-        .fontDesign(fontDesignFromSettings())
-        .dynamicTypeSize(dynamicTypeFromSettings())
-        .preferredColorScheme(effectiveColorScheme())
-        .background(tokens.bg.ignoresSafeArea())
     }
 
     private func addChat() {
@@ -114,54 +105,18 @@ struct ContentView: View {
     }
 }
 
-private extension ContentView {
-    func resolvedTokens() -> ThemeTokens {
-        let paletteID = settingsQuery.first?.chatBubbleColorID ?? "coolSlate"
-        let style: AppThemeStyle = {
-            switch paletteID.lowercased() {
-            case "slate", "coolslate": return .coolSlate
-            case "sand", "sun", "sunset": return .sand
-            case "lavender", "purple": return .lavender
-            case "contrast", "highcontrast", "hc": return .highContrast
-            default: return .coolSlate
-            }
-        }()
-        let scheme = effectiveColorScheme() ?? colorScheme
-        return ThemeFactory.make(style: style, colorScheme: scheme)
-    }
-
-    // Honor Settings → Theme: system | light | dark
-    func effectiveColorScheme() -> ColorScheme? {
-        switch (settingsQuery.first?.interfaceTheme ?? "system").lowercased() {
-        case "light": return .light
-        case "dark":  return .dark
-        default:       return nil // follow system
-        }
-    }
-
-    func fontDesignFromSettings() -> Font.Design {
-        let v = settingsQuery.first?.interfaceFontStyle ?? "system"
-        switch v {
-        case "serif": return .serif
-        case "rounded": return .rounded
-        case "mono": return .monospaced
-        default: return .default
-        }
-    }
-
-    func dynamicTypeFromSettings() -> DynamicTypeSize {
-        let idx = settingsQuery.first?.interfaceTextSizeIndex ?? 2
-        switch idx {
-        case 0: return .xSmall
-        case 1: return .small
-        case 2: return .medium
-        case 3: return .large
-        default: return .xLarge
-        }
-    }
-}
-
 #Preview {
-    ContentView()
-        .modelContainer(for: [Chat.self, Message.self, AppSettings.self], inMemory: true)
+    if let container = try? ModelContainer(
+        for: Chat.self, Message.self, AppSettings.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    ) {
+        let settings = SettingsStore(context: container.mainContext)
+        return AppThemeView {
+            ContentView()
+        }
+        .environment(settings)
+        .modelContainer(container)
+    } else {
+        return Text("Preview unavailable")
+    }
 }

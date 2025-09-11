@@ -906,11 +906,11 @@ private struct FontOptionCard: View {
         let container = try ModelContainer(for: Schema([Chat.self, Message.self, AppSettings.self]),
                                            configurations: [ModelConfiguration(isStoredInMemoryOnly: true)])
         let store = SettingsStore(context: container.mainContext)
-        return AnyView(
+        return AppThemeView {
             SettingsView()
-                .environment(store)
-                .modelContainer(container)
-        )
+        }
+        .environment(store)
+        .modelContainer(container)
     } catch {
         return AnyView(Text("Preview unavailable: \(String(describing: error))"))
     }

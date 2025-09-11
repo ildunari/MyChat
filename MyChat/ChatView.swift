@@ -6,7 +6,7 @@ import UniformTypeIdentifiers
 
 struct ChatView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var settingsQuery: [AppSettings]
+    @Environment(SettingsStore.self) private var settings
     @Environment(\.tokens) private var T
 
     let chat: Chat
@@ -65,11 +65,9 @@ struct ChatView: View {
             )
         }
         .background(T.bg.ignoresSafeArea())
-        .tint(T.accent)
         .sheet(isPresented: $showModelEditor) {
-            let providerID = settingsQuery.first?.defaultProvider ?? "openai"
-            let modelID = settingsQuery.first?.defaultModel ?? ""
-            ModelSettingsView(providerID: providerID, modelID: modelID)
+            ModelSettingsView(providerID: settings.defaultProvider,
+                              modelID: settings.defaultModel)
         }
         .photosPicker(isPresented: $showPhotoPicker, selection: $pickerItems, maxSelectionCount: 4, matching: .images)
         .onChange(of: pickerItems) { _, newItems in
@@ -96,8 +94,7 @@ struct ChatView: View {
 
     // MARK: - WebCanvas integration
     private var useWebCanvasFlag: Bool {
-        let wantsWeb = settingsQuery.first?.useWebCanvas ?? true
-        return wantsWeb && hasWebCanvasAssets
+        settings.useWebCanvas && hasWebCanvasAssets
     }
 
     private var hasWebCanvasAssets: Bool {
@@ -105,14 +102,6 @@ struct ChatView: View {
         if b.url(forResource: "index", withExtension: "html", subdirectory: "WebCanvas/dist") != nil { return true }
         if b.url(forResource: "index", withExtension: "html", subdirectory: "ChatApp/WebCanvas/dist") != nil { return true }
         return false
-    }
-
-    private var currentThemeForCanvas: CanvasTheme {
-        // Simple mapping: defer to system for now
-        if let pref = settingsQuery.first?.interfaceTheme, pref == "dark" { return .dark }
-        if let pref = settingsQuery.first?.interfaceTheme, pref == "light" { return .light }
-        // Fall back to light; SwiftUI color scheme not available here without @Environment
-        return .light
     }
 
     private struct WebCanvasContainer: View {
@@ -273,7 +262,7 @@ struct ChatView: View {
                     Button(action: { setDefaultModel(m) }) {
                         HStack {
                             Text(m)
-                            if m == (settingsQuery.first?.defaultModel ?? "") {
+                            if m == settings.defaultModel {
                                 AppIcon.checkCircle(true, size: 14)
                             }
                         }
@@ -297,25 +286,22 @@ struct ChatView: View {
     }
 
     private func currentModelDisplay() -> String {
-        let s = settingsQuery.first
-        return s?.defaultModel.isEmpty == false ? (s?.defaultModel ?? "Model") : "Model"
+        return settings.defaultModel.isEmpty == false ? settings.defaultModel : "Model"
     }
 
     private func availableModelsForCurrentProvider() -> [String] {
-        let s = settingsQuery.first
-        switch s?.defaultProvider ?? "openai" {
-        case "openai": return s?.openAIEnabledModels ?? []
-        case "anthropic": return s?.anthropicEnabledModels ?? []
-        case "google": return s?.googleEnabledModels ?? []
-        case "xai": return s?.xaiEnabledModels ?? []
+        switch settings.defaultProvider {
+        case "openai": return Array(settings.openAIEnabled).sorted()
+        case "anthropic": return Array(settings.anthropicEnabled).sorted()
+        case "google": return Array(settings.googleEnabled).sorted()
+        case "xai": return Array(settings.xaiEnabled).sorted()
         default: return []
         }
     }
 
     private func setDefaultModel(_ m: String) {
-        guard let s = settingsQuery.first else { return }
-        s.defaultModel = m
-        try? modelContext.save()
+        settings.defaultModel = m
+        settings.save()
     }
 
     private var defaultSuggestions: [SuggestionChipItem] {
@@ -363,9 +349,9 @@ struct ChatView: View {
 
         do {
             // Resolve provider from settings
-            let settings = settingsQuery.first ?? AppSettings()
-            let providerID = settings.defaultProvider
-            let model = effectiveModel(for: providerID)
+        let settings = self.settings
+        let providerID = settings.defaultProvider
+        let model = effectiveModel(for: providerID)
 
             let provider = try makeProvider(id: providerID)
             var aiMessages: [AIMessage] = []
@@ -480,15 +466,15 @@ struct ChatView: View {
 
     // MARK: - Provider header helpers
     private var providerDisplayName: String {
-        let p = settingsQuery.first?.defaultProvider ?? "openai"
+        let p = settings.defaultProvider
         return ProviderID(rawValue: p)?.displayName ?? "AI"
     }
     private var currentModel: String {
-        settingsQuery.first?.defaultModel ?? ""
+        settings.defaultModel
     }
 
     private func effectiveModel(for providerID: String) -> String {
-        let configured = settingsQuery.first?.defaultModel ?? ""
+        let configured = settings.defaultModel
         let allowed = availableModelsForCurrentProvider()
         if allowed.contains(configured), !configured.isEmpty { return configured }
         var fallback = configured
@@ -500,7 +486,8 @@ struct ChatView: View {
         default: break
         }
         if fallback.isEmpty { fallback = allowed.first ?? configured }
-        if let s = settingsQuery.first { s.defaultModel = fallback; try? modelContext.save() }
+        settings.defaultModel = fallback
+        settings.save()
         return fallback
     }
 
@@ -553,12 +540,14 @@ struct ChatView: View {
         let chat = Chat(title: "Preview Chat")
         context.insert(chat)
         context.insert(Message(role: "user", content: "Hello!", chat: chat))
-        return AnyView(
+        let settings = SettingsStore(context: container.mainContext)
+        return AppThemeView {
             NavigationStack {
                 ChatView(chat: chat)
             }
-            .modelContainer(container)
-        )
+        }
+        .environment(settings)
+        .modelContainer(container)
     } else {
         return AnyView(Text("Preview unavailable"))
     }

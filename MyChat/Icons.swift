@@ -12,6 +12,13 @@ enum AppIcon {
         Image(systemName: "gear").font(.system(size: size, weight: .bold))
         #endif
     }
+    @ViewBuilder static func user(_ size: CGFloat = 18) -> some View {
+        #if canImport(PhosphorSwift)
+        Ph.userCircle.bold.frame(width: size, height: size)
+        #else
+        Image(systemName: "person.circle").font(.system(size: size, weight: .bold))
+        #endif
+    }
     @ViewBuilder static func plus(_ size: CGFloat = 18) -> some View {
         #if canImport(PhosphorSwift)
         Ph.plus.bold.frame(width: size, height: size)

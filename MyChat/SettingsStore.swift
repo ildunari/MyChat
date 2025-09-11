@@ -32,6 +32,13 @@ final class SettingsStore {
     var promptCachingEnabled: Bool
     var useWebCanvas: Bool
 
+    // Personalization
+    var userFirstName: String
+    var userLastName: String
+    var userUsername: String
+    var aiName: String
+    var personalInfo: String
+
     private let OPENAI_KEY_KEYCHAIN = "openai_api_key"
     private let ANTHROPIC_KEY_KEYCHAIN = "anthropic_api_key"
     private let GOOGLE_KEY_KEYCHAIN = "google_api_key"
@@ -101,6 +108,13 @@ final class SettingsStore {
         self.chatBubbleColorID = settings.chatBubbleColorID
         self.promptCachingEnabled = settings.promptCachingEnabled
         self.useWebCanvas = settings.useWebCanvas
+
+        // Personalization
+        self.userFirstName = settings.userFirstName
+        self.userLastName = settings.userLastName
+        self.userUsername = settings.userUsername
+        self.aiName = settings.aiDisplayName
+        self.personalInfo = settings.personalInfo
     }
 
     func save() {
@@ -119,6 +133,11 @@ final class SettingsStore {
         settings.chatBubbleColorID = chatBubbleColorID
         settings.promptCachingEnabled = promptCachingEnabled
         settings.useWebCanvas = useWebCanvas
+        settings.userFirstName = userFirstName
+        settings.userLastName = userLastName
+        settings.userUsername = userUsername
+        settings.aiDisplayName = aiName
+        settings.personalInfo = personalInfo
         try? context.save()
 
         saveKeychain(key: OPENAI_KEY_KEYCHAIN, value: openAIAPIKey)

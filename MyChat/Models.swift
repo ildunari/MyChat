@@ -68,6 +68,13 @@ final class AppSettings: Identifiable {
     // Feature flag: use WKWebView WebCanvas for transcript rendering
     var useWebCanvas: Bool
 
+    // Personalization
+    var userFirstName: String
+    var userLastName: String
+    var userUsername: String
+    var aiDisplayName: String
+    var personalInfo: String
+
     init(
         id: UUID = UUID(),
         defaultProvider: String = "openai",
@@ -84,7 +91,12 @@ final class AppSettings: Identifiable {
         interfaceTextSizeIndex: Int = 2,
         chatBubbleColorID: String = "coolSlate",
         promptCachingEnabled: Bool = false,
-        useWebCanvas: Bool = true
+        useWebCanvas: Bool = true,
+        userFirstName: String = "",
+        userLastName: String = "",
+        userUsername: String = "",
+        aiDisplayName: String = "",
+        personalInfo: String = ""
     ) {
         self.id = id
         self.defaultProvider = defaultProvider
@@ -102,5 +114,10 @@ final class AppSettings: Identifiable {
         self.chatBubbleColorID = chatBubbleColorID
         self.promptCachingEnabled = promptCachingEnabled
         self.useWebCanvas = useWebCanvas
+        self.userFirstName = userFirstName
+        self.userLastName = userLastName
+        self.userUsername = userUsername
+        self.aiDisplayName = aiDisplayName
+        self.personalInfo = personalInfo
     }
 }

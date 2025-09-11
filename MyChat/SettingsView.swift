@@ -47,6 +47,17 @@ struct SettingsView: View {
                             }
                         }
                     }
+                    NavigationLink {
+                        PersonalizationSettingsView()
+                    } label: {
+                        HStack(spacing: 12) {
+                            AppIcon.user(18).foregroundStyle(T.accent)
+                            VStack(alignment: .leading) {
+                                Text("Personalization")
+                                Text("Your name, username, AI name, personal info").font(.footnote).foregroundStyle(.secondary)
+                            }
+                        }
+                    }
                     Toggle(isOn: $store.useWebCanvas) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Use Web Canvas")
@@ -106,6 +117,36 @@ private extension SettingsView {
         if models.contains(store.defaultModel) == false {
             store.defaultModel = models.first ?? ""
         }
+    }
+}
+
+// MARK: - Personalization
+private struct PersonalizationSettingsView: View {
+    @Environment(SettingsStore.self) private var store
+    var body: some View {
+        @Bindable var store = store
+        Form {
+            Section("Identity") {
+                TextField("First Name", text: $store.userFirstName)
+                    .onChange(of: store.userFirstName) { _, _ in store.save() }
+                TextField("Last Name", text: $store.userLastName)
+                    .onChange(of: store.userLastName) { _, _ in store.save() }
+                TextField("Username", text: $store.userUsername)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .onChange(of: store.userUsername) { _, _ in store.save() }
+            }
+            Section("Assistant") {
+                TextField("AI Name (assistant)", text: $store.aiName)
+                    .onChange(of: store.aiName) { _, _ in store.save() }
+            }
+            Section("Personal Info") {
+                TextEditor(text: $store.personalInfo)
+                    .frame(minHeight: 120)
+                    .onChange(of: store.personalInfo) { _, _ in store.save() }
+            }
+        }
+        .navigationTitle("Personalization")
     }
 }
 

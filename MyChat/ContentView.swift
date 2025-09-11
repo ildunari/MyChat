@@ -9,42 +9,53 @@ struct ContentView: View {
     @State private var showingSettings = false
     @State private var chatHistoryExpanded = true
     @State private var agentsExpanded = true
+    private enum SectionKind: Hashable { case chats, agents }
+    @State private var sectionOrder: [SectionKind] = [.chats, .agents]
+    @State private var dragOffsets: [SectionKind: CGFloat] = [:]
     @State private var renamingChat: Chat? = nil
     @State private var newChatTitle: String = ""
     @State private var navNewChat: Chat? = nil
     
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .bottom) {
-                GeometryReader { proxy in
-                    let cap = max(220, proxy.size.height * 0.33)
-                    ScrollView {
-                        VStack(spacing: 24) {
-                            HomeSection(
-                                title: "Chat History",
-                                isExpanded: $chatHistoryExpanded,
-                                itemCount: chats.count,
-                                maxHeight: cap
+            GeometryReader { proxy in
+                let cap = max(220, proxy.size.height * 0.33)
+                ScrollView {
+                    VStack(spacing: 16) {
+                        ForEach(sectionOrder, id: \.self) { kind in
+                            let offsetY = dragOffsets[kind] ?? 0
+                            SectionContainer(
+                                title: kind == .chats ? "Chat History" : "Agents",
+                                count: kind == .chats ? chats.count : 0,
+                                isExpanded: kind == .chats ? $chatHistoryExpanded : $agentsExpanded,
+                                maxHeight: cap,
+                                onDragChanged: { value in dragOffsets[kind] = value.translation.height },
+                                onDragEnded: { value in
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
+                                        let threshold: CGFloat = 40
+                                        if value.translation.height < -threshold, let idx = sectionOrder.firstIndex(of: kind), idx > 0 {
+                                            sectionOrder.swapAt(idx, idx-1)
+                                        } else if value.translation.height > threshold, let idx = sectionOrder.firstIndex(of: kind), idx < sectionOrder.count-1 {
+                                            sectionOrder.swapAt(idx, idx+1)
+                                        }
+                                        dragOffsets[kind] = 0
+                                    }
+                                }
                             ) {
-                                ChatHistoryGrid(maxHeight: cap)
+                                if kind == .chats {
+                                    ChatHistoryGrid(maxHeight: cap)
+                                } else {
+                                    AgentsPlaceholder()
+                                }
                             }
-
-                            HomeSection(
-                                title: "Agents",
-                                isExpanded: $agentsExpanded,
-                                itemCount: 0,
-                                maxHeight: cap
-                            ) {
-                                AgentsPlaceholder()
-                            }
-
-                            Spacer().frame(height: 60)
+                            .offset(y: offsetY)
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
+                        Spacer(minLength: 24)
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 24)
                 }
-                // Bottom settings handle removed (settings lives in tab bar)
             }
             .background(T.bg)
             .toolbar {
@@ -221,6 +232,44 @@ struct HomeSection<Content: View>: View {
                 } else {
                     content.frame(maxHeight: 220).clipped()
                 }
+            }
+        }
+    }
+}
+
+// Draggable container with grab handle and collapse behavior
+private struct SectionContainer<Content: View>: View {
+    @Environment(\.tokens) private var T
+    let title: String
+    let count: Int
+    @Binding var isExpanded: Bool
+    let maxHeight: CGFloat
+    var onDragChanged: (DragGesture.Value) -> Void
+    var onDragEnded: (DragGesture.Value) -> Void
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                AppIcon.grabber(14).foregroundStyle(T.textSecondary)
+                    .gesture(
+                        DragGesture(minimumDistance: 4)
+                            .onChanged(onDragChanged)
+                            .onEnded(onDragEnded)
+                    )
+                Text(title).font(.title3.bold()).foregroundStyle(T.text)
+                Spacer()
+                if count > 0 { Text("\(count)").font(.caption).foregroundStyle(T.textSecondary).padding(.horizontal,8).padding(.vertical,4).background(T.surface, in: Capsule()) }
+                Button(action: { withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() } }) {
+                    Group { if isExpanded { AppIcon.chevronUp(12) } else { AppIcon.chevronDown(12) } }
+                        .foregroundStyle(T.textSecondary)
+                }
+                .buttonStyle(.plain)
+            }
+            if isExpanded {
+                content()
+                    .frame(height: maxHeight)
+                    .clipped()
             }
         }
     }

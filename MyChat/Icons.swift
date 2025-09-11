@@ -12,6 +12,14 @@ enum AppIcon {
         Image(systemName: "gear").font(.system(size: size, weight: .bold))
         #endif
     }
+    @ViewBuilder static func grabber(_ size: CGFloat = 16) -> some View {
+        #if canImport(PhosphorSwift)
+        Ph.dotsSixVertical.bold.frame(width: size, height: size)
+        #else
+        Image(systemName: "line.3.horizontal").font(.system(size: size, weight: .bold))
+            .rotationEffect(.degrees(90))
+        #endif
+    }
     @ViewBuilder static func home(_ size: CGFloat = 18) -> some View {
         #if canImport(PhosphorSwift)
         Ph.house.bold.frame(width: size, height: size)

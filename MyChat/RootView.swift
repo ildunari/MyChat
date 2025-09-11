@@ -209,17 +209,25 @@ private struct NotesPlaceholderView: View {
     @Environment(\.tokens) private var T
     var body: some View {
         VStack(spacing: 12) {
-            AppIcon.note(28).foregroundStyle(T.textSecondary)
-            Text("Notes coming soon").foregroundStyle(T.textSecondary)
-        }.frame(maxWidth: .infinity, maxHeight: .infinity)
+            Text("🚧 Under construction")
+                .font(.headline)
+                .foregroundStyle(T.text)
+            Text("Notes will arrive soon.")
+                .foregroundStyle(T.textSecondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 private struct MediaPlaceholderView: View {
     @Environment(\.tokens) private var T
     var body: some View {
         VStack(spacing: 12) {
-            AppIcon.image(28).foregroundStyle(T.textSecondary)
-            Text("Media gallery coming soon").foregroundStyle(T.textSecondary)
-        }.frame(maxWidth: .infinity, maxHeight: .infinity)
+            Text("🚧 Under construction")
+                .font(.headline)
+                .foregroundStyle(T.text)
+            Text("Media gallery will arrive soon.")
+                .foregroundStyle(T.textSecondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

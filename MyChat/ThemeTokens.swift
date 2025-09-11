@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum AppThemeStyle: String, CaseIterable, Identifiable {
-    case terracotta, sand, coolSlate, lavender, highContrast
+    case terracotta, sand, coolSlate, lavender, highContrast, ocean, forest
     var id: String { rawValue }
 }
 
@@ -33,44 +33,52 @@ struct ThemeTokens {
 
 struct ThemeFactory {
     static func make(style: AppThemeStyle, colorScheme: ColorScheme) -> ThemeTokens {
-        // Neutral paper backgrounds (reduce warm/yellow cast)
-        let paper      = Color(red: 0.98, green: 0.985, blue: 0.995)
-        let paperDark  = Color(red: 0.09, green: 0.09, blue: 0.10)
-
-        let terra      = Color(red: 0.85, green: 0.47, blue: 0.36)   // soft terracotta
-        let sandLight  = Color(red: 0.94, green: 0.82, blue: 0.58)   // pastel sand (Claude-adjacent)
-        let sandDeep   = Color(red: 0.86, green: 0.70, blue: 0.40)
-        let slate      = Color(red: 0.18, green: 0.29, blue: 0.44)   // cool slate (sleek darker blue)
-        let lavender   = Color(red: 0.47, green: 0.45, blue: 0.65)   // muted lavender
-
         let isDark = (colorScheme == .dark)
 
-        let accent: Color
-        let accentSoft: Color
+        // Palette anchors
+        let terra      = Color(red: 0.86, green: 0.45, blue: 0.36)
+        let sandLight  = Color(red: 0.94, green: 0.84, blue: 0.62)
+        let sandDeep   = Color(red: 0.86, green: 0.70, blue: 0.40)
+        let slate      = Color(red: 0.20, green: 0.32, blue: 0.50)
+        let lavender   = Color(red: 0.52, green: 0.48, blue: 0.68)
+        let ocean      = Color(red: 0.06, green: 0.60, blue: 0.65)
+        let forest     = Color(red: 0.17, green: 0.56, blue: 0.37)
+
+        // Compute palette-specific backgrounds and surfaces
+        func palette(_ accent: Color, _ tint: Color) -> (bg: Color, surface: Color, elevated: Color, accent: Color, accentSoft: Color) {
+            let bg = isDark ? tint.opacity(0.16) : tint.opacity(0.10)
+            let surface = isDark ? Color(red: 0.12, green: 0.12, blue: 0.13).opacity(0.95) : Color.white.opacity(0.96)
+            let elevated = isDark ? Color(red: 0.16, green: 0.16, blue: 0.18) : Color.white
+            return (bg: bg, surface: surface, elevated: elevated, accent: accent, accentSoft: accent.opacity(0.18))
+        }
+
+        let p: (bg: Color, surface: Color, elevated: Color, accent: Color, accentSoft: Color)
         switch style {
-        case .terracotta:   accent = terra;                             accentSoft = terra.opacity(0.14)
-        case .sand:         accent = isDark ? sandDeep : sandLight;     accentSoft = accent.opacity(0.20)
-        case .coolSlate:    accent = slate;                             accentSoft = slate.opacity(0.16)
-        case .lavender:     accent = lavender;                          accentSoft = lavender.opacity(0.14)
-        case .highContrast: accent = .orange;                           accentSoft = Color.orange.opacity(0.20)
+        case .terracotta:   p = palette(terra, Color(red: 0.99, green: 0.95, blue: 0.92))
+        case .sand:         p = palette(isDark ? sandDeep : sandLight, Color(red: 0.98, green: 0.95, blue: 0.88))
+        case .coolSlate:    p = palette(slate, Color(red: 0.93, green: 0.96, blue: 0.99))
+        case .lavender:     p = palette(lavender, Color(red: 0.96, green: 0.94, blue: 0.98))
+        case .highContrast: p = palette(.orange, Color(red: 1.00, green: 0.98, blue: 0.92))
+        case .ocean:        p = palette(ocean, Color(red: 0.90, green: 0.96, blue: 0.97))
+        case .forest:       p = palette(forest, Color(red: 0.92, green: 0.97, blue: 0.93))
         }
 
         return ThemeTokens(
-            bg: isDark ? paperDark : paper,
-            surface: isDark ? Color(red: 0.12, green: 0.12, blue: 0.13) : Color.white.opacity(0.94),
-            surfaceElevated: isDark ? Color(red: 0.15, green: 0.15, blue: 0.16) : Color.white,
+            bg: p.bg,
+            surface: p.surface,
+            surfaceElevated: p.elevated,
             borderSoft: isDark ? Color.white.opacity(0.08) : Color.black.opacity(0.06),
-            borderHard: isDark ? Color.white.opacity(0.16) : Color.black.opacity(0.10),
-            text: isDark ? Color.white.opacity(0.92) : Color.black.opacity(0.90),
+            borderHard: isDark ? Color.white.opacity(0.18) : Color.black.opacity(0.12),
+            text: isDark ? Color.white.opacity(0.92) : Color.black.opacity(0.92),
             textSecondary: isDark ? Color.white.opacity(0.70) : Color.black.opacity(0.60),
-            link: isDark ? accent.opacity(0.9) : accent,
+            link: isDark ? p.accent.opacity(0.9) : p.accent,
             codeBg: isDark ? Color.white.opacity(0.06) : Color.black.opacity(0.03),
-            accent: accent,
-            accentSoft: accentSoft,
+            accent: p.accent,
+            accentSoft: p.accentSoft,
             bubbleUser: isDark ? Color.white.opacity(0.08) : Color.black.opacity(0.035),
             bubbleAssistant: isDark ? Color.white.opacity(0.05) : Color.black.opacity(0.02),
-            bubbleTool: isDark ? Color.white.opacity(0.07) : accentSoft,
-            shadow: isDark ? Color.black.opacity(0.60) : Color.black.opacity(0.10),
+            bubbleTool: isDark ? Color.white.opacity(0.07) : p.accentSoft,
+            shadow: isDark ? Color.black.opacity(0.60) : Color.black.opacity(0.12),
             radiusSmall: 10, radiusMedium: 14, radiusLarge: 20
         )
     }

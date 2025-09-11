@@ -25,10 +25,13 @@ struct AppThemeView<Content: View>: View {
     // MARK: - Helpers
     private func themeStyle() -> AppThemeStyle {
         switch settings.chatBubbleColorID.lowercased() {
+        case "terracotta": return .terracotta
         case "slate", "coolslate": return .coolSlate
         case "sand", "sun", "sunset": return .sand
         case "lavender", "purple": return .lavender
         case "contrast", "highcontrast", "hc": return .highContrast
+        case "ocean", "teal", "aqua": return .ocean
+        case "forest", "mint", "green": return .forest
         default: return .coolSlate
         }
     }
@@ -60,4 +63,3 @@ struct AppThemeView<Content: View>: View {
         }
     }
 }
-

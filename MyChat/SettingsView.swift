@@ -155,16 +155,16 @@ private struct ProvidersSettingsView: View {
 
     var body: some View {
         List {
-            ProviderRow(title: ProviderID.openai.displayName, symbol: "bolt.horizontal.circle.fill") {
+            ProviderRow(title: ProviderID.openai.displayName, iconView: AnyView(AppIcon.providerOpenAI(16))) {
                 ProviderDetailView(provider: .openai)
             }
-            ProviderRow(title: ProviderID.anthropic.displayName, symbol: "a.circle.fill") {
+            ProviderRow(title: ProviderID.anthropic.displayName, iconView: AnyView(AppIcon.providerAnthropic(16))) {
                 ProviderDetailView(provider: .anthropic)
             }
-            ProviderRow(title: ProviderID.google.displayName, symbol: "g.circle.fill") {
+            ProviderRow(title: ProviderID.google.displayName, iconView: AnyView(AppIcon.providerGoogle(16))) {
                 ProviderDetailView(provider: .google)
             }
-            ProviderRow(title: ProviderID.xai.displayName, symbol: "x.circle.fill") {
+            ProviderRow(title: ProviderID.xai.displayName, iconView: AnyView(AppIcon.providerXAI(16))) {
                 ProviderDetailView(provider: .xai)
             }
         }
@@ -174,21 +174,13 @@ private struct ProvidersSettingsView: View {
 
 private struct ProviderRow<Destination: View>: View {
     let title: String
-    let symbol: String
+    let iconView: AnyView
     @ViewBuilder var destination: () -> Destination
 
     var body: some View {
         NavigationLink { destination() } label: {
             HStack(spacing: 12) {
-                // Minimal mapping for previews using AppIcon helpers
-                Group {
-                    switch symbol {
-                    case "gear": AnyView(AppIcon.gear(16))
-                    case "plus": AnyView(AppIcon.plus(16))
-                    case "info.circle": AnyView(AppIcon.info(16))
-                    default: AnyView(AppIcon.info(16))
-                    }
-                }
+                iconView
                     .foregroundStyle(.teal)
                 Text(title)
             }
@@ -222,14 +214,20 @@ private struct ProviderDetailView: View {
                     Button {
                         Task { await verify() }
                     } label: {
-                        Label("Verify", systemImage: "arrow.clockwise.circle")
+                        HStack(spacing: 6) {
+                            AppIcon.refresh(14)
+                            Text("Verify")
+                        }
                     }
                     .disabled(apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
                     Button {
                         Task { await reloadModels() }
                     } label: {
-                        Label("Refresh Models", systemImage: "arrow.triangle.2.circlepath")
+                        HStack(spacing: 6) {
+                            AppIcon.refreshModels(14)
+                            Text("Refresh Models")
+                        }
                     }
                     .disabled(apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || loadingModels)
                 }
@@ -455,7 +453,10 @@ private struct DefaultChatSettingsView: View {
                 }
                 if supportsPromptCaching {
                     Toggle(isOn: $store.promptCachingEnabled) {
-                        Label("Enable prompt caching (if supported)", systemImage: "bolt.horizontal.circle")
+                        HStack(spacing: 6) {
+                            AppIcon.lightning(14)
+                            Text("Enable prompt caching (if supported)")
+                        }
                     }
                     .onChange(of: store.promptCachingEnabled) { _, _ in store.save() }
                 }
@@ -728,7 +729,7 @@ private struct InterfaceSettingsView: View {
     }
 
     // Reduced, distinct palettes with dark-mode variants via ThemeFactory
-    private let bubblePaletteIDs: [String] = ["terracotta", "sand", "coolslate", "lavender", "highcontrast"]
+    private let bubblePaletteIDs: [String] = ["terracotta", "sand", "coolslate", "lavender", "ocean", "forest", "highcontrast"]
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
@@ -882,10 +883,13 @@ private struct InterfaceSettingsView: View {
             case "coolslate", "slate": return .coolSlate
             case "sand": return .sand
             case "lavender": return .lavender
+            case "ocean", "teal", "aqua": return .ocean
+            case "forest", "mint", "green": return .forest
             case "highcontrast": return .highContrast
             default: return .terracotta
             }
         }()
+        // Swatch preview uses accent for visibility, but section backgrounds will follow bg/surface
         return ThemeFactory.make(style: style, colorScheme: colorScheme).accent
     }
 }

@@ -51,6 +51,7 @@ struct ContentView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     ComposeButton { createAndNavigate() }
+                        .padding(.trailing, 2)
                 }
             }
             .navigationDestination(item: $navNewChat) { chat in
@@ -128,14 +129,9 @@ struct ContentView: View {
         Button(action: action) {
             ZStack {
                 Circle().fill(T.accent)
-                // New-note look using Phosphor note + plus
-                ZStack(alignment: .bottomTrailing) {
-                    AppIcon.note(18).foregroundStyle(.white)
-                    AppIcon.plus(10).foregroundStyle(.white.opacity(0.95))
-                        .offset(x: -1, y: -1)
-                }
+                AppIcon.plus(16).foregroundStyle(.white)
             }
-            .frame(width: 40, height: 40)
+            .frame(width: 34, height: 34)
             .shadow(color: T.shadow, radius: 4, x: 0, y: 2)
         }
         .accessibilityLabel("Compose New Chat")

@@ -87,6 +87,10 @@ struct ContentView: View {
         withAnimation {
             let chat = Chat(title: "")
             modelContext.insert(chat)
+            // Persist and navigate directly into the newly created chat
+            try? modelContext.save()
+            initialChat = chat
+            showInitialChat = true
         }
     }
 

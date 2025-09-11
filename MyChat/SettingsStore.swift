@@ -31,6 +31,10 @@ final class SettingsStore {
     var chatBubbleColorID: String // palette id
     var promptCachingEnabled: Bool
     var useWebCanvas: Bool
+    // Home layout prefs
+    var homeSectionOrder: [String]
+    var homeChatsExpanded: Bool
+    var homeAgentsExpanded: Bool
 
     // Personalization
     var userFirstName: String
@@ -108,6 +112,9 @@ final class SettingsStore {
         self.chatBubbleColorID = settings.chatBubbleColorID
         self.promptCachingEnabled = settings.promptCachingEnabled
         self.useWebCanvas = settings.useWebCanvas
+        self.homeSectionOrder = settings.homeSectionOrder
+        self.homeChatsExpanded = settings.homeChatsExpanded
+        self.homeAgentsExpanded = settings.homeAgentsExpanded
 
         // Personalization
         self.userFirstName = settings.userFirstName
@@ -133,6 +140,9 @@ final class SettingsStore {
         settings.chatBubbleColorID = chatBubbleColorID
         settings.promptCachingEnabled = promptCachingEnabled
         settings.useWebCanvas = useWebCanvas
+        settings.homeSectionOrder = homeSectionOrder
+        settings.homeChatsExpanded = homeChatsExpanded
+        settings.homeAgentsExpanded = homeAgentsExpanded
         settings.userFirstName = userFirstName
         settings.userLastName = userLastName
         settings.userUsername = userUsername

@@ -68,6 +68,11 @@ final class AppSettings: Identifiable {
     // Feature flag: use WKWebView WebCanvas for transcript rendering
     var useWebCanvas: Bool
 
+    // Home layout preferences
+    var homeSectionOrder: [String] // e.g., ["chats", "agents"]
+    var homeChatsExpanded: Bool
+    var homeAgentsExpanded: Bool
+
     // Personalization
     var userFirstName: String
     var userLastName: String
@@ -92,6 +97,9 @@ final class AppSettings: Identifiable {
         chatBubbleColorID: String = "coolSlate",
         promptCachingEnabled: Bool = false,
         useWebCanvas: Bool = true,
+        homeSectionOrder: [String] = ["chats", "agents"],
+        homeChatsExpanded: Bool = true,
+        homeAgentsExpanded: Bool = true,
         userFirstName: String = "",
         userLastName: String = "",
         userUsername: String = "",
@@ -114,6 +122,9 @@ final class AppSettings: Identifiable {
         self.chatBubbleColorID = chatBubbleColorID
         self.promptCachingEnabled = promptCachingEnabled
         self.useWebCanvas = useWebCanvas
+        self.homeSectionOrder = homeSectionOrder
+        self.homeChatsExpanded = homeChatsExpanded
+        self.homeAgentsExpanded = homeAgentsExpanded
         self.userFirstName = userFirstName
         self.userLastName = userLastName
         self.userUsername = userUsername

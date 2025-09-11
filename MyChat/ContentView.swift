@@ -4,6 +4,7 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.tokens) private var T
+    @Environment(SettingsStore.self) private var store
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Chat.createdAt, order: .reverse) private var chats: [Chat]
     
@@ -91,8 +92,10 @@ struct ContentView: View {
                 }
             }
         }
-        .onAppear { loadOrder() }
-        .onChange(of: sectionOrder) { _, _ in saveOrder() }
+        .onAppear { loadOrderFromStore() }
+        .onChange(of: sectionOrder) { _, _ in saveOrderToStore() }
+        .onChange(of: chatHistoryExpanded) { _, newVal in store.homeChatsExpanded = newVal; store.save() }
+        .onChange(of: agentsExpanded) { _, newVal in store.homeAgentsExpanded = newVal; store.save() }
     }
     
     // MARK: - Helper Views
@@ -295,18 +298,20 @@ private enum Haptics {
 
 // MARK: - Persistence of section order
 private extension ContentView {
-    func saveOrder() {
-        let arr = sectionOrder.map { $0 == .chats ? "chats" : "agents" }
-        UserDefaults.standard.set(arr, forKey: orderDefaultsKey)
+    func saveOrderToStore() {
+        store.homeSectionOrder = sectionOrder.map { $0 == .chats ? "chats" : "agents" }
+        store.save()
     }
-    func loadOrder() {
-        guard let arr = UserDefaults.standard.array(forKey: orderDefaultsKey) as? [String], arr.count >= 2 else { return }
+    func loadOrderFromStore() {
+        let arr = store.homeSectionOrder
         var out: [SectionKind] = []
         for s in arr {
             if s == "chats" { out.append(.chats) }
             else if s == "agents" { out.append(.agents) }
         }
         if out.isEmpty == false { sectionOrder = out }
+        chatHistoryExpanded = store.homeChatsExpanded
+        agentsExpanded = store.homeAgentsExpanded
     }
 }
 

@@ -79,9 +79,7 @@ struct MyChatApp: App {
 
     var body: some Scene {
         WindowGroup {
-            AppThemeView {
-                ContentView()
-            }
+            AppThemeView { RootView() }
             .environment(settingsStore) // Make SettingsStore available to all views
         }
         .modelContainer(container) // Attach the SwiftData container

@@ -12,6 +12,20 @@ enum AppIcon {
         Image(systemName: "gear").font(.system(size: size, weight: .bold))
         #endif
     }
+    @ViewBuilder static func home(_ size: CGFloat = 18) -> some View {
+        #if canImport(PhosphorSwift)
+        Ph.house.bold.frame(width: size, height: size)
+        #else
+        Image(systemName: "house.fill").font(.system(size: size, weight: .bold))
+        #endif
+    }
+    @ViewBuilder static func chat(_ size: CGFloat = 18) -> some View {
+        #if canImport(PhosphorSwift)
+        Ph.chatCircleDots.bold.frame(width: size, height: size)
+        #else
+        Image(systemName: "message.fill").font(.system(size: size, weight: .bold))
+        #endif
+    }
     @ViewBuilder static func note(_ size: CGFloat = 18) -> some View {
         #if canImport(PhosphorSwift)
         Ph.note.bold.frame(width: size, height: size)

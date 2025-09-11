@@ -44,8 +44,7 @@ struct ContentView: View {
                         .padding(.top, 8)
                     }
                 }
-                // Bottom settings handle
-                SettingsHandle()
+                // Bottom settings handle removed (settings lives in tab bar)
             }
             .background(T.bg)
             .toolbar {

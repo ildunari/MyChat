@@ -80,9 +80,9 @@ final class AppSettings: Identifiable {
         googleEnabledModels: [String] = ["gemini-1.5-pro", "gemini-1.5-flash"],
         xaiEnabledModels: [String] = ["grok-beta"],
         interfaceTheme: String = "system",
-        interfaceFontStyle: String = "system",
+        interfaceFontStyle: String = "rounded",
         interfaceTextSizeIndex: Int = 2,
-        chatBubbleColorID: String = "terracotta",
+        chatBubbleColorID: String = "coolSlate",
         promptCachingEnabled: Bool = false,
         useWebCanvas: Bool = true
     ) {

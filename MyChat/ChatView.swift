@@ -65,6 +65,7 @@ struct ChatView: View {
             )
         }
         .background(T.bg.ignoresSafeArea())
+        .tint(T.accent)
         .sheet(isPresented: $showModelEditor) {
             let providerID = settingsQuery.first?.defaultProvider ?? "openai"
             let modelID = settingsQuery.first?.defaultModel ?? ""
@@ -214,23 +215,26 @@ struct ChatView: View {
                     }
                     .padding(.horizontal)
                 } else {
-                    // User message with a subtle bubble
-                    HStack(alignment: .top, spacing: 8) {
+                    // User message aligned to the right with tighter corner radius
+                    VStack(alignment: .trailing, spacing: 4) {
                         Text("You")
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                            .frame(width: 32, alignment: .leading)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
                         Text(message.content)
-                            .padding(10)
+                            .font(.system(.body, design: .rounded)).fontWeight(.medium)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
                             .background(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
                                     .fill(T.bubbleUser)
                             )
                             .overlay(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
                                     .stroke(T.borderSoft, lineWidth: 1)
                             )
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .frame(maxWidth: 320, alignment: .trailing)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                     .padding(.horizontal)
                 }
@@ -496,7 +500,7 @@ struct ChatView: View {
         default: break
         }
         if fallback.isEmpty { fallback = allowed.first ?? configured }
-        if var s = settingsQuery.first { s.defaultModel = fallback; try? modelContext.save() }
+        if let s = settingsQuery.first { s.defaultModel = fallback; try? modelContext.save() }
         return fallback
     }
 

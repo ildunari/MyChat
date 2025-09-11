@@ -33,13 +33,14 @@ struct ThemeTokens {
 
 struct ThemeFactory {
     static func make(style: AppThemeStyle, colorScheme: ColorScheme) -> ThemeTokens {
-        let paper      = Color(red: 0.97, green: 0.96, blue: 0.93)
-        let paperDark  = Color(red: 0.10, green: 0.10, blue: 0.10)
+        // Neutral paper backgrounds (reduce warm/yellow cast)
+        let paper      = Color(red: 0.98, green: 0.985, blue: 0.995)
+        let paperDark  = Color(red: 0.09, green: 0.09, blue: 0.10)
 
         let terra      = Color(red: 0.85, green: 0.47, blue: 0.36)   // soft terracotta
         let sandLight  = Color(red: 0.94, green: 0.82, blue: 0.58)   // pastel sand (Claude-adjacent)
         let sandDeep   = Color(red: 0.86, green: 0.70, blue: 0.40)
-        let slate      = Color(red: 0.22, green: 0.33, blue: 0.43)   // cool slate
+        let slate      = Color(red: 0.18, green: 0.29, blue: 0.44)   // cool slate (sleek darker blue)
         let lavender   = Color(red: 0.47, green: 0.45, blue: 0.65)   // muted lavender
 
         let isDark = (colorScheme == .dark)
@@ -49,15 +50,15 @@ struct ThemeFactory {
         switch style {
         case .terracotta:   accent = terra;                             accentSoft = terra.opacity(0.14)
         case .sand:         accent = isDark ? sandDeep : sandLight;     accentSoft = accent.opacity(0.20)
-        case .coolSlate:    accent = slate;                             accentSoft = slate.opacity(0.14)
+        case .coolSlate:    accent = slate;                             accentSoft = slate.opacity(0.16)
         case .lavender:     accent = lavender;                          accentSoft = lavender.opacity(0.14)
         case .highContrast: accent = .orange;                           accentSoft = Color.orange.opacity(0.20)
         }
 
         return ThemeTokens(
             bg: isDark ? paperDark : paper,
-            surface: isDark ? Color(red: 0.13, green: 0.13, blue: 0.13) : Color.white.opacity(0.86),
-            surfaceElevated: isDark ? Color(red: 0.16, green: 0.16, blue: 0.16) : Color.white,
+            surface: isDark ? Color(red: 0.12, green: 0.12, blue: 0.13) : Color.white.opacity(0.94),
+            surfaceElevated: isDark ? Color(red: 0.15, green: 0.15, blue: 0.16) : Color.white,
             borderSoft: isDark ? Color.white.opacity(0.08) : Color.black.opacity(0.06),
             borderHard: isDark ? Color.white.opacity(0.16) : Color.black.opacity(0.10),
             text: isDark ? Color.white.opacity(0.92) : Color.black.opacity(0.90),

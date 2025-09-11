@@ -125,15 +125,24 @@ private struct MarkdownSegment: View {
             if text.contains("$") {
                 // Use our inline math renderer when inline $...$ detected
                 InlineMathParagraph(text: text)
+                    .foregroundStyle(T.text)
             } else {
                 // Down-based renderer → AttributedString → SwiftUI Text
-                let attributed = renderMarkdownAttributed(text, linkColor: T.link)
+                let attributed = renderMarkdownAttributed(text,
+                                                          linkColor: T.link,
+                                                          preferSystemStyling: true)
                 if containsTable {
                     ScrollView(.horizontal, showsIndicators: true) {
                         Text(attributed)
+                            .font(.body)
+                            .foregroundStyle(T.text)
+                            .textSelection(.enabled)
                     }
                 } else {
                     Text(attributed)
+                        .font(.body)
+                        .foregroundStyle(T.text)
+                        .textSelection(.enabled)
                 }
             }
         }

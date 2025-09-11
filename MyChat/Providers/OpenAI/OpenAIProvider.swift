@@ -1,6 +1,12 @@
 // Providers/OpenAIProvider.swift
 import Foundation
 
+func partString(_ parts: [AIMessage.Part]) -> String {
+    var out = ""
+    for p in parts { if case .text(let t) = p { out += (out.isEmpty ? t : "\n\n" + t) } }
+    return out
+}
+
 struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
     let id = "openai"
     let displayName = "OpenAI"
@@ -55,6 +61,7 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
         struct Req: Encodable {
             let model: String
             let input: [InputItem]
+            let instructions: String?
             let temperature: Double?
             let top_p: Double?
             let max_output_tokens: Int?
@@ -71,7 +78,10 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
             return "data:\(mime);base64,\(b64)"
         }
 
-        let inputItems: [InputItem] = messages.map { msg in
+        // Split system → instructions; include both user and assistant turns in input for full context
+        let instructions = messages.filter { $0.role == .system }.map { partString($0.parts) }.joined(separator: "\n\n")
+        let userOnly = messages.filter { $0.role == .user }
+        let inputItems: [InputItem] = userOnly.map { msg in
             var parts: [Content] = []
             for p in msg.parts {
                 switch p {
@@ -79,11 +89,12 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
                 case .imageData(let data, let mime): parts.append(.init(imageDataURL: dataURL(from: data, mime: mime)))
                 }
             }
-            return InputItem(role: msg.role.rawValue, content: parts)
+            return InputItem(role: "user", content: parts)
         }
 
         let req = Req(model: model,
                       input: inputItems,
+                      instructions: instructions.isEmpty ? nil : instructions,
                       temperature: temperature,
                       top_p: topP,
                       max_output_tokens: maxOutputTokens,
@@ -131,6 +142,7 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
         struct Req: Encodable {
             let model: String
             let input: [InputItem]
+            let instructions: String?
             let temperature: Double?
             let top_p: Double?
             let max_output_tokens: Int?
@@ -142,7 +154,10 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
 
         func dataURL(from data: Data, mime: String) -> String { "data:\(mime);base64,\(data.base64EncodedString())" }
 
-        let inputItems: [InputItem] = messages.map { msg in
+        // Split system → instructions; include both user and assistant turns in input for full context
+        let instructions = messages.filter { $0.role == .system }.map { partString($0.parts) }.joined(separator: "\n\n")
+        let userOnly = messages.filter { $0.role == .user }
+        let inputItems: [InputItem] = userOnly.map { msg in
             var parts: [Content] = []
             for p in msg.parts {
                 switch p {
@@ -150,11 +165,12 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
                 case .imageData(let data, let mime): parts.append(.init(imageDataURL: dataURL(from: data, mime: mime)))
                 }
             }
-            return InputItem(role: msg.role.rawValue, content: parts)
+            return InputItem(role: "user", content: parts)
         }
 
         let reqBody = Req(model: model,
                           input: inputItems,
+                          instructions: instructions.isEmpty ? nil : instructions,
                           temperature: temperature,
                           top_p: topP,
                           max_output_tokens: maxOutputTokens,

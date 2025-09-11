@@ -27,7 +27,7 @@ struct ContentView: View {
                     } label: {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(chat.title.isEmpty ? "New Chat" : chat.title)
-                                .font(.headline)
+                                .font(.headline.weight(.semibold))
                             if let last = chat.messages.sorted(by: { $0.createdAt < $1.createdAt }).last {
                                 Text("\(last.role.capitalized): \(last.content)")
                                     .font(.subheadline)
@@ -76,6 +76,7 @@ struct ContentView: View {
             }
         }
         .theme(tokens)
+        .tint(tokens.accent)
         .fontDesign(fontDesignFromSettings())
         .dynamicTypeSize(dynamicTypeFromSettings())
         .preferredColorScheme(effectiveColorScheme())
@@ -115,14 +116,14 @@ struct ContentView: View {
 
 private extension ContentView {
     func resolvedTokens() -> ThemeTokens {
-        let paletteID = settingsQuery.first?.chatBubbleColorID ?? "terracotta"
+        let paletteID = settingsQuery.first?.chatBubbleColorID ?? "coolSlate"
         let style: AppThemeStyle = {
             switch paletteID.lowercased() {
             case "slate", "coolslate": return .coolSlate
             case "sand", "sun", "sunset": return .sand
             case "lavender", "purple": return .lavender
             case "contrast", "highcontrast", "hc": return .highContrast
-            default: return .terracotta
+            default: return .coolSlate
             }
         }()
         let scheme = effectiveColorScheme() ?? colorScheme

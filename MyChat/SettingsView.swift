@@ -5,6 +5,7 @@ import SwiftData
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SettingsStore.self) private var store
+    @Environment(\.tokens) private var T
 
     var body: some View {
         @Bindable var store = store
@@ -15,7 +16,7 @@ struct SettingsView: View {
                         ProvidersSettingsView()
                     } label: {
                         HStack(spacing: 12) {
-                            AppIcon.info(18).foregroundStyle(.blue)
+                            AppIcon.info(18).foregroundStyle(T.accent)
                             VStack(alignment: .leading) {
                                 Text("Providers")
                                 Text("Manage API keys and models").font(.footnote).foregroundStyle(.secondary)
@@ -26,7 +27,7 @@ struct SettingsView: View {
                         DefaultChatSettingsView()
                     } label: {
                         HStack(spacing: 12) {
-                            AppIcon.info(18).foregroundStyle(.purple)
+                            AppIcon.info(18).foregroundStyle(T.accent)
                             VStack(alignment: .leading) {
                                 Text("Default Chat")
                                 Text("System prompt, temperature, tokens").font(.footnote).foregroundStyle(.secondary)
@@ -39,7 +40,7 @@ struct SettingsView: View {
                         InterfaceSettingsView()
                     } label: {
                         HStack(spacing: 12) {
-                            AppIcon.info(18).foregroundStyle(.orange)
+                            AppIcon.info(18).foregroundStyle(T.accent)
                             VStack(alignment: .leading) {
                                 Text("Appearance")
                                 Text("Theme, font, text size, bubble colors").font(.footnote).foregroundStyle(.secondary)
@@ -52,6 +53,7 @@ struct SettingsView: View {
                             Text("Faster rendering with streaming, math, tables, code, artifacts slot").font(.footnote).foregroundStyle(.secondary)
                         }
                     }
+                    .onChange(of: store.useWebCanvas) { _, _ in store.save() }
                 }
                 Section("Defaults") {
                     Picker("Default Provider", selection: $store.defaultProvider) {
@@ -60,6 +62,7 @@ struct SettingsView: View {
                         Text("Google").tag("google")
                         Text("XAI").tag("xai")
                     }
+                    .onChange(of: store.defaultProvider) { _, _ in store.save() }
 
                     // Model picker based on enabled models for the selected provider
                     Picker("Default Model", selection: $store.defaultModel) {
@@ -69,6 +72,7 @@ struct SettingsView: View {
                     }
                     .pickerStyle(.menu)
                     .disabled(modelsForSelectedProvider().isEmpty)
+                    .onChange(of: store.defaultModel) { _, _ in store.save() }
                     .onAppear { ensureValidDefaultModel() }
                     .onChange(of: store.defaultProvider) { _, _ in ensureValidDefaultModel() }
                     .onChange(of: store.openAIEnabled) { _, _ in if store.defaultProvider == "openai" { ensureValidDefaultModel() } }
@@ -79,8 +83,7 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) { Button("Save") { store.save(); dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
             }
         }
     }
@@ -169,6 +172,10 @@ private struct ProviderDetailView: View {
                 SecureField("API Key", text: $apiKey)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
+                    .onChange(of: apiKey) { _, _ in 
+                        writeAPIKey(apiKey)
+                        store.save()
+                    }
                 VerificationBar(verifying: verifying, verified: verified)
                 HStack {
                     Button {
@@ -210,10 +217,6 @@ private struct ProviderDetailView: View {
             apiKey = readAPIKey()
             available = enabledModelsAll()
         }
-        .onDisappear {
-            writeAPIKey(apiKey)
-            store.save()
-        }
     }
 
     private func bindingForModel(_ m: String) -> Binding<Bool> {
@@ -221,22 +224,34 @@ private struct ProviderDetailView: View {
         case .openai:
             return Binding(
                 get: { store.openAIEnabled.contains(m) },
-                set: { v in if v { _ = store.openAIEnabled.insert(m) } else { _ = store.openAIEnabled.remove(m) } }
+                set: { v in 
+                    if v { _ = store.openAIEnabled.insert(m) } else { _ = store.openAIEnabled.remove(m) }
+                    store.save()
+                }
             )
         case .anthropic:
             return Binding(
                 get: { store.anthropicEnabled.contains(m) },
-                set: { v in if v { _ = store.anthropicEnabled.insert(m) } else { _ = store.anthropicEnabled.remove(m) } }
+                set: { v in 
+                    if v { _ = store.anthropicEnabled.insert(m) } else { _ = store.anthropicEnabled.remove(m) }
+                    store.save()
+                }
             )
         case .google:
             return Binding(
                 get: { store.googleEnabled.contains(m) },
-                set: { v in if v { _ = store.googleEnabled.insert(m) } else { _ = store.googleEnabled.remove(m) } }
+                set: { v in 
+                    if v { _ = store.googleEnabled.insert(m) } else { _ = store.googleEnabled.remove(m) }
+                    store.save()
+                }
             )
         case .xai:
             return Binding(
                 get: { store.xaiEnabled.contains(m) },
-                set: { v in if v { _ = store.xaiEnabled.insert(m) } else { _ = store.xaiEnabled.remove(m) } }
+                set: { v in 
+                    if v { _ = store.xaiEnabled.insert(m) } else { _ = store.xaiEnabled.remove(m) }
+                    store.save()
+                }
             )
         }
     }
@@ -332,12 +347,13 @@ private struct ModelRowWithInfo: View {
     let title: String
     @Binding var isOn: Bool
     var onInfo: () -> Void
+    @Environment(\.tokens) private var T
     var body: some View {
         HStack {
             Button(action: { isOn.toggle() }) {
                 HStack {
                     AppIcon.checkCircle(isOn, size: 18)
-                        .foregroundStyle(isOn ? .blue : .secondary)
+                        .foregroundStyle(isOn ? T.accent : .secondary)
                     Text(title)
                         .foregroundStyle(.primary)
                     Spacer()
@@ -381,20 +397,26 @@ private struct DefaultChatSettingsView: View {
             Section("System Prompt") {
                 TextEditor(text: $store.systemPrompt)
                     .frame(minHeight: 120)
+                    .onChange(of: store.systemPrompt) { _, _ in store.save() }
             }
             Section("Sampling") {
                 VStack(alignment: .leading) {
                     HStack { Text("Temperature"); Spacer(); Text(String(format: "%.2f", store.temperature)).foregroundStyle(.secondary) }
                     Slider(value: $store.temperature, in: 0...maxTemperature, step: 0.05)
+                        .onChange(of: store.temperature) { _, _ in store.save() }
                 }
                 VStack(alignment: .leading) {
                     HStack { Text("Max Tokens"); Spacer(); Text("\(store.maxTokens)").foregroundStyle(.secondary) }
-                    Slider(value: Binding(get: { Double(store.maxTokens) }, set: { store.maxTokens = Int($0) }), in: 64...maxTokens, step: 32)
+                    Slider(value: Binding(get: { Double(store.maxTokens) }, set: { 
+                        store.maxTokens = Int($0)
+                        store.save()
+                    }), in: 64...maxTokens, step: 32)
                 }
                 if supportsPromptCaching {
                     Toggle(isOn: $store.promptCachingEnabled) {
                         Label("Enable prompt caching (if supported)", systemImage: "bolt.horizontal.circle")
                     }
+                    .onChange(of: store.promptCachingEnabled) { _, _ in store.save() }
                 }
             }
         }
@@ -414,6 +436,7 @@ private struct DefaultChatSettingsView: View {
 
 struct ModelSettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.tokens) private var T
 
     let providerID: String
     let modelID: String
@@ -451,7 +474,7 @@ struct ModelSettingsView: View {
                 Section {
                     Button("Restore Default") { restoreDefault() }
                         .buttonStyle(.plain)
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(T.accent)
                 }
 
                 Section("Model") {
@@ -677,6 +700,7 @@ private struct InterfaceSettingsView: View {
                     Text("Dark").tag("dark")
                 }
                 .pickerStyle(.segmented)
+                .onChange(of: store.interfaceTheme) { _, _ in store.save() }
                 Text("Choose whether the app follows system appearance or forces light/dark.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -698,7 +722,10 @@ private struct InterfaceSettingsView: View {
                             bodyFont: bodyF,
                             background: bg,
                             selected: store.interfaceFontStyle == opt.id,
-                            onSelect: { store.interfaceFontStyle = opt.id }
+                            onSelect: { 
+                                store.interfaceFontStyle = opt.id
+                                store.save()
+                            }
                         )
                         .fontDesign(.default) // ensure preview cards show their own design, not the global selection
                         .accessibilityLabel("\(opt.label) font")
@@ -708,7 +735,10 @@ private struct InterfaceSettingsView: View {
 
                 VStack(alignment: .leading, spacing: 8) {
                     HStack { Text("Text Size"); Spacer(); Text(sizeLabels[Int(store.interfaceTextSizeIndex)]) }
-                    Slider(value: Binding(get: { Double(store.interfaceTextSizeIndex) }, set: { store.interfaceTextSizeIndex = Int($0.rounded()) }), in: 0...4, step: 1)
+                    Slider(value: Binding(get: { Double(store.interfaceTextSizeIndex) }, set: { 
+                        store.interfaceTextSizeIndex = Int($0.rounded())
+                        store.save()
+                    }), in: 0...4, step: 1)
                     // Previews under the slider positions
                     HStack(spacing: 12) {
                         ForEach(0..<5) { i in
@@ -728,7 +758,10 @@ private struct InterfaceSettingsView: View {
                                 RoundedRectangle(cornerRadius: 10, style: .continuous)
                                     .stroke(i == store.interfaceTextSizeIndex ? Color.accentColor : Color.clear, lineWidth: 1)
                             )
-                            .onTapGesture { store.interfaceTextSizeIndex = i }
+                            .onTapGesture { 
+                                store.interfaceTextSizeIndex = i
+                                store.save()
+                            }
                         }
                     }
                 }
@@ -737,7 +770,10 @@ private struct InterfaceSettingsView: View {
             Section("Theme Palette") {
                 HStack(spacing: 12) {
                     ForEach(bubblePaletteIDs, id: \.self) { id in
-                        Button(action: { store.chatBubbleColorID = id }) {
+                        Button(action: { 
+                            store.chatBubbleColorID = id
+                            store.save()
+                        }) {
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
                                 .fill(previewColor(for: id))
                                 .frame(width: 36, height: 36)

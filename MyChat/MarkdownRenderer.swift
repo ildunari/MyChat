@@ -14,13 +14,27 @@ import Down
 /// Renders markdown into an AttributedString suitable for SwiftUI Text.
 /// - Parameter markdown: source markdown text
 /// - Returns: AttributedString with basic styling applied. Falls back to AttributedString(markdown:) if Down is unavailable.
-func renderMarkdownAttributed(_ markdown: String, linkColor: Color? = nil) -> AttributedString {
+func renderMarkdownAttributed(_ markdown: String,
+                              linkColor: Color? = nil,
+                              preferSystemStyling: Bool = false) -> AttributedString {
     // Cache raw parsed output to avoid re-parsing on every redraw
     let key = markdownCacheKey(markdown)
     if let cached = MarkdownCache.get(key) {
         return postProcess(cached, linkColor: linkColor)
     }
-    // Prefer Down when available (handles more complete Markdown than the Foundation parser alone)
+    // Optionally prefer Foundation's Markdown parser so resulting Text inherits SwiftUI environment
+    // font design and dynamic type settings (for consistent app-wide appearance).
+    if preferSystemStyling {
+        if let a = try? AttributedString(markdown: markdown) {
+            MarkdownCache.put(key, a)
+            return postProcess(a, linkColor: linkColor)
+        }
+        let a = AttributedString(markdown)
+        MarkdownCache.put(key, a)
+        return postProcess(a, linkColor: linkColor)
+    }
+
+    // Otherwise prefer Down (handles more complete Markdown than the Foundation parser alone)
     #if canImport(Down)
     do {
         let down = Down(markdownString: markdown)

@@ -7,12 +7,7 @@ import SwiftUI
 import Highlightr
 #endif
 
-#if canImport(SwiftMath)
-import SwiftMath // used only for conditional compilation; no direct UI references
-#endif
-#if canImport(iosMath)
-import iosMath
-#endif
+import SwiftMath // SwiftMath provides MTMathUILabel for native LaTeX rendering
 
 struct AIResponseView: View {
     let content: String
@@ -183,21 +178,19 @@ private struct CodeBlockSegment: View {
 
 private struct MathBlockSegment: View {
     let latex: String
+    @State private var renderingFailed = false
+    
     var body: some View {
         Group {
-            #if canImport(iosMath)
-            IOSMathLabel(latex: latex)
-                .padding(.vertical, 4)
-            #elseif canImport(SwiftMath)
-            // SwiftMath present: if it exposes a SwiftUI view in future, plug it here.
-            // For now, prefer KaTeX WebView for accurate display-mode rendering.
-            MathWebView(latex: latex, displayMode: true)
-                .frame(minHeight: 28)
-            #else
-            // Web-based KaTeX fallback (auto-sizes; allows horizontal scroll)
-            MathWebView(latex: latex, displayMode: true)
-                .frame(minHeight: 28)
-            #endif
+            if renderingFailed {
+                // KaTeX fallback for edge cases or if SwiftMath fails
+                MathWebView(latex: latex, displayMode: true)
+                    .frame(minHeight: 28)
+            } else {
+                // Primary: Use SwiftMath's native MTMathUILabel
+                SwiftMathLabel(latex: latex, displayMode: true, renderingFailed: $renderingFailed)
+                    .padding(.vertical, 4)
+            }
         }
     }
 }
@@ -278,23 +271,50 @@ private struct HighlightedCodeView: UIViewRepresentable {
 }
 #endif
 
-#if canImport(iosMath)
-private struct IOSMathLabel: UIViewRepresentable {
+// SwiftMath UIViewRepresentable wrapper for MTMathUILabel
+private struct SwiftMathLabel: UIViewRepresentable {
     let latex: String
+    var displayMode: Bool = false
+    @Binding var renderingFailed: Bool
+    @Environment(\.colorScheme) private var colorScheme
+    
     func makeUIView(context: Context) -> MTMathUILabel {
-        let v = MTMathUILabel()
-        v.labelMode = .text
-        v.textAlignment = .center
-        v.latex = latex
-        v.textColor = .label
-        return v
+        let label = MTMathUILabel()
+        label.labelMode = displayMode ? .display : .text
+        label.textAlignment = .center
+        label.font = MTFontManager().defaultFont
+        return label
     }
-    func updateUIView(_ uiView: MTMathUILabel, context: Context) {
-        uiView.latex = latex
-        uiView.textColor = .label
+    
+    func updateUIView(_ label: MTMathUILabel, context: Context) {
+        label.latex = latex
+        label.textColor = colorScheme == .dark ? .white : .black
+        label.labelMode = displayMode ? .display : .text
+        
+        // Check if rendering failed (error property is set)
+        if label.error != nil {
+            // Fall back to KaTeX for this equation
+            renderingFailed = true
+        }
     }
 }
-#endif
+
+// Helper view for inline math rendering with fallback
+private struct InlineMathView: View {
+    let latex: String
+    @State private var renderingFailed = false
+    
+    var body: some View {
+        if renderingFailed {
+            // KaTeX fallback for edge cases
+            MathWebView(latex: latex, displayMode: false)
+                .frame(minHeight: 22)
+        } else {
+            // Primary: SwiftMath native rendering
+            SwiftMathLabel(latex: latex, displayMode: false, renderingFailed: $renderingFailed)
+        }
+    }
+}
 
 // MARK: Inline math paragraph rendering
 
@@ -312,16 +332,7 @@ private struct InlineMathParagraph: View {
                 case .text(let t):
                     Text(t)
                 case .math(let ltx):
-                    #if canImport(iosMath)
-                    IOSMathLabel(latex: ltx)
-                    #elseif canImport(SwiftMath)
-                    // Inline placeholder when SwiftMath is present but no direct view is integrated.
-                    Text(ltx)
-                        .font(.system(.body, design: .monospaced))
-                    #else
-                    MathWebView(latex: ltx, displayMode: false)
-                        .frame(minHeight: 22)
-                    #endif
+                    InlineMathView(latex: ltx)
                 }
             }
         }

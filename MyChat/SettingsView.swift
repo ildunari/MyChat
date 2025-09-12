@@ -107,10 +107,13 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { 
-                    Button("Save") { 
-                        store.save()
-                        dismiss() 
+                // Only show Save button if there are unsaved changes
+                if store.hasUnsavedChanges {
+                    ToolbarItem(placement: .confirmationAction) { 
+                        Button("Save") { 
+                            store.save()
+                        }
+                        .fontWeight(.semibold)
                     }
                 }
             }
@@ -162,7 +165,6 @@ private struct PersonalizationSettingsView: View {
             Section("Personal Info") {
                 TextEditor(text: $store.personalInfo)
                     .frame(minHeight: 120)
-                    .onChange(of: store.personalInfo) { _, _ in store.save() }
             }
         }
         .navigationTitle("Personalization")
@@ -226,7 +228,6 @@ private struct ProviderDetailView: View {
                     .autocorrectionDisabled()
                     .onChange(of: apiKey) { _, _ in 
                         writeAPIKey(apiKey)
-                        store.save()
                     }
                 VerificationBar(verifying: verifying, verified: verified)
                 HStack {
@@ -455,19 +456,16 @@ private struct DefaultChatSettingsView: View {
             Section("System Prompt") {
                 TextEditor(text: $store.systemPrompt)
                     .frame(minHeight: 120)
-                    .onChange(of: store.systemPrompt) { _, _ in store.save() }
             }
             Section("Sampling") {
                 VStack(alignment: .leading) {
                     HStack { Text("Temperature"); Spacer(); Text(String(format: "%.2f", store.temperature)).foregroundStyle(.secondary) }
                     Slider(value: $store.temperature, in: 0...maxTemperature, step: 0.05)
-                        .onChange(of: store.temperature) { _, _ in store.save() }
                 }
                 VStack(alignment: .leading) {
                     HStack { Text("Max Tokens"); Spacer(); Text("\(store.maxTokens)").foregroundStyle(.secondary) }
                     Slider(value: Binding(get: { Double(store.maxTokens) }, set: { 
                         store.maxTokens = Int($0)
-                        store.save()
                     }), in: 64...maxTokens, step: 32)
                 }
                 if supportsPromptCaching {

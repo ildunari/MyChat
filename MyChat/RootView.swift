@@ -99,7 +99,14 @@ private struct ChatRootView: View {
             ZStack(alignment: .leading) {
                 // Chat content behind
                 if let chat = current ?? chats.first {
-                    NavigationStack { ChatView(chat: chat) }
+                    NavigationStack {
+                        ChatView(chat: chat, onNewChat: {
+                            let newChat = Chat(title: "New Chat")
+                            modelContext.insert(newChat)
+                            try? modelContext.save()
+                            withAnimation(.spring()) { current = newChat }
+                        })
+                    }
                 } else {
                     Text("No chats yet. Tap + to start.")
                         .foregroundStyle(T.textSecondary)
@@ -147,7 +154,19 @@ private struct ChatRootView: View {
                         if open != drawerOpen { Haptics.selection(); drawerOpen = open }
                     }
             )
-            .onAppear { if current == nil { current = chats.first } }
+            .onAppear {
+                if current == nil {
+                    if let first = chats.first {
+                        current = first
+                    } else {
+                        // Auto-create a fresh chat when none exist
+                        let newChat = Chat(title: "New Chat")
+                        modelContext.insert(newChat)
+                        try? modelContext.save()
+                        current = newChat
+                    }
+                }
+            }
         }
     }
 

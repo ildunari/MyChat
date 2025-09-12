@@ -11,6 +11,7 @@ struct ChatView: View {
     @Environment(\.tokens) private var T
 
     let chat: Chat
+    var onNewChat: (() -> Void)? = nil
 
     @State private var inputText: String = ""
     @State private var isSending = false
@@ -76,6 +77,8 @@ struct ChatView: View {
             let modelID = settingsQuery.first?.defaultModel ?? ""
             ModelSettingsView(providerID: providerID, modelID: modelID)
         }
+        .sheet(isPresented: $showFullModelPicker) { FullModelPickerSheet() }
+        .sheet(isPresented: $showChatSettings) { ChatSettingsSheet() }
         .photosPicker(isPresented: $showPhotoPicker, selection: $pickerItems, maxSelectionCount: 4, matching: .images)
         .onChange(of: pickerItems) { _, newItems in
             Task {
@@ -287,24 +290,20 @@ struct ChatView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
-        // Default back button preserved; no custom leading item
+        // Center model display with quick menu
         ToolbarItem(placement: .principal) {
             Menu {
-                // Model picker populated from AppSettings enabled lists
-                ForEach(availableModelsForCurrentProvider(), id: \.self) { m in
-                    Button(action: { setDefaultModel(m) }) {
-                        HStack {
-                            Text(m)
-                            if m == (settingsQuery.first?.defaultModel ?? "") {
-                                AppIcon.checkCircle(true, size: 14)
-                            }
+                // Quick models (up to 3)
+                Section("Quick Models") {
+                    ForEach(quickModels(), id: \.self) { m in
+                        Button(action: { setDefaultModel(m) }) {
+                            HStack { Text(m); if m == (settingsQuery.first?.defaultModel ?? "") { AppIcon.checkCircle(true, size: 14) } }
                         }
                     }
                 }
+                Button("Other models…") { showFullModelPicker = true }
                 Divider()
-                Button {
-                    showModelEditor = true
-                } label: { HStack(spacing: 6) { AppIcon.info(14); Text("Model Info") } }
+                Button("Chat Settings…") { showChatSettings = true }
             } label: {
                 HStack(spacing: 4) {
                     Text(currentModelDisplay()).font(.headline)
@@ -313,8 +312,10 @@ struct ChatView: View {
                 .contentShape(Rectangle())
             }
         }
-        ToolbarItem(placement: .navigationBarTrailing) {
-            Button { showModelEditor = true } label: { AppIcon.info(18) }
+        // Top-right new chat button
+        ToolbarItem(placement: .topBarTrailing) {
+            Button(action: { onNewChat?() }) { AppIcon.plus(18) }
+                .accessibilityLabel("New Chat")
         }
     }
 
@@ -340,6 +341,20 @@ struct ChatView: View {
         try? modelContext.save()
     }
 
+    private func quickModels() -> [String] {
+        // Default model + two more from enabled list for current provider
+        let s = settingsQuery.first
+        let current = s?.defaultModel ?? ""
+        var pool = availableModelsForCurrentProvider()
+        if let i = pool.firstIndex(of: current) { pool.remove(at: i) }
+        var out = [String]()
+        if !current.isEmpty { out.append(current) }
+        out.append(contentsOf: pool.prefix(2))
+        // Deduplicate and cap at 3
+        var seen = Set<String>()
+        return out.filter { seen.insert($0).inserted }.prefix(3).map { $0 }
+    }
+
     private var defaultSuggestions: [SuggestionChipItem] {
         [
             .init(title: "Identify the best", subtitle: "high-performance pre-workouts"),
@@ -356,6 +371,107 @@ struct ChatView: View {
         let input: CGFloat = 44 + 24 // field height + margins
         let chips: CGFloat = showSuggestions ? (60 + 16) : 0
         return input + chips
+    }
+
+    // MARK: - Sheets
+    @MainActor
+    private struct FullModelPickerSheet: View {
+        @Environment(\.dismiss) private var dismiss
+        @Environment(\.modelContext) private var modelContext
+        @Query private var settingsQuery: [AppSettings]
+        var body: some View {
+            NavigationStack {
+                List {
+                    Section("OpenAI") { modelList(provider: "openai") }
+                    Section("Anthropic") { modelList(provider: "anthropic") }
+                    Section("Google") { modelList(provider: "google") }
+                    Section("XAI") { modelList(provider: "xai") }
+                }
+                .navigationTitle("All Models")
+                .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } } }
+            }
+        }
+        @ViewBuilder private func modelList(provider: String) -> some View {
+            let s = settingsQuery.first
+            let models: [String] = {
+                switch provider {
+                case "openai": return s?.openAIEnabledModels ?? []
+                case "anthropic": return s?.anthropicEnabledModels ?? []
+                case "google": return s?.googleEnabledModels ?? []
+                case "xai": return s?.xaiEnabledModels ?? []
+                default: return []
+                }
+            }()
+            ForEach(models, id: \.self) { m in
+                Button(action: {
+                    if let s = settingsQuery.first {
+                        s.defaultProvider = provider
+                        s.defaultModel = m
+                        try? modelContext.save()
+                    }
+                    dismiss()
+                }) {
+                    HStack { Text(m); if m == (settingsQuery.first?.defaultModel ?? "") { AppIcon.checkCircle(true, size: 14) } }
+                }
+            }
+        }
+    }
+
+    @MainActor
+    private struct ChatSettingsSheet: View {
+        @Environment(\.dismiss) private var dismiss
+        @Environment(\.modelContext) private var modelContext
+        @Query private var settingsQuery: [AppSettings]
+        @State private var systemPrompt: String = ""
+        @State private var temperature: Double = 1.0
+        @State private var maxTokens: Double = 1024
+        @State private var historyLimit: Int = -1 // -1 = All
+        var body: some View {
+            let defaults = settingsQuery.first
+            NavigationStack {
+                Form {
+                    Section("System Instruction") {
+                        TextEditor(text: Binding(get: { systemPrompt }, set: { systemPrompt = $0 }))
+                            .frame(minHeight: 120)
+                    }
+                    Section("Sampling") {
+                        HStack { Text("Temperature"); Spacer(); Text(String(format: "%.2f", temperature)).foregroundStyle(.secondary) }
+                        Slider(value: $temperature, in: 0...2, step: 0.05)
+                        Stepper("Max output tokens: \(Int(maxTokens))", value: $maxTokens, in: 128...32768, step: 128)
+                    }
+                    Section("History") {
+                        Picker("Messages included", selection: Binding(get: { historyLimit }, set: { historyLimit = $0 })) {
+                            Text("All previous").tag(-1)
+                            Text("Last 5").tag(5)
+                            Text("Last 10").tag(10)
+                            Text("Last 20").tag(20)
+                        }.pickerStyle(.menu)
+                    }
+                }
+                .onAppear {
+                    systemPrompt = defaults?.defaultSystemPrompt ?? systemPrompt
+                    temperature = defaults?.defaultTemperature ?? temperature
+                    maxTokens = Double(defaults?.defaultMaxTokens ?? Int(maxTokens))
+                    historyLimit = defaults?.defaultHistoryLimit ?? -1
+                }
+                .navigationTitle("Chat Settings")
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Save") {
+                            if let s = settingsQuery.first {
+                                s.defaultSystemPrompt = systemPrompt
+                                s.defaultTemperature = temperature
+                                s.defaultMaxTokens = Int(maxTokens)
+                                s.defaultHistoryLimit = historyLimit
+                                try? modelContext.save()
+                            }
+                            dismiss()
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private var sortedMessages: [Message] {
@@ -408,9 +524,13 @@ struct ChatView: View {
                 aiMessages.append(AIMessage(role: .system, content: sys))
             }
 
-            // Use all previous messages except the just-inserted user message (when not editing)
+            // Use previous messages, optionally limiting to the last N per AppSettings
             var previous = chat.messages.sorted(by: { $0.createdAt < $1.createdAt })
             if editingMessage == nil, let last = previous.last, last.content == userText { previous.removeLast() }
+            let historyLimit = settings.defaultHistoryLimit
+            if historyLimit > 0 && previous.count > historyLimit {
+                previous = Array(previous.suffix(historyLimit))
+            }
             aiMessages.append(contentsOf: previous.map { m in
                 AIMessage(role: m.role == "user" ? .user : .assistant, content: m.content)
             })
@@ -539,6 +659,8 @@ struct ChatView: View {
     }
 
     @State private var showModelEditor: Bool = false
+    @State private var showFullModelPicker: Bool = false
+    @State private var showChatSettings: Bool = false
 
     private func updateChatTitle(from text: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)

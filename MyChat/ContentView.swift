@@ -103,7 +103,9 @@ struct ContentView: View {
     @ViewBuilder
     private func ChatHistoryGrid(maxHeight cap: CGFloat) -> some View {
         if chats.isEmpty {
-            EmptyStateView(message: "No chats yet. Tap the + button to start your first conversation!")
+            EmptyStateView(message: "No chats yet. Tap the + button to start your first conversation!") {
+                createAndNavigate()
+            }
         } else {
             let gridSpacing: CGFloat = 12
             let verticalPad: CGFloat = 8
@@ -498,28 +500,33 @@ struct MetadataChip: View {
 
 struct EmptyStateView: View {
     let message: String
-    
+    var onTap: (() -> Void)? = nil
+
     @Environment(\.tokens) private var T
-    
+
     var body: some View {
-        VStack(spacing: 16) {
-            AppIcon.plus(40)
-                .foregroundStyle(T.textSecondary)
-            
-            Text(message)
-                .font(.subheadline)
-                .foregroundStyle(T.textSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
+        Button(action: { onTap?() }) {
+            VStack(spacing: 16) {
+                AppIcon.plus(40)
+                    .foregroundStyle(T.textSecondary)
+
+                Text(message)
+                    .font(.subheadline)
+                    .foregroundStyle(T.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 140)
+            .background(T.surface.opacity(0.5))
+            .overlay(
+                RoundedRectangle(cornerRadius: T.radiusMedium)
+                    .strokeBorder(T.borderSoft, style: StrokeStyle(lineWidth: 1, dash: [8, 8]))
+            )
+            .clipShape(RoundedRectangle(cornerRadius: T.radiusMedium))
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: 140)
-        .background(T.surface.opacity(0.5))
-        .overlay(
-            RoundedRectangle(cornerRadius: T.radiusMedium)
-                .strokeBorder(T.borderSoft, style: StrokeStyle(lineWidth: 1, dash: [8, 8]))
-        )
-        .clipShape(RoundedRectangle(cornerRadius: T.radiusMedium))
+        .buttonStyle(.plain)
+        .accessibilityLabel("Start a new chat")
     }
 }
 

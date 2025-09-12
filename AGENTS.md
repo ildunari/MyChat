@@ -249,7 +249,7 @@ To keep the human in the loop at all times, follow these rules in every session:
 - SPM Dependencies (present):
   - **Down** (branch master): Markdown parsing and rendering (replaced MarkdownUI)
   - **HighlighterSwift** (product: Highlighter) 1.1.7: Code syntax highlighting (optional)
-  - **SwiftMath** 1.7.3 and/or **iosMath**: Mathematical formula rendering (optional)
+  - **SwiftMath** 1.7.3: Mathematical formula rendering with native LaTeX support
   - **PhosphorSwift** 2.1.0: Icon set
 - Quick build check: `xcodebuild -project MyChat.xcodeproj -scheme MyChat -destination 'generic/platform=iOS Simulator' build`
 
@@ -267,7 +267,7 @@ To keep the human in the loop at all times, follow these rules in every session:
   - Providers screen verifies API keys and lists models via `ProviderAPIs`.
 
 - Rendering
-  - Markdown (Down → AttributedString with tinted links and inline-code styling), code highlighting (Highlightr/Highlighter when available, monospaced fallback), math via iosMath or SwiftMath branch with KaTeX fallback.
+  - Markdown (Down → AttributedString with tinted links and inline-code styling), code highlighting (Highlightr/Highlighter when available, monospaced fallback), math via SwiftMath with automatic KaTeX fallback.
 
 ## Migration Notes (from ChatApp to MyChat)
 
@@ -289,7 +289,7 @@ To keep the human in the loop at all times, follow these rules in every session:
 - [x] Update AIResponseView.swift to use Down instead of MarkdownUI
 - [x] Update ChatStyles.swift (MarkdownUI theme removed)
 - [x] Add Highlighter adapter path (Highlightr/Highlighter)
-- [x] Fix math renderer tiers (iosMath → label, SwiftMath → KaTeX fallback, else KaTeX)
+- [x] Migrated to SwiftMath as primary math renderer with KaTeX fallback
 - [x] Build project successfully on simulator
 - [ ] Test basic chat functionality with API keys
 - [ ] Add UI polish for code themes (optional)

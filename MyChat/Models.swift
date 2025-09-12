@@ -79,6 +79,8 @@ final class AppSettings: Identifiable {
     var userUsername: String
     var aiDisplayName: String
     var personalInfo: String
+    // How many previous messages to include when sending context (-1 = all)
+    var defaultHistoryLimit: Int
 
     init(
         id: UUID = UUID(),
@@ -104,7 +106,8 @@ final class AppSettings: Identifiable {
         userLastName: String = "",
         userUsername: String = "",
         aiDisplayName: String = "",
-        personalInfo: String = ""
+        personalInfo: String = "",
+        defaultHistoryLimit: Int = -1
     ) {
         self.id = id
         self.defaultProvider = defaultProvider
@@ -130,5 +133,6 @@ final class AppSettings: Identifiable {
         self.userUsername = userUsername
         self.aiDisplayName = aiDisplayName
         self.personalInfo = personalInfo
+        self.defaultHistoryLimit = defaultHistoryLimit
     }
 }

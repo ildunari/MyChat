@@ -8,15 +8,29 @@ import Observation
 final class SettingsStore {
     var defaultProvider: String
     var defaultModel: String
-    var openAIAPIKey: String
-    var anthropicAPIKey: String
-    var googleAPIKey: String
-    var xaiAPIKey: String
+    var openAIAPIKey: String {
+        didSet { if oldValue != openAIAPIKey { hasUnsavedChanges = true } }
+    }
+    var anthropicAPIKey: String {
+        didSet { if oldValue != anthropicAPIKey { hasUnsavedChanges = true } }
+    }
+    var googleAPIKey: String {
+        didSet { if oldValue != googleAPIKey { hasUnsavedChanges = true } }
+    }
+    var xaiAPIKey: String {
+        didSet { if oldValue != xaiAPIKey { hasUnsavedChanges = true } }
+    }
 
-    // Default chat controls
-    var systemPrompt: String
-    var temperature: Double
-    var maxTokens: Int
+    // Default chat controls - these need explicit save
+    var systemPrompt: String {
+        didSet { if oldValue != systemPrompt { hasUnsavedChanges = true } }
+    }
+    var temperature: Double {
+        didSet { if oldValue != temperature { hasUnsavedChanges = true } }
+    }
+    var maxTokens: Int {
+        didSet { if oldValue != maxTokens { hasUnsavedChanges = true } }
+    }
 
     // Enabled model lists per provider
     var openAIEnabled: Set<String>
@@ -31,6 +45,7 @@ final class SettingsStore {
     var chatBubbleColorID: String // palette id
     var promptCachingEnabled: Bool
     var useWebCanvas: Bool
+    var defaultHistoryLimit: Int // -1 = all, otherwise last N messages
     // Home layout prefs
     var homeSectionOrder: [String]
     var homeChatsExpanded: Bool
@@ -41,7 +56,12 @@ final class SettingsStore {
     var userLastName: String
     var userUsername: String
     var aiName: String
-    var personalInfo: String
+    var personalInfo: String {
+        didSet { if oldValue != personalInfo { hasUnsavedChanges = true } }
+    }
+    
+    // Track unsaved changes for settings that need explicit save
+    var hasUnsavedChanges: Bool = false
 
     private let OPENAI_KEY_KEYCHAIN = "openai_api_key"
     private let ANTHROPIC_KEY_KEYCHAIN = "anthropic_api_key"
@@ -112,6 +132,7 @@ final class SettingsStore {
         self.chatBubbleColorID = settings.chatBubbleColorID
         self.promptCachingEnabled = settings.promptCachingEnabled
         self.useWebCanvas = settings.useWebCanvas
+        self.defaultHistoryLimit = settings.defaultHistoryLimit
         self.homeSectionOrder = settings.homeSectionOrder
         self.homeChatsExpanded = settings.homeChatsExpanded
         self.homeAgentsExpanded = settings.homeAgentsExpanded
@@ -140,6 +161,7 @@ final class SettingsStore {
         settings.chatBubbleColorID = chatBubbleColorID
         settings.promptCachingEnabled = promptCachingEnabled
         settings.useWebCanvas = useWebCanvas
+        settings.defaultHistoryLimit = defaultHistoryLimit
         settings.homeSectionOrder = homeSectionOrder
         settings.homeChatsExpanded = homeChatsExpanded
         settings.homeAgentsExpanded = homeAgentsExpanded
@@ -154,6 +176,9 @@ final class SettingsStore {
         saveKeychain(key: ANTHROPIC_KEY_KEYCHAIN, value: anthropicAPIKey)
         saveKeychain(key: GOOGLE_KEY_KEYCHAIN, value: googleAPIKey)
         saveKeychain(key: XAI_KEY_KEYCHAIN, value: xaiAPIKey)
+        
+        // Reset the flag after saving
+        hasUnsavedChanges = false
     }
 
     func apiKey(for provider: String) -> String? {

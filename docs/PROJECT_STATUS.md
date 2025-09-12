@@ -1,4 +1,4 @@
-# Project Status — 2025-09-09
+# Project Status — 2025-09-12
 
 ## Summary
 - Observation migration applied for `SettingsStore` usage across the app.
@@ -8,6 +8,7 @@
 - Previews updated: `SettingsView` uses an in-memory `ModelContainer` and injects a preview `SettingsStore`.
 - Fixed UIPlayground preview build issues by scoping mock types and adding `import Combine` where `ObservableObject/@Published` are used (playground-only).
 - Build validated for iOS Simulator. Resolved a locked build DB by removing `DerivedData/.../XCBuildData` and retrying.
+- Settings page adopts a glass-like material background for a more modern, layered look.
 
 ## Artifacts
 - Built app: `~/Library/Developer/Xcode/DerivedData/.../Build/Products/Debug-iphonesimulator/MyChat.app`

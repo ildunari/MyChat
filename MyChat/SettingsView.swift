@@ -10,97 +10,120 @@ struct SettingsView: View {
     var body: some View {
         @Bindable var store = store
         NavigationStack {
-            List {
-                Section {
-                    NavigationLink {
-                        ProvidersSettingsView()
-                    } label: {
-                        HStack(spacing: 12) {
-                            AppIcon.info(18).foregroundStyle(T.accent)
-                            VStack(alignment: .leading) {
-                                Text("Providers")
-                                Text("Manage API keys and models").font(.footnote).foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                    NavigationLink {
-                        DefaultChatSettingsView()
-                    } label: {
-                        HStack(spacing: 12) {
-                            AppIcon.info(18).foregroundStyle(T.accent)
-                            VStack(alignment: .leading) {
-                                Text("Default Chat")
-                                Text("System prompt, temperature, tokens").font(.footnote).foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                }
-                Section("Interface") {
-                    NavigationLink {
-                        InterfaceSettingsView()
-                    } label: {
-                        HStack(spacing: 12) {
-                            AppIcon.info(18).foregroundStyle(T.accent)
-                            VStack(alignment: .leading) {
-                                Text("Appearance")
-                                Text("Theme, font, text size, bubble colors").font(.footnote).foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                    NavigationLink {
-                        PersonalizationSettingsView()
-                    } label: {
-                        HStack(spacing: 12) {
-                            AppIcon.user(18).foregroundStyle(T.accent)
-                            VStack(alignment: .leading) {
-                                Text("Personalization")
-                                Text("Your name, username, AI name, personal info").font(.footnote).foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                    Toggle(isOn: $store.useWebCanvas) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Use Web Canvas")
-                            Text("Faster rendering with streaming, math, tables, code, artifacts slot").font(.footnote).foregroundStyle(.secondary)
-                        }
-                    }
-                    .onChange(of: store.useWebCanvas) { _, _ in store.save() }
-                }
-                Section("Defaults") {
-                    Picker("Default Provider", selection: $store.defaultProvider) {
-                        Text("OpenAI").tag("openai")
-                        Text("Anthropic").tag("anthropic")
-                        Text("Google").tag("google")
-                        Text("XAI").tag("xai")
-                    }
-                    .onChange(of: store.defaultProvider) { _, _ in store.save() }
+            ZStack {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .ignoresSafeArea()
 
-                    // Model picker based on enabled models for the selected provider
-                    Picker("Default Model", selection: $store.defaultModel) {
-                        ForEach(modelsForSelectedProvider(), id: \.self) { m in
-                            Text(m).tag(m)
+                List {
+                    Section {
+                        NavigationLink {
+                            ProvidersSettingsView()
+                        } label: {
+                            HStack(spacing: 12) {
+                                AppIcon.info(18).foregroundStyle(T.accent)
+                                VStack(alignment: .leading) {
+                                    Text("Providers")
+                                    Text("Manage API keys and models")
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        NavigationLink {
+                            DefaultChatSettingsView()
+                        } label: {
+                            HStack(spacing: 12) {
+                                AppIcon.info(18).foregroundStyle(T.accent)
+                                VStack(alignment: .leading) {
+                                    Text("Default Chat")
+                                    Text("System prompt, temperature, tokens")
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
                         }
                     }
-                    .pickerStyle(.menu)
-                    .disabled(modelsForSelectedProvider().isEmpty)
-                    .onChange(of: store.defaultModel) { _, _ in store.save() }
-                    .onAppear { ensureValidDefaultModel() }
-                    .onChange(of: store.defaultProvider) { _, _ in ensureValidDefaultModel() }
-                    .onChange(of: store.openAIEnabled) { _, _ in if store.defaultProvider == "openai" { ensureValidDefaultModel() } }
-                    .onChange(of: store.anthropicEnabled) { _, _ in if store.defaultProvider == "anthropic" { ensureValidDefaultModel() } }
-                    .onChange(of: store.googleEnabled) { _, _ in if store.defaultProvider == "google" { ensureValidDefaultModel() } }
-                    .onChange(of: store.xaiEnabled) { _, _ in if store.defaultProvider == "xai" { ensureValidDefaultModel() } }
+                    Section("Interface") {
+                        NavigationLink {
+                            InterfaceSettingsView()
+                        } label: {
+                            HStack(spacing: 12) {
+                                AppIcon.info(18).foregroundStyle(T.accent)
+                                VStack(alignment: .leading) {
+                                    Text("Appearance")
+                                    Text("Theme, font, text size, bubble colors")
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        NavigationLink {
+                            PersonalizationSettingsView()
+                        } label: {
+                            HStack(spacing: 12) {
+                                AppIcon.user(18).foregroundStyle(T.accent)
+                                VStack(alignment: .leading) {
+                                    Text("Personalization")
+                                    Text("Your name, username, AI name, personal info")
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        Toggle(isOn: $store.useWebCanvas) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Use Web Canvas")
+                                Text("Faster rendering with streaming, math, tables, code, artifacts slot")
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .onChange(of: store.useWebCanvas) { _, _ in store.save() }
+                    }
+                    Section("Defaults") {
+                        Picker("Default Provider", selection: $store.defaultProvider) {
+                            Text("OpenAI").tag("openai")
+                            Text("Anthropic").tag("anthropic")
+                            Text("Google").tag("google")
+                            Text("XAI").tag("xai")
+                        }
+                        .onChange(of: store.defaultProvider) { _, _ in store.save() }
+
+                        // Model picker based on enabled models for the selected provider
+                        Picker("Default Model", selection: $store.defaultModel) {
+                            ForEach(modelsForSelectedProvider(), id: \.self) { m in
+                                Text(m).tag(m)
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .disabled(modelsForSelectedProvider().isEmpty)
+                        .onChange(of: store.defaultModel) { _, _ in store.save() }
+                        .onAppear { ensureValidDefaultModel() }
+                        .onChange(of: store.defaultProvider) { _, _ in ensureValidDefaultModel() }
+                        .onChange(of: store.openAIEnabled) { _, _ in if store.defaultProvider == "openai" { ensureValidDefaultModel() } }
+                        .onChange(of: store.anthropicEnabled) { _, _ in if store.defaultProvider == "anthropic" { ensureValidDefaultModel() } }
+                        .onChange(of: store.googleEnabled) { _, _ in if store.defaultProvider == "google" { ensureValidDefaultModel() } }
+                        .onChange(of: store.xaiEnabled) { _, _ in if store.defaultProvider == "xai" { ensureValidDefaultModel() } }
+                    }
                 }
+                .scrollContentBackground(.hidden)
+                .listStyle(.insetGrouped)
+                .background(.clear)
+                .listRowBackground(
+                    RoundedRectangle(cornerRadius: 12).fill(.thinMaterial)
+                )
             }
             .navigationTitle("Settings")
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { 
-                    Button("Save") { 
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
                         store.save()
-                        dismiss() 
+                        dismiss()
                     }
                 }
             }
+            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         }
     }
 }

@@ -734,7 +734,11 @@ private struct InterfaceSettingsView: View {
     }
 
     // Reduced, distinct palettes with dark-mode variants via ThemeFactory
-    private let bubblePaletteIDs: [String] = ["terracotta", "sand", "coolslate", "lavender", "ocean", "forest", "highcontrast"]
+    private let paletteOptions: [(style: AppThemeStyle, label: String)] = [
+        (.terracotta, "Terracotta"), (.sand, "Sand"), (.coolSlate, "Cool Slate"),
+        (.lavender, "Lavender"), (.ocean, "Ocean"), (.forest, "Forest"),
+        (.highContrast, "High Contrast")
+    ]
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
@@ -815,21 +819,19 @@ private struct InterfaceSettingsView: View {
             }
 
             Section("Theme Palette") {
-                HStack(spacing: 12) {
-                    ForEach(bubblePaletteIDs, id: \.self) { id in
-                        Button(action: { 
-                            store.chatBubbleColorID = id
-                            store.save()
-                        }) {
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .fill(previewColor(for: id))
-                                .frame(width: 36, height: 36)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                        .stroke(store.chatBubbleColorID == id ? Color.accentColor : Color.clear, lineWidth: 2)
-                                )
-                        }
-                        .buttonStyle(.plain)
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                    ForEach(paletteOptions, id: \.style) { opt in
+                        PaletteOptionCard(
+                            style: opt.style,
+                            label: opt.label,
+                            selected: store.chatBubbleColorID.lowercased() == opt.style.rawValue.lowercased(),
+                            onSelect: {
+                                store.chatBubbleColorID = opt.style.rawValue
+                                store.save()
+                            }
+                        )
+                        .accessibilityLabel("\(opt.label) palette")
+                        .accessibilityAddTraits(store.chatBubbleColorID.lowercased() == opt.style.rawValue.lowercased() ? .isSelected : [])
                     }
                 }
                 Text("Soft, distinct palettes (with dark-mode variants). ‘Sand’ matches a Claude-like pastel.")
@@ -874,15 +876,6 @@ private struct InterfaceSettingsView: View {
         }
     }
 
-    private func sampleSnippet(for id: String) -> String {
-        switch id {
-        case "serif": return "Readable, classic body text"
-        case "rounded": return "Friendly, soft headings"
-        case "mono": return "Code & technical content"
-        default: return "Balanced, native UI style"
-        }
-    }
-
     private func cardBackground(for id: String) -> Color {
         // Muted, per-font tones; adjusted for dark/light
         let isDark = (colorScheme == .dark)
@@ -894,20 +887,47 @@ private struct InterfaceSettingsView: View {
         }
     }
 
-    private func previewColor(for paletteID: String) -> Color {
-        let style: AppThemeStyle = {
-            switch paletteID.lowercased() {
-            case "coolslate", "slate": return .coolSlate
-            case "sand": return .sand
-            case "lavender": return .lavender
-            case "ocean", "teal", "aqua": return .ocean
-            case "forest", "mint", "green": return .forest
-            case "highcontrast": return .highContrast
-            default: return .terracotta
+}
+
+// Split out to keep the parent body simple for the compiler
+private struct PaletteOptionCard: View {
+    let style: AppThemeStyle
+    let label: String
+    let selected: Bool
+    let onSelect: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        let tokens = ThemeFactory.make(style: style, colorScheme: colorScheme)
+        return Button(action: onSelect) {
+            ZStack(alignment: .topTrailing) {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [tokens.accent, tokens.accentSoft],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                Text(label)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(Color.white.opacity(0.9))
+                    .padding(8)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                if selected {
+                    AppIcon.checkCircle(true, size: 18)
+                        .foregroundStyle(Color.white)
+                        .padding(8)
+                }
             }
-        }()
-        // Swatch preview uses accent for visibility, but section backgrounds will follow bg/surface
-        return ThemeFactory.make(style: style, colorScheme: colorScheme).accent
+            .frame(height: 72)
+        }
+        .buttonStyle(.plain)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(selected ? Color.accentColor : Color.clear, lineWidth: 1)
+        )
     }
 }
 

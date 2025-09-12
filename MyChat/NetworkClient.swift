@@ -5,7 +5,13 @@ import Combine // TODO: Temporary import to unblock build; remove after Observat
 struct NetworkClient {
     let session: URLSession
 
-    static let shared = NetworkClient(session: {
+    // Allow tests to inject a custom session to intercept requests.
+    // In DEBUG builds, use `NetworkClient.useTestSession(...)` before constructing providers.
+    #if DEBUG
+    static func useTestSession(_ session: URLSession) { shared = NetworkClient(session: session) }
+    #endif
+
+    static var shared = NetworkClient(session: {
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 60
         config.timeoutIntervalForResource = 120

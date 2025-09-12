@@ -37,3 +37,12 @@
 - **Automatic fallback**: If SwiftMath fails to parse LaTeX, automatically falls back to KaTeX WebView.
 - **Build tested**: Successfully built and ran on iPhone 16 Pro Max simulator.
 - **Documentation updated**: All project docs now reflect SwiftMath as the primary math renderer.
+
+### Smart Save Button Implementation
+- **Conditional save button**: Settings toolbar now shows a Save button only when settings requiring explicit save are modified.
+- **Change tracking**: Added `hasUnsavedChanges` property to SettingsStore with didSet observers on relevant properties.
+- **Settings categorized**: 
+  - Explicit save required: API keys, system prompt, temperature, max tokens, personal info
+  - Auto-applied: UI preferences (theme, font, bubble colors), provider/model selection, toggles
+- **User experience**: Save button appears when changes are made, disappears after saving, reappears with new changes.
+- **Implementation tested**: Verified on iPhone 16 Pro Max simulator - button appears/disappears correctly based on changes.

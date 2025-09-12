@@ -74,6 +74,8 @@ This is a SwiftUI-based iOS chat application with AI provider integration, built
 - `NetworkClient`: HTTP client with error handling and timeout management
 - `KeychainService`: Secure storage for API keys
 - `SettingsStore`: Observable settings management with SwiftData persistence
+  - Smart save: Settings requiring explicit save (API keys, system prompt, temperature, max tokens, personal info) trigger a Save button
+  - Auto-save: UI preferences (theme, font, colors) apply immediately without Save button
 
 #### Data Flow
 1. User input → `ChatView`

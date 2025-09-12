@@ -82,7 +82,8 @@ The following Swift packages need to be added to the project:
 - [x] Build project successfully
 - [ ] Test chat creation and deletion
 - [ ] Test message sending (requires API keys)
-- [ ] Test settings view
+- [x] Test settings view
+- [x] Test smart save button (appears only when explicit-save settings are changed)
 - [ ] Test theme switching
 - [ ] Test model selection
 - [ ] Test image attachments

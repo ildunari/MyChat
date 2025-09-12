@@ -8,10 +8,7 @@ import Highlightr
 #endif
 
 #if canImport(SwiftMath)
-import SwiftMath // used only for conditional compilation; no direct UI references
-#endif
-#if canImport(iosMath)
-import iosMath
+import SwiftMath
 #endif
 
 struct AIResponseView: View {
@@ -185,14 +182,9 @@ private struct MathBlockSegment: View {
     let latex: String
     var body: some View {
         Group {
-            #if canImport(iosMath)
-            IOSMathLabel(latex: latex)
+            #if canImport(SwiftMath)
+            MathUILabelView(latex: latex)
                 .padding(.vertical, 4)
-            #elseif canImport(SwiftMath)
-            // SwiftMath present: if it exposes a SwiftUI view in future, plug it here.
-            // For now, prefer KaTeX WebView for accurate display-mode rendering.
-            MathWebView(latex: latex, displayMode: true)
-                .frame(minHeight: 28)
             #else
             // Web-based KaTeX fallback (auto-sizes; allows horizontal scroll)
             MathWebView(latex: latex, displayMode: true)
@@ -278,8 +270,8 @@ private struct HighlightedCodeView: UIViewRepresentable {
 }
 #endif
 
-#if canImport(iosMath)
-private struct IOSMathLabel: UIViewRepresentable {
+#if canImport(SwiftMath)
+private struct MathUILabelView: UIViewRepresentable {
     let latex: String
     func makeUIView(context: Context) -> MTMathUILabel {
         let v = MTMathUILabel()
@@ -312,12 +304,8 @@ private struct InlineMathParagraph: View {
                 case .text(let t):
                     Text(t)
                 case .math(let ltx):
-                    #if canImport(iosMath)
-                    IOSMathLabel(latex: ltx)
-                    #elseif canImport(SwiftMath)
-                    // Inline placeholder when SwiftMath is present but no direct view is integrated.
-                    Text(ltx)
-                        .font(.system(.body, design: .monospaced))
+                    #if canImport(SwiftMath)
+                    MathUILabelView(latex: ltx)
                     #else
                     MathWebView(latex: ltx, displayMode: false)
                         .frame(minHeight: 22)

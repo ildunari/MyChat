@@ -10,7 +10,7 @@ Rules:
 - For math:
   - Block math: wrap LaTeX in $$ ... $$.
   - Inline math: wrap LaTeX in $ ... $.
-  - Use standard LaTeX syntax compatible with iosMath (no HTML/MathML).
+  - Use standard LaTeX syntax compatible with SwiftMath/KaTeX (no HTML/MathML).
 - When including both code and prose, separate sections clearly.
 - Do not include screenshots or images in output; describe them in text.
 

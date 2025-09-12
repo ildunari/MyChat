@@ -29,7 +29,7 @@ Successfully transferred Swift code from ChatApp_FreshSource_2025-09-06 backup t
 The following Swift packages need to be added to the project:
 - `Down` - For markdown rendering (replacing MarkdownUI)
 - `Highlightr` or `HighlighterSwift` - For code syntax highlighting (optional but recommended)
-- `SwiftMath` or `iosMath` - For LaTeX math rendering (optional)
+- `SwiftMath` - For LaTeX math rendering (optional)
 
 ### 4. System Prompt Configuration
 **Priority: MEDIUM**
@@ -65,7 +65,7 @@ The following Swift packages need to be added to the project:
 - Conditional imports audited and updated:
   - Removed MarkdownUI gates; added Down-based path.
   - Code highlighting supports `Highlightr` or `Highlighter` (smittytone/HighlighterSwift) with safe fallback.
-  - Math rendering split: `iosMath` path uses `MTMathUILabel`; `SwiftMath` branch compiles without referencing `MTMathUILabel` and falls back to KaTeX.
+  - Math rendering uses `SwiftMath`'s `MTMathUILabel`; when SwiftMath is unavailable, the app falls back to KaTeX via `MathWebView`.
 
 ### 2. Preview Providers
 - Preview providers reference in-memory model containers
@@ -88,13 +88,13 @@ The following Swift packages need to be added to the project:
 - [ ] Test image attachments
 - [x] Test markdown rendering (basic)
 - [x] Code highlighting path present (HighlighterSwift); theme polish TBD
-- [ ] Test math rendering (iosMath when added; SwiftMath fallback verified compiles)
+- [ ] Test math rendering (SwiftMath block + inline, KaTeX fallback)
 
 ## Status Updates (2025-09-09)
 
 - Down integration complete; MarkdownUI removed.
 - Highlighter/Highlightr adapter added with graceful fallback.
-- Math renderer fixed: iosMath preferred; SwiftMath branch compiles and falls back to KaTeX.
+- Math renderer fixed: SwiftMath integrated with KaTeX fallback.
 - WebCanvas loader guarded: loads local `WebCanvas/dist/index.html` or `ChatApp/WebCanvas/dist/index.html`; otherwise no-op with comment.
 
 ## Next Steps

@@ -7,6 +7,7 @@
 - `SettingsView` and its subviews refactored to use `@Environment(SettingsStore.self)` with `@Bindable` in bodies where needed.
 - Previews updated: `SettingsView` uses an in-memory `ModelContainer` and injects a preview `SettingsStore`.
 - Fixed UIPlayground preview build issues by scoping mock types and adding `import Combine` where `ObservableObject/@Published` are used (playground-only).
+- SwiftMath handles inline and block math with KaTeX fallback; iosMath code removed and temporary `Combine` imports cleaned.
 - Build validated for iOS Simulator. Resolved a locked build DB by removing `DerivedData/.../XCBuildData` and retrying.
 - Settings page adopts a glass-like material background for a modern, layered look; list rows use thin material with inset grouping.
 

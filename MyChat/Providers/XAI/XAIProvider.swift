@@ -29,7 +29,27 @@ struct XAIProvider: AIProviderAdvanced {
         reasoningEffort: String?,
         verbosity: String?
     ) async throws -> String {
-        struct Msg: Encodable { let role: String; let content: String }
+        struct Content: Encodable {
+            let type: String
+            let text: String?
+            let image_url: ImageURL?
+            let file: FileRef?
+
+            struct ImageURL: Encodable { let url: String }
+            struct FileRef: Encodable { let file_id: String }
+        }
+        struct ToolCall: Encodable {
+            let id: String?
+            let r#type = "function"
+            let function: Function
+            struct Function: Encodable { let name: String; let arguments: String }
+        }
+        struct Msg: Encodable {
+            let role: String
+            let content: [Content]?
+            let tool_calls: [ToolCall]?
+            let tool_call_id: String?
+        }
         struct Req: Encodable {
             let model: String
             let messages: [Msg]
@@ -41,27 +61,46 @@ struct XAIProvider: AIProviderAdvanced {
             let frequency_penalty: Double?
             let stop: [String]?
         }
-        struct Resp: Decodable { struct Choice: Decodable { struct Message: Decodable { let content: String }
+        struct Resp: Decodable { struct Choice: Decodable { struct Message: Decodable { let content: [OutPart]? }
                 let message: Message }
             let choices: [Choice] }
+        struct OutPart: Decodable { let text: String? }
 
-        // Basic text-only mapping (images not yet supported in this minimal client)
-        func flatten(_ parts: [AIMessage.Part]) -> String {
-            parts.compactMap { p in
-                if case let .text(t) = p { return t } else { return nil }
-            }.joined(separator: "\n")
+        func dataURL(from data: Data, mime: String) -> String {
+            "data:\(mime);base64,\(data.base64EncodedString())"
         }
-        let mapped: [Msg] = messages.map { m in
-            switch m.role {
-            case .system: return Msg(role: "system", content: flatten(m.parts))
-            case .user: return Msg(role: "user", content: flatten(m.parts))
-            case .assistant: return Msg(role: "assistant", content: flatten(m.parts))
+
+        func buildMessages() -> [Msg] {
+            messages.map { msg in
+                var contents: [Content] = []
+                var toolCalls: [ToolCall] = []
+                var toolCallID: String?
+                for part in msg.parts {
+                    switch part {
+                    case .text(let t):
+                        contents.append(Content(type: "text", text: t, image_url: nil, file: nil))
+                    case .imageData(let data, let mime):
+                        contents.append(Content(type: "image_url", text: nil, image_url: .init(url: dataURL(from: data, mime: mime)), file: nil))
+                    case .toolCall(let id, let name, let arguments):
+                        toolCalls.append(ToolCall(id: id, function: .init(name: name, arguments: arguments)))
+                    case .toolResult(let id, let content):
+                        contents.append(Content(type: "text", text: content, image_url: nil, file: nil))
+                        toolCallID = id
+                    case .fileReference(let id):
+                        contents.append(Content(type: "input_file", text: nil, image_url: nil, file: .init(file_id: id)))
+                    }
+                }
+                let role = msg.role == .tool ? "tool" : msg.role.rawValue
+                return Msg(role: role,
+                           content: contents.isEmpty ? nil : contents,
+                           tool_calls: toolCalls.isEmpty ? nil : toolCalls,
+                           tool_call_id: toolCallID)
             }
         }
 
         let caps = ModelCapabilitiesStore.get(provider: id, model: model)
         let req = Req(model: model,
-                      messages: mapped,
+                      messages: buildMessages(),
                       temperature: temperature,
                       top_p: topP,
                       max_tokens: maxOutputTokens,
@@ -84,7 +123,7 @@ struct XAIProvider: AIProviderAdvanced {
             throw NSError(domain: "XAI", code: http?.statusCode ?? -1, userInfo: [NSLocalizedDescriptionKey: err])
         }
         let decoded = try JSONDecoder().decode(Resp.self, from: data)
-        let text = decoded.choices.first?.message.content ?? ""
+        let text = decoded.choices.first?.message.content?.compactMap { $0.text }.joined(separator: "\n") ?? ""
         return text
     }
 }

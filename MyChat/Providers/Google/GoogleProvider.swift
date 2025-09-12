@@ -32,7 +32,46 @@ struct GoogleProvider: AIProviderAdvanced {
         struct Part: Encodable {
             let text: String?
             let inlineData: InlineData?
+            let functionCall: FunctionCall?
+            let functionResponse: FunctionResponse?
+            let fileData: FileData?
+
             struct InlineData: Encodable { let mimeType: String; let data: String }
+            struct FunctionCall: Encodable { let name: String; let args: [String: JSONValue] }
+            struct FunctionResponse: Encodable { let name: String; let response: [String: JSONValue] }
+            struct FileData: Encodable { let fileUri: String }
+        }
+        enum JSONValue: Encodable {
+            case string(String)
+            case number(Double)
+            case bool(Bool)
+            case object([String: JSONValue])
+            case array([JSONValue])
+            case null
+
+            init(_ value: Any) {
+                switch value {
+                case let v as String: self = .string(v)
+                case let v as Double: self = .number(v)
+                case let v as Int: self = .number(Double(v))
+                case let v as Bool: self = .bool(v)
+                case let v as [String: Any]: self = .object(v.mapValues { JSONValue($0) })
+                case let v as [Any]: self = .array(v.map { JSONValue($0) })
+                default: self = .null
+                }
+            }
+
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.singleValueContainer()
+                switch self {
+                case .string(let s): try container.encode(s)
+                case .number(let n): try container.encode(n)
+                case .bool(let b): try container.encode(b)
+                case .object(let o): try container.encode(o)
+                case .array(let a): try container.encode(a)
+                case .null: try container.encodeNil()
+                }
+            }
         }
         struct Content: Encodable { let role: String; let parts: [Part] }
         struct GenerationConfig: Encodable { let temperature: Double?; let topP: Double?; let topK: Int?; let maxOutputTokens: Int?; let stopSequences: [String]? }
@@ -58,19 +97,42 @@ struct GoogleProvider: AIProviderAdvanced {
         let sys = systemText.isEmpty ? nil : SystemInstruction(parts: [Part(text: systemText, inlineData: nil)])
 
         func parts(from p: [AIMessage.Part]) -> [Part] {
-            p.map { item in
+            p.compactMap { item in
                 switch item {
-                case .text(let t): return Part(text: t, inlineData: nil)
-                case .imageData(let data, let mime): return Part(text: nil, inlineData: .init(mimeType: mime, data: data.base64EncodedString()))
+                case .text(let t):
+                    return Part(text: t, inlineData: nil, functionCall: nil, functionResponse: nil, fileData: nil)
+                case .imageData(let data, let mime):
+                    return Part(text: nil, inlineData: .init(mimeType: mime, data: data.base64EncodedString()), functionCall: nil, functionResponse: nil, fileData: nil)
+                case .toolCall(_, let name, let arguments):
+                    let data = Data(arguments.utf8)
+                    var obj: [String: JSONValue] = [:]
+                    if let raw = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                        obj = raw.mapValues { JSONValue($0) }
+                    }
+                    return Part(text: nil, inlineData: nil, functionCall: .init(name: name, args: obj), functionResponse: nil, fileData: nil)
+                case .toolResult(let id, let content):
+                    let data = Data(content.utf8)
+                    var obj: [String: JSONValue] = [:]
+                    if let raw = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                        obj = raw.mapValues { JSONValue($0) }
+                    }
+                    return Part(text: nil, inlineData: nil, functionCall: nil, functionResponse: .init(name: id ?? "tool", response: obj), fileData: nil)
+                case .fileReference(let id):
+                    return Part(text: nil, inlineData: nil, functionCall: nil, functionResponse: nil, fileData: .init(fileUri: id))
                 }
             }
         }
 
         let contents: [Content] = messages.compactMap { m in
             switch m.role {
-            case .system: return nil
-            case .user: return Content(role: "user", parts: parts(from: m.parts))
-            case .assistant: return Content(role: "model", parts: parts(from: m.parts))
+            case .system:
+                return nil
+            case .user:
+                return Content(role: "user", parts: parts(from: m.parts))
+            case .assistant:
+                return Content(role: "model", parts: parts(from: m.parts))
+            case .tool:
+                return Content(role: "function", parts: parts(from: m.parts))
             }
         }
 

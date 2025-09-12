@@ -7,6 +7,100 @@ func partString(_ parts: [AIMessage.Part]) -> String {
     return out
 }
 
+private struct OAContent: Encodable {
+    let type: String
+    let text: String?
+    let image_url: ImageURL?
+    let tool_call: ToolCall?
+    let tool_result: ToolResult?
+    let file_reference: FileRef?
+
+    init(text: String, role: AIMessage.Role) {
+        self.type = role == .assistant ? "output_text" : "input_text"
+        self.text = text
+        self.image_url = nil
+        self.tool_call = nil
+        self.tool_result = nil
+        self.file_reference = nil
+    }
+
+    init(imageDataURL: String) {
+        self.type = "input_image"
+        self.text = nil
+        self.image_url = ImageURL(url: imageDataURL)
+        self.tool_call = nil
+        self.tool_result = nil
+        self.file_reference = nil
+    }
+
+    init(toolCall: ToolCall) {
+        self.type = "tool_call"
+        self.text = nil
+        self.image_url = nil
+        self.tool_call = toolCall
+        self.tool_result = nil
+        self.file_reference = nil
+    }
+
+    init(toolResult: ToolResult) {
+        self.type = "tool_result"
+        self.text = nil
+        self.image_url = nil
+        self.tool_call = nil
+        self.tool_result = toolResult
+        self.file_reference = nil
+    }
+
+    init(fileReference id: String) {
+        self.type = "input_file"
+        self.text = nil
+        self.image_url = nil
+        self.tool_call = nil
+        self.tool_result = nil
+        self.file_reference = FileRef(id: id)
+    }
+
+    struct ImageURL: Encodable { let url: String }
+    struct ToolCall: Encodable { let id: String?; let name: String; let arguments: String }
+    struct ToolResult: Encodable { let id: String?; let content: String }
+    struct FileRef: Encodable { let id: String }
+}
+
+private struct OAInputItem: Encodable {
+    let role: String
+    let content: [OAContent]
+}
+
+private func buildOpenAIInput(from messages: [AIMessage]) -> (instructions: String, input: [OAInputItem]) {
+    func dataURL(from data: Data, mime: String) -> String {
+        "data:\(mime);base64,\(data.base64EncodedString())"
+    }
+    let instructions = messages
+        .filter { $0.role == .system }
+        .map { partString($0.parts) }
+        .joined(separator: "\n\n")
+    let convo = messages.filter { $0.role != .system }
+    let items: [OAInputItem] = convo.map { msg in
+        var parts: [OAContent] = []
+        for p in msg.parts {
+            switch p {
+            case .text(let t):
+                parts.append(OAContent(text: t, role: msg.role))
+            case .imageData(let data, let mime):
+                parts.append(OAContent(imageDataURL: dataURL(from: data, mime: mime)))
+            case .toolCall(let id, let name, let arguments):
+                parts.append(OAContent(toolCall: .init(id: id, name: name, arguments: arguments)))
+            case .toolResult(let id, let content):
+                parts.append(OAContent(toolResult: .init(id: id, content: content)))
+            case .fileReference(let id):
+                parts.append(OAContent(fileReference: id))
+            }
+        }
+        return OAInputItem(role: msg.role.rawValue, content: parts)
+    }
+    return (instructions, items)
+}
+
 struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
     let id = "openai"
     let displayName = "OpenAI"
@@ -46,24 +140,13 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
         reasoningEffort: String?,
         verbosity: String?
     ) async throws -> String {
-        struct InputItem: Encodable {
-            let role: String
-            let content: [Content]
-        }
-        struct Content: Encodable {
-            let type: String
-            let text: String?
-            let image_url: ImageURL?
-            init(text: String) { self.type = "input_text"; self.text = text; self.image_url = nil }
-            init(imageDataURL: String) { self.type = "input_image"; self.text = nil; self.image_url = ImageURL(url: imageDataURL) }
-            struct ImageURL: Encodable { let url: String }
-        }
         struct Req: Encodable {
             let model: String
-            let input: [InputItem]
+            let input: [OAInputItem]
             let instructions: String?
             let temperature: Double?
             let top_p: Double?
+            let top_k: Int?
             let max_output_tokens: Int?
             let reasoning: Reasoning?
             let verbosity: String?
@@ -72,31 +155,13 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
         struct Resp: Decodable { let output: Output?; let response: Output? }
         struct Output: Decodable { let content: [OutPart]? }
         struct OutPart: Decodable { let type: String; let text: String? }
-
-        func dataURL(from data: Data, mime: String) -> String {
-            let b64 = data.base64EncodedString()
-            return "data:\(mime);base64,\(b64)"
-        }
-
-        // Split system → instructions; include both user and assistant turns in input for full context
-        let instructions = messages.filter { $0.role == .system }.map { partString($0.parts) }.joined(separator: "\n\n")
-        let userOnly = messages.filter { $0.role == .user }
-        let inputItems: [InputItem] = userOnly.map { msg in
-            var parts: [Content] = []
-            for p in msg.parts {
-                switch p {
-                case .text(let t): parts.append(.init(text: t))
-                case .imageData(let data, let mime): parts.append(.init(imageDataURL: dataURL(from: data, mime: mime)))
-                }
-            }
-            return InputItem(role: "user", content: parts)
-        }
-
+        let built = buildOpenAIInput(from: messages)
         let req = Req(model: model,
-                      input: inputItems,
-                      instructions: instructions.isEmpty ? nil : instructions,
+                      input: built.input,
+                      instructions: built.instructions.isEmpty ? nil : built.instructions,
                       temperature: temperature,
                       top_p: topP,
+                      top_k: topK,
                       max_output_tokens: maxOutputTokens,
                       reasoning: reasoningEffort.map { .init(effort: $0) },
                       verbosity: verbosity)
@@ -130,49 +195,26 @@ struct OpenAIProvider: AIProviderAdvanced, AIStreamingProvider {
         verbosity: String?,
         onDelta: @escaping (String) -> Void
     ) async throws -> String {
-        struct InputItem: Encodable { let role: String; let content: [Content] }
-        struct Content: Encodable {
-            let type: String
-            let text: String?
-            let image_url: ImageURL?
-            init(text: String) { self.type = "input_text"; self.text = text; self.image_url = nil }
-            init(imageDataURL: String) { self.type = "input_image"; self.text = nil; self.image_url = ImageURL(url: imageDataURL) }
-            struct ImageURL: Encodable { let url: String }
-        }
         struct Req: Encodable {
             let model: String
-            let input: [InputItem]
+            let input: [OAInputItem]
             let instructions: String?
             let temperature: Double?
             let top_p: Double?
+            let top_k: Int?
             let max_output_tokens: Int?
             let reasoning: Reasoning?
             let verbosity: String?
             let stream: Bool
             struct Reasoning: Encodable { let effort: String }
         }
-
-        func dataURL(from data: Data, mime: String) -> String { "data:\(mime);base64,\(data.base64EncodedString())" }
-
-        // Split system → instructions; include both user and assistant turns in input for full context
-        let instructions = messages.filter { $0.role == .system }.map { partString($0.parts) }.joined(separator: "\n\n")
-        let userOnly = messages.filter { $0.role == .user }
-        let inputItems: [InputItem] = userOnly.map { msg in
-            var parts: [Content] = []
-            for p in msg.parts {
-                switch p {
-                case .text(let t): parts.append(.init(text: t))
-                case .imageData(let data, let mime): parts.append(.init(imageDataURL: dataURL(from: data, mime: mime)))
-                }
-            }
-            return InputItem(role: "user", content: parts)
-        }
-
+        let built = buildOpenAIInput(from: messages)
         let reqBody = Req(model: model,
-                          input: inputItems,
-                          instructions: instructions.isEmpty ? nil : instructions,
+                          input: built.input,
+                          instructions: built.instructions.isEmpty ? nil : built.instructions,
                           temperature: temperature,
                           top_p: topP,
+                          top_k: topK,
                           max_output_tokens: maxOutputTokens,
                           reasoning: reasoningEffort.map { .init(effort: $0) },
                           verbosity: verbosity,

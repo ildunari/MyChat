@@ -27,6 +27,7 @@ struct RootView: View {
                 .padding(.bottom, 2)
                 .background(Color.clear.ignoresSafeArea(edges: .bottom))
         }
+        .background(T.bg.ignoresSafeArea())
     }
 }
 

@@ -64,12 +64,14 @@ struct AnthropicProvider: AIProviderAdvanced {
         let caps = ModelCapabilitiesStore.get(provider: id, model: model)
         let cacheFlag = (caps?.enablePromptCaching ?? false)
         func toBlocks(_ parts: [AIMessage.Part]) -> [ContentBlock] {
-            parts.map { p in
+            parts.compactMap { p in
                 switch p {
                 case .text(let t):
                     return ContentBlock(type: "text", text: t, source: nil, cache_control: cacheFlag ? .init(type: "ephemeral") : nil)
                 case .imageData(let data, let mime):
                     return ContentBlock(type: "input_image", text: nil, source: .init(media_type: mime, data: data.base64EncodedString()), cache_control: nil)
+                default:
+                    return nil
                 }
             }
         }
@@ -81,6 +83,8 @@ struct AnthropicProvider: AIProviderAdvanced {
                 return MessageItem(role: "user", content: toBlocks(m.parts))
             case .assistant:
                 return MessageItem(role: "assistant", content: toBlocks(m.parts))
+            case .tool:
+                return nil
             }
         }
 

@@ -2,10 +2,13 @@
 import Foundation
 
 struct AIMessage {
-    enum Role: String, Codable { case system, user, assistant }
+    enum Role: String, Codable { case system, user, assistant, tool }
     enum Part: Codable, Hashable {
         case text(String)
         case imageData(Data, mime: String)
+        case toolCall(id: String?, name: String, arguments: String)
+        case toolResult(id: String?, content: String)
+        case fileReference(id: String)
     }
     var role: Role
     var parts: [Part]

@@ -264,7 +264,7 @@ private struct SectionContainer<Content: View>: View {
             HStack(spacing: 10) {
                 AppIcon.grabber(14).foregroundStyle(T.textSecondary)
                     .gesture(
-                        DragGesture(minimumDistance: 4)
+                        DragGesture(minimumDistance: 4, coordinateSpace: .global)
                             .onChanged(onDragChanged)
                             .onEnded(onDragEnded)
                     )

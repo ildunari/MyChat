@@ -50,14 +50,23 @@ private struct DockTabBar: View {
     var body: some View {
         HStack(spacing: 0) {
             ForEach(items, id: \.tab) { it in
-                Button(action: { withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { selected = it.tab } }) {
+                Button(action: { withAnimation(.smooth(duration: 0.45, extraBounce: 0.25)) { selected = it.tab } }) {
                     VStack(spacing: 6) {
                         ZStack {
                             if selected == it.tab {
-                                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .fill(T.accent)
-                                    .matchedGeometryEffect(id: "hl", in: highlightNS)
-                                    .frame(width: 64, height: 44)
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .fill(T.accent.opacity(0.25))
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .fill(.ultraThinMaterial)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                                .stroke(T.accent.opacity(0.6), lineWidth: 1)
+                                        )
+                                }
+                                .matchedGeometryEffect(id: "hl", in: highlightNS)
+                                .frame(width: 64, height: 44)
+                                .shadow(color: T.accent.opacity(0.3), radius: 8, x: 0, y: 2)
                             }
                             VStack(spacing: 4) {
                                 it.icon
@@ -79,7 +88,8 @@ private struct DockTabBar: View {
         .padding(.vertical, 10)
         .background(
             Rectangle()
-                .fill(T.surface)
+                .fill(.ultraThinMaterial)
+                .overlay(Rectangle().fill(T.surface.opacity(scheme == .dark ? 0.5 : 0.7)))
                 .shadow(color: T.shadow.opacity(0.08), radius: 10, x: 0, y: -2)
         )
         .ignoresSafeArea(edges: .bottom)

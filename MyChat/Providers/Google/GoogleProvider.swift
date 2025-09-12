@@ -94,7 +94,7 @@ struct GoogleProvider: AIProviderAdvanced {
         let systemText = messages.filter { $0.role == .system }
             .flatMap { msg in msg.parts.compactMap { if case let .text(t) = $0 { return t } else { return nil } } }
             .joined(separator: "\n\n")
-        let sys = systemText.isEmpty ? nil : SystemInstruction(parts: [Part(text: systemText, inlineData: nil)])
+        let sys = systemText.isEmpty ? nil : SystemInstruction(parts: [Part(text: systemText, inlineData: nil, functionCall: nil, functionResponse: nil, fileData: nil)])
 
         func parts(from p: [AIMessage.Part]) -> [Part] {
             p.compactMap { item in

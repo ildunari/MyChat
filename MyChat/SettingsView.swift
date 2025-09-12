@@ -10,7 +10,11 @@ struct SettingsView: View {
     var body: some View {
         @Bindable var store = store
         NavigationStack {
-            List {
+            ZStack {
+                Rectangle()
+                    .fill(.ultraThinMaterial)
+                    .ignoresSafeArea()
+                List {
                 Section {
                     NavigationLink {
                         ProvidersSettingsView()
@@ -68,19 +72,21 @@ struct SettingsView: View {
                 }
                 Section("Defaults") {
                     Picker("Default Provider", selection: $store.defaultProvider) {
-                        Text("OpenAI").tag("openai")
-                        Text("Anthropic").tag("anthropic")
-                        Text("Google").tag("google")
-                        Text("XAI").tag("xai")
+                        Text("OpenAI").fontWeight(.semibold).tag("openai")
+                        Text("Anthropic").fontWeight(.semibold).tag("anthropic")
+                        Text("Google").fontWeight(.semibold).tag("google")
+                        Text("XAI").fontWeight(.semibold).tag("xai")
                     }
+                    .fontWeight(.semibold)
                     .onChange(of: store.defaultProvider) { _, _ in store.save() }
 
                     // Model picker based on enabled models for the selected provider
                     Picker("Default Model", selection: $store.defaultModel) {
                         ForEach(modelsForSelectedProvider(), id: \.self) { m in
-                            Text(m).tag(m)
+                            Text(m).fontWeight(.semibold).tag(m)
                         }
                     }
+                    .fontWeight(.semibold)
                     .pickerStyle(.menu)
                     .disabled(modelsForSelectedProvider().isEmpty)
                     .onChange(of: store.defaultModel) { _, _ in store.save() }
@@ -91,6 +97,13 @@ struct SettingsView: View {
                     .onChange(of: store.googleEnabled) { _, _ in if store.defaultProvider == "google" { ensureValidDefaultModel() } }
                     .onChange(of: store.xaiEnabled) { _, _ in if store.defaultProvider == "xai" { ensureValidDefaultModel() } }
                 }
+                }
+                .scrollContentBackground(.hidden)
+                .listStyle(.insetGrouped)
+                .background(.clear)
+                .listRowBackground(
+                    RoundedRectangle(cornerRadius: 12).fill(.thinMaterial)
+                )
             }
             .navigationTitle("Settings")
             .toolbar {
@@ -101,6 +114,7 @@ struct SettingsView: View {
                     }
                 }
             }
+            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         }
     }
 }

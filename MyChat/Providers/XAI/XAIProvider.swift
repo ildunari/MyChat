@@ -40,7 +40,7 @@ struct XAIProvider: AIProviderAdvanced {
         }
         struct ToolCall: Encodable {
             let id: String?
-            let r#type = "function"
+            let type = "function"
             let function: Function
             struct Function: Encodable { let name: String; let arguments: String }
         }

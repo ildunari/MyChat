@@ -1,6 +1,9 @@
 # macOS
 .DS_Store
 
+# VS Code settings
+.vscode/
+
 # Xcode / Swift / DerivedData
 DerivedData/
 build/
@@ -21,4 +24,3 @@ MyChat.xcodeproj/xcuserdata/
 # Env secrets (Debug-only bundle copy comes from this)
 MyChat/Env/.env
 MyChat/Env/*.env
-

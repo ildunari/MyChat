@@ -63,35 +63,35 @@ struct ContentView: View {
                     .padding(.bottom, 24)
                 }
             }
-            .background(T.bg)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    ComposeButton { createAndNavigate() }
-                        .padding(.trailing, 2)
-                }
-            }
-            .navigationDestination(item: $navNewChat) { chat in
-                ChatView(chat: chat)
-            }
-            .sheet(isPresented: $showingSettings) {
-                SettingsView()
-            }
-            .alert("Rename Chat", isPresented: .constant(renamingChat != nil)) {
-                TextField("Chat title", text: $newChatTitle)
-                Button("Cancel") {
-                    renamingChat = nil
-                    newChatTitle = ""
-                }
-                Button("Save") {
-                    if let chat = renamingChat {
-                        chat.title = newChatTitle.isEmpty ? "New Chat" : newChatTitle
-                        try? modelContext.save()
-                    }
-                    renamingChat = nil
-                    newChatTitle = ""
-                }
+        }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                ComposeButton { createAndNavigate() }
+                    .padding(.trailing, 2)
             }
         }
+        .navigationDestination(item: $navNewChat) { chat in
+            ChatView(chat: chat)
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView()
+        }
+        .alert("Rename Chat", isPresented: .constant(renamingChat != nil)) {
+            TextField("Chat title", text: $newChatTitle)
+            Button("Cancel") {
+                renamingChat = nil
+                newChatTitle = ""
+            }
+            Button("Save") {
+                if let chat = renamingChat {
+                    chat.title = newChatTitle.isEmpty ? "New Chat" : newChatTitle
+                    try? modelContext.save()
+                }
+                renamingChat = nil
+                newChatTitle = ""
+            }
+        }
+        .background(T.bg.ignoresSafeArea())
         .onAppear { loadOrderFromStore() }
         .onChange(of: sectionOrder) { _, _ in saveOrderToStore() }
         .onChange(of: chatHistoryExpanded) { _, newVal in store.homeChatsExpanded = newVal; store.save() }

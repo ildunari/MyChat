@@ -10,23 +10,20 @@ struct RootView: View {
     @Namespace private var highlightNS
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Group {
-                switch tab {
-                case .home: ContentView()
-                case .chat: ChatRootView()
-                case .notes: NotesPlaceholderView()
-                case .media: MediaPlaceholderView()
-                case .settings: SettingsView()
-                }
+        Group {
+            switch tab {
+            case .home: ContentView()
+            case .chat: ChatRootView()
+            case .notes: NotesPlaceholderView()
+            case .media: MediaPlaceholderView()
+            case .settings: SettingsView()
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-            // Custom dock bar
-            DockTabBar(selected: $tab, highlightNS: highlightNS)
-                .padding(.bottom, 2)
-                .background(Color.clear.ignoresSafeArea(edges: .bottom))
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            DockTabBar(selected: $tab, highlightNS: highlightNS)
+        }
+        .background(T.bg.ignoresSafeArea())
     }
 }
 

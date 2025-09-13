@@ -333,20 +333,9 @@ struct ChatView: View {
                                 .foregroundStyle(.secondary)
                                 .frame(maxWidth: .infinity, alignment: .trailing)
                         }
-                        Button("Edit") { onEdit?() }
-                            .font(.footnote)
                         Text(message.content)
                             .font(.system(.body, design: .rounded)).fontWeight(.medium)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .fill(T.bubbleUser)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .stroke(T.borderSoft, lineWidth: 1)
-                            )
+                            .liquidGlassChatBubble(isUser: true)
                             .frame(maxWidth: 320, alignment: .trailing)
                             .frame(maxWidth: .infinity, alignment: .trailing)
                         Text(relativeTime(message.createdAt))
@@ -429,7 +418,7 @@ struct ChatView: View {
             } label: {
                 HStack(spacing: 4) {
                     Text(currentModelDisplay()).font(.headline)
-                    AppIcon.chevronDown(10).rotationEffect(.degrees(-90))
+                    AppIcon.chevronDown(10)
                 }
                 .contentShape(Rectangle())
             }

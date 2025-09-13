@@ -35,7 +35,7 @@ struct RootView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .overlay(alignment: .bottom) {
             ZStack(alignment: .bottom) {
-                // Composer overlays above the dock when in Chat tab
+                // Liquid glass composer with enhanced vibrancy
                 if tab == .chat {
                     InputBar(text: $chatBridge.text,
                              onSend: { chatBridge.onSend?() },
@@ -44,9 +44,15 @@ struct RootView: View {
                              onMic: { chatBridge.onMic?() },
                              onLive: { chatBridge.onLive?() },
                              onPlus: { chatBridge.onPlus?() })
+                    .liquidGlass(.regular, cornerRadius: 20)
+                    .shadow(color: Color.black.opacity(0.2), radius: 15, y: 5)
                     .padding(.horizontal)
                     .padding(.bottom, DockMetrics.height + 6) // sit above dock
                     .zIndex(1)
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .bottom).combined(with: .opacity),
+                        removal: .move(edge: .bottom).combined(with: .opacity)
+                    ))
                 }
 
                 DockTabBar(selected: $tab, highlightNS: highlightNS)
@@ -66,8 +72,10 @@ struct RootView: View {
 private struct DockTabBar: View {
     @Environment(\.tokens) private var T
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Binding var selected: MainTab
     var highlightNS: Namespace.ID
+    @State private var hoveredTab: MainTab? = nil
 
     private struct Item { let tab: MainTab; let title: String; let icon: AnyView }
     private var items: [Item] {
@@ -81,45 +89,100 @@ private struct DockTabBar: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 4) {
             ForEach(items, id: \.tab) { it in
-                Button(action: { withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { selected = it.tab } }) {
-                    VStack(spacing: 6) {
+                Button(action: { 
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) { 
+                        selected = it.tab 
+                    }
+                }) {
+                    VStack(spacing: 4) {
                         ZStack {
+                            // Liquid glass selection indicator
                             if selected == it.tab {
-                                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .fill(T.accent)
-                                    .matchedGeometryEffect(id: "hl", in: highlightNS)
-                                    .frame(width: 68, height: 52) // taller to center highlight
+                                LiquidGlassTabIndicator(isSelected: true)
+                                    .matchedGeometryEffect(id: "tabSelection", in: highlightNS)
+                                    .frame(width: 68, height: 52)
                             }
-                            VStack(spacing: 4) {
+                            
+                            // Hover effect
+                            if hoveredTab == it.tab && selected != it.tab {
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(Material.ultraThinMaterial)
+                                    .frame(width: 68, height: 52)
+                                    .opacity(0.5)
+                            }
+                            
+                            VStack(spacing: 3) {
                                 it.icon
                                     .foregroundStyle(selected == it.tab ? Color.white : T.textSecondary)
+                                    .scaleEffect(selected == it.tab ? 1.1 : 1.0)
+                                    .animation(.spring(response: 0.3), value: selected)
                                 Text(it.title)
-                                    .font(.caption.weight(.semibold))
+                                    .font(.caption.weight(selected == it.tab ? .bold : .semibold))
                                     .foregroundStyle(selected == it.tab ? Color.white : T.textSecondary)
                             }
                             .frame(width: 76, height: 56)
-                            .padding(.horizontal, 4)
                         }
                     }
                     .frame(maxWidth: .infinity)
+                    .onHover { hovering in
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            hoveredTab = hovering ? it.tab : nil
+                        }
+                    }
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 0)
-        .padding(.vertical, 8)
-        .background(
-            // Solid dock background so content doesn't show through
-            // (prevents scroll views from appearing "behind" the dock)
-            RoundedRectangle(cornerRadius: 0)
-                .fill(T.surface) // opaque surface color
-                .overlay(
-                    Rectangle().fill(T.borderSoft).frame(height: 0.5), alignment: .top
-                )
-                .shadow(color: T.shadow.opacity(0.10), radius: 14, x: 0, y: -2)
-        )
+        .padding(.horizontal, 8)
+        .padding(.vertical, 10)
+        .background {
+            if reduceTransparency {
+                // Accessibility fallback
+                RoundedRectangle(cornerRadius: 0)
+                    .fill(T.surface)
+                    .overlay(
+                        Rectangle().fill(T.borderSoft).frame(height: 0.5), alignment: .top
+                    )
+            } else {
+                // Liquid glass dock with vibrancy
+                ZStack {
+                    // Base glass material
+                    Rectangle()
+                        .fill(Material.regularMaterial)
+                    
+                    // Gradient overlay for depth
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(scheme == .dark ? 0.05 : 0.1),
+                            Color.clear
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    
+                    // Top border with glass effect
+                    VStack {
+                        Rectangle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(scheme == .dark ? 0.2 : 0.3),
+                                        Color.clear
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                            .frame(height: 1)
+                        Spacer()
+                    }
+                }
+                .compositingGroup()
+                .shadow(color: Color.black.opacity(scheme == .dark ? 0.4 : 0.15), radius: 20, x: 0, y: -5)
+            }
+        }
     }
 }
 
@@ -230,67 +293,160 @@ private struct ChatRootView: View {
 
     private var drawer: some View {
         VStack(alignment: .leading, spacing: 0) {
+            // Liquid glass header
             HStack {
-                Text("History").font(.headline).foregroundStyle(T.text)
+                Text("History")
+                    .font(.headline)
+                    .foregroundStyle(T.text)
                 Spacer()
                 Button(role: .destructive, action: { showClearAll.toggle() }) {
-                    HStack(spacing: 6) { AppIcon.trash(14); Text("Clear All") }
+                    HStack(spacing: 6) { 
+                        AppIcon.trash(14)
+                        Text("Clear All") 
+                    }
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.liquidGlass(.subtle, cornerRadius: 8))
                 .tint(Color.red)
-                Button(action: { withAnimation(.spring()) { drawerX = -1 } }) { AppIcon.close(14) }
-                    .buttonStyle(.plain)
+                
+                Button(action: { withAnimation(.spring()) { drawerX = -1 } }) { 
+                    AppIcon.close(16)
+                        .foregroundStyle(T.textSecondary)
+                }
+                .buttonStyle(.plain)
             }
             .padding(12)
-            .background(T.surfaceElevated)
-            .overlay(Rectangle().fill(T.borderSoft).frame(height: 1), alignment: .bottom)
+            .background(Material.ultraThinMaterial)
+            .overlay(
+                LinearGradient(
+                    colors: [T.borderSoft, Color.clear],
+                    startPoint: .bottom,
+                    endPoint: .top
+                )
+                .frame(height: 1),
+                alignment: .bottom
+            )
 
-            // Search
+            // Liquid glass search bar
             HStack {
-                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
                 TextField("Search chats", text: $search)
                     .textFieldStyle(.plain)
+                if !search.isEmpty {
+                    Button(action: { search = "" }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .transition(.scale.combined(with: .opacity))
+                }
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(T.surface)
+            .liquidGlass(.subtle, cornerRadius: 10)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
 
             ScrollView {
-                LazyVStack(spacing: 10) {
+                LazyVStack(spacing: 8) {
                     ForEach(filteredAndSortedChats) { c in
-                        Button(action: { current = c; withAnimation(.spring()) { drawerX = -1 } }) {
+                        Button(action: { 
+                            current = c
+                            withAnimation(.spring()) { drawerX = -1 } 
+                        }) {
                             HStack {
-                                if c.isPinned { Image(systemName: "pin.fill").foregroundStyle(T.accent) } else { AppIcon.text(16).foregroundStyle(T.accent) }
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(c.title.isEmpty ? "New Chat" : c.title).foregroundStyle(T.text)
-                                        .lineLimit(1)
-                                    Text(relative(c.createdAt)).font(.caption).foregroundStyle(T.textSecondary)
+                                // Animated icon
+                                Group {
+                                    if c.isPinned { 
+                                        Image(systemName: "pin.fill")
+                                            .foregroundStyle(T.accent)
+                                            .scaleEffect(1.1)
+                                    } else { 
+                                        AppIcon.text(16)
+                                            .foregroundStyle(T.accent.opacity(0.8))
+                                    }
                                 }
+                                .frame(width: 24)
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(c.title.isEmpty ? "New Chat" : c.title)
+                                        .foregroundStyle(T.text)
+                                        .lineLimit(1)
+                                        .font(.system(.body, design: .rounded))
+                                    
+                                    Text(relative(c.createdAt))
+                                        .font(.caption)
+                                        .foregroundStyle(T.textSecondary)
+                                }
+                                
                                 Spacer()
+                                
+                                // Selection indicator
+                                if current?.id == c.id {
+                                    Circle()
+                                        .fill(T.accent)
+                                        .frame(width: 6, height: 6)
+                                        .transition(.scale)
+                                }
                             }
-                            .padding(10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(T.surface)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .liquidGlass(
+                                current?.id == c.id ? .regular : .subtle,
+                                cornerRadius: 12,
+                                isInteractive: true
                             )
                         }
                         .buttonStyle(.plain)
                         .contextMenu {
-                            Button(c.isPinned ? "Unpin" : "Pin") { c.isPinned.toggle(); try? modelContext.save() }
+                            Button(c.isPinned ? "Unpin" : "Pin") { 
+                                withAnimation(.spring()) {
+                                    c.isPinned.toggle()
+                                }
+                                try? modelContext.save() 
+                            }
                             Divider()
-                            Button("Delete", role: .destructive) { modelContext.delete(c); try? modelContext.save(); if current?.id == c.id { current = chats.first } }
+                            Button("Rename") {
+                                // TODO: Add rename functionality
+                            }
+                            Divider()
+                            Button("Delete", role: .destructive) { 
+                                withAnimation(.easeOut(duration: 0.2)) {
+                                    modelContext.delete(c)
+                                    try? modelContext.save()
+                                    if current?.id == c.id { 
+                                        current = chats.first 
+                                    }
+                                }
+                            }
                         }
                     }
                 }
                 .padding(12)
             }
         }
-        .background(T.surface)
-        .overlay(RoundedRectangle(cornerRadius: 0).stroke(T.borderSoft, lineWidth: 1))
+        .background(Material.thinMaterial)
+        .overlay(
+            RoundedRectangle(cornerRadius: 0)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.1),
+                            Color.clear
+                        ],
+                        startPoint: .topTrailing,
+                        endPoint: .bottomLeading
+                    ),
+                    lineWidth: 1
+                )
+        )
         .confirmationDialog("Clear all chats?", isPresented: $showClearAll, titleVisibility: .visible) {
             Button("Delete All Chats", role: .destructive) {
-                for c in chats { modelContext.delete(c) }
-                try? modelContext.save(); current = nil
+                withAnimation(.easeOut(duration: 0.3)) {
+                    for c in chats { modelContext.delete(c) }
+                    try? modelContext.save()
+                    current = nil
+                }
             }
             Button("Cancel", role: .cancel) { }
         }

@@ -154,14 +154,43 @@ struct ContentView: View {
     private func ComposeButton(action: @escaping () -> Void) -> some View {
         Button(action: action) {
             ZStack {
-                Circle().fill(T.accent)
-                AppIcon.plus(16).foregroundStyle(.white)
+                Circle()
+                    .fill(Material.thick)
+                    .overlay {
+                        Circle()
+                            .fill(T.accent.opacity(0.8))
+                    }
+                    .overlay {
+                        Circle()
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.3),
+                                        Color.white.opacity(0.1)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 0.5
+                            )
+                    }
+                
+                AppIcon.plus(16)
+                    .foregroundStyle(.white)
+                    .fontWeight(.bold)
             }
-            .frame(width: 34, height: 34)
-            .shadow(color: T.shadow, radius: 4, x: 0, y: 2)
+            .frame(width: 36, height: 36)
+            .shadow(color: T.accent.opacity(0.3), radius: 8, x: 0, y: 3)
+            .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
         }
         .accessibilityLabel("Compose New Chat")
         .buttonStyle(.plain)
+        .scaleEffect(1.0)
+        .onTapGesture {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                action()
+            }
+        }
     }
     
     @ViewBuilder
@@ -426,12 +455,7 @@ struct ChatCard: View {
             .padding(16)
             .frame(height: fixedHeight ?? 140)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: T.radiusLarge, style: .continuous)
-                    .fill(LinearGradient(colors: [T.surface, T.surfaceElevated], startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .overlay(RoundedRectangle(cornerRadius: T.radiusLarge, style: .continuous).stroke(T.borderSoft, lineWidth: 1))
-                    .shadow(color: T.shadow.opacity(0.25), radius: (scheme == .dark ? 4 : 6), x: 0, y: 3)
-            )
+            .liquidGlass(.regular, cornerRadius: T.radiusLarge, isInteractive: true)
         }
         .buttonStyle(PlainButtonStyle())
         .contextMenu {

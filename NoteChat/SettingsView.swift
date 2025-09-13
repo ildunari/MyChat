@@ -16,24 +16,59 @@ struct SettingsView: View {
                         ProvidersSettingsView()
                     } label: {
                         HStack(spacing: 12) {
-                            AppIcon.info(18).foregroundStyle(T.accent)
+                            ZStack {
+                                Circle()
+                                    .fill(Material.ultraThinMaterial)
+                                    .frame(width: 32, height: 32)
+                                    .overlay {
+                                        Circle()
+                                            .fill(T.accent.opacity(0.1))
+                                    }
+                                AppIcon.info(18).foregroundStyle(T.accent)
+                            }
                             VStack(alignment: .leading) {
                                 Text("Providers")
-                                Text("Manage API keys and models").font(.footnote).foregroundStyle(.secondary)
+                                    .fontWeight(.medium)
+                                Text("Manage API keys and models")
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
                             }
                         }
+                        .padding(.vertical, 4)
                     }
+                    .listRowBackground(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Material.ultraThinMaterial)
+                    )
+                    
                     NavigationLink {
                         DefaultChatSettingsView()
                     } label: {
                         HStack(spacing: 12) {
-                            AppIcon.info(18).foregroundStyle(T.accent)
+                            ZStack {
+                                Circle()
+                                    .fill(Material.ultraThinMaterial)
+                                    .frame(width: 32, height: 32)
+                                    .overlay {
+                                        Circle()
+                                            .fill(T.accent.opacity(0.1))
+                                    }
+                                AppIcon.info(18).foregroundStyle(T.accent)
+                            }
                             VStack(alignment: .leading) {
                                 Text("Default Chat")
-                                Text("System prompt, temperature, tokens").font(.footnote).foregroundStyle(.secondary)
+                                    .fontWeight(.medium)
+                                Text("System prompt, temperature, tokens")
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
                             }
                         }
+                        .padding(.vertical, 4)
                     }
+                    .listRowBackground(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Material.ultraThinMaterial)
+                    )
                 }
                 Section("Interface") {
                     NavigationLink {
@@ -64,6 +99,7 @@ struct SettingsView: View {
                             Text("Faster rendering with streaming, math, tables, code, artifacts slot").font(.footnote).foregroundStyle(.secondary)
                         }
                     }
+                    .toggleStyle(.liquidGlass)
                     .onChange(of: store.useWebCanvas) { _, _ in store.save() }
 
                     Toggle(isOn: $store.useLiquidGlass) {
@@ -72,30 +108,47 @@ struct SettingsView: View {
                             Text("Liquid glass effect behind content").font(.footnote).foregroundStyle(.secondary)
                         }
                     }
+                    .toggleStyle(.liquidGlass)
                     .onChange(of: store.useLiquidGlass) { _, _ in store.save() }
 
                     if store.useLiquidGlass {
-                        HStack {
-                            Text("Background Intensity")
-                            Spacer()
-                            Text(String(format: "%.2f", store.liquidGlassIntensity)).foregroundStyle(.secondary)
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("Background Intensity")
+                                Spacer()
+                                Text(String(format: "%.0f%%", store.liquidGlassIntensity * 100))
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 2)
+                                    .background(
+                                        Capsule()
+                                            .fill(Material.ultraThinMaterial)
+                                    )
+                            }
+                            Slider(value: $store.liquidGlassIntensity, in: 0...1, step: 0.05)
+                                .accentColor(T.accent)
+                                .onChange(of: store.liquidGlassIntensity) { _, _ in store.save() }
                         }
-                        Slider(value: $store.liquidGlassIntensity, in: 0...1, step: 0.05)
-                            .onChange(of: store.liquidGlassIntensity) { _, _ in store.save() }
+                        .transition(.opacity.combined(with: .move(edge: .top)))
                     }
+                    
                     Toggle(isOn: $store.showThinkingOverlay) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Show Thinking Overlay")
                             Text("Subtle capsule shown while generating").font(.footnote).foregroundStyle(.secondary)
                         }
                     }
+                    .toggleStyle(.liquidGlass)
                     .onChange(of: store.showThinkingOverlay) { _, _ in store.save() }
+                    
                     Toggle(isOn: $store.showReasoningSnippets) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Show Reasoning Snippets")
                             Text("When supported; short, ephemeral tokens only").font(.footnote).foregroundStyle(.secondary)
                         }
                     }
+                    .toggleStyle(.liquidGlass)
                     .onChange(of: store.showReasoningSnippets) { _, _ in store.save() }
                 }
                 Section("Defaults") {

@@ -1,5 +1,5 @@
 import XCTest
-@testable import MyChat
+@testable import NoteChat
 
 final class ProviderPayloadInterceptTests: XCTestCase {
     override class func setUp() {
@@ -28,9 +28,10 @@ final class ProviderPayloadInterceptTests: XCTestCase {
                 XCTAssertNotNil(json?["contents"]) // rough smoke validation
             }
             let resp = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: ["Content-Type":"application/json"])!
-            let data = "{" +
-            "\"candidates\":[{" +
-            "\"content\":{\"parts\":[{\"text\":\"ok\"}]}}]}".data(using: .utf8)!
+            let json = """
+            {"candidates":[{"content":{"parts":[{"text":"ok"}]}}]}
+            """
+            let data = json.data(using: .utf8)!
             return (resp, data)
         }
 
@@ -54,9 +55,10 @@ final class ProviderPayloadInterceptTests: XCTestCase {
                 }
             }
             let resp = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: ["Content-Type":"application/json"])!
-            let data = "{" +
-            "\"choices\":[{" +
-            "\"message\":{\"content\":[{\"text\":\"ok\"}]}}]}".data(using: .utf8)!
+            let json = """
+            {"choices":[{"message":{"content":[{"text":"ok"}]}}]}
+            """
+            let data = json.data(using: .utf8)!
             return (resp, data)
         }
 

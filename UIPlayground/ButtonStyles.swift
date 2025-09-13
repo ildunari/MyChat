@@ -1,6 +1,6 @@
 //
 //  ButtonStyles.swift
-//  MyChat UIPlayground
+//  NoteChat UIPlayground
 //
 //  Experiment with different button styles and animations
 //

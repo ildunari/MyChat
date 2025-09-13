@@ -1,7 +1,8 @@
 import XCTest
 import SwiftData
-@testable import MyChat
+@testable import NoteChat
 
+@MainActor
 final class ModelSelectionTests: XCTestCase {
     func testModelSelectionUpdatesEnabledModels() throws {
         let container = try ModelContainer(for: AppSettings.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))

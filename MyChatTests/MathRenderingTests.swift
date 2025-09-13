@@ -1,5 +1,5 @@
 import XCTest
-@testable import MyChat
+@testable import NoteChat
 
 final class MathRenderingTests: XCTestCase {
     func testMathWebViewStoresLatex() {

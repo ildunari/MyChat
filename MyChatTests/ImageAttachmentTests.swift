@@ -1,5 +1,5 @@
 import XCTest
-@testable import MyChat
+@testable import NoteChat
 
 private final class MockImageProvider: ImageProvider {
     let id = "mock"

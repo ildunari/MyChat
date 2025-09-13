@@ -1,6 +1,6 @@
 //
 //  PlaygroundExample.swift
-//  MyChat UIPlayground
+//  NoteChat UIPlayground
 //
 //  This is a template for testing UI components in isolation.
 //  Use the Canvas preview to see live updates as you code!

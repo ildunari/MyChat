@@ -90,6 +90,7 @@ struct InputBar: View {
     var onPlus: (() -> Void)? = nil
     @FocusState private var isTextFieldFocused: Bool
     @Environment(\.tokens) private var T
+    @Environment(SettingsStore.self) private var store
 
     var body: some View {
         HStack(spacing: InputMetrics.rowSpacing) {
@@ -105,7 +106,8 @@ struct InputBar: View {
                     .lineLimit(1...6)
                     .focused($isTextFieldFocused)
                     .onSubmit {
-                        if !isStreaming, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { onSend() }
+                        // Enter-to-send behavior is controlled by Settings
+                        if store.enterToSend, !isStreaming, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { onSend() }
                     }
                     .submitLabel(.send)
 
@@ -139,6 +141,14 @@ struct InputBar: View {
                             .foregroundStyle(T.accent)
                             .frame(width: InputMetrics.sendSize, height: InputMetrics.sendSize)
                             .background(Circle().fill(T.accentSoft))
+                    }
+                    .contextMenu {
+                        if !isStreaming {
+                            Button("Send") { onSend() }
+                            Button("Insert New Line") { text.append("\n") }
+                        } else {
+                            Button("Stop", role: .destructive) { onStop?() }
+                        }
                     }
                     .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }

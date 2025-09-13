@@ -41,3 +41,33 @@ Scope: Chat UX polish, navigation behavior, visual background
 - Accessibility: large content sizes, VoiceOver rotor landmarks, contrast checks.
 - Settings: toggle for background animation and intensity.
 
+
+---
+
+## Phase 2 (2025-09-13) — Chat Production Polish
+
+Features
+- Settings → Enter to Send, Preserve Drafts, Animated Background toggle + intensity slider.
+  - Files: `NoteChat/Models.swift`, `NoteChat/SettingsStore.swift`, `NoteChat/SettingsView.swift`, `NoteChat/RootView.swift`
+- Draft preservation per chat (switching threads keeps typed text).
+  - Files: `NoteChat/ChatComposerBridge.swift`, `NoteChat/RootView.swift`
+- Scroll-to-bottom affordance when scrolled up.
+  - File: `NoteChat/ChatView.swift` (MessageListView overlay)
+- Group consecutive messages by role; relative timestamps per message.
+  - File: `NoteChat/ChatView.swift` (MessageRow changes)
+- Long-press on Send for quick actions; refine typing indicator.
+  - Files: `NoteChat/ChatUI.swift`, `NoteChat/ChatView.swift`
+- Expand response to full-screen sheet (for code/long content).
+  - File: `NoteChat/ChatView.swift`
+
+Testing
+- Build: `xcodebuild -project NoteChat-AI.xcodeproj -scheme MyChat -destination 'generic/platform=iOS Simulator' build`
+- Settings → toggle features and confirm behavior updates live.
+- Type in a chat, switch chats, return: draft restored when enabled.
+- Scroll up while streaming: “Bottom” pill appears; tap to jump.
+- Inspect grouped headers and timestamps; expand assistant reply via button.
+
+Notes
+- Liquid Glass respects intensity and can be disabled. Default 0.40.
+- Enter-to-send gated in `InputBar.onSubmit`; newline insertion available via Send button context menu.
+- Next candidates: message reactions, per-chat pinning, export/share transcript, attachments tray, better code block controls.

@@ -6,15 +6,19 @@ enum MainTab: Int, CaseIterable { case chat, notes, home, media, settings }
 struct RootView: View {
     @Environment(\.tokens) private var T
     @Environment(\.modelContext) private var modelContext
+    @Environment(SettingsStore.self) private var store
     @State private var tab: MainTab = .home
     @Namespace private var highlightNS
     @StateObject private var chatBridge = ChatComposerBridge()
 
     var body: some View {
         ZStack {
-            // Liquid glass background spans the app
-            LiquidGlassBackground()
-                .allowsHitTesting(false)
+            // Liquid glass background spans the app (toggleable)
+            if store.useLiquidGlass {
+                LiquidGlassBackground()
+                    .allowsHitTesting(false)
+                    .opacity(store.liquidGlassIntensity)
+            }
             Group {
                 switch tab {
                 case .home: ContentView()
@@ -125,6 +129,8 @@ enum DockMetrics { static let height: CGFloat = 78 }
 private struct ChatRootView: View {
     @Environment(\.tokens) private var T
     @Environment(\.modelContext) private var modelContext
+    @Environment(SettingsStore.self) private var store
+    @EnvironmentObject private var chatBridge: ChatComposerBridge
     @Query(sort: \Chat.createdAt, order: .reverse) private var chats: [Chat]
     @State private var current: Chat? = nil
     @State private var drawerX: CGFloat = -1 // -1 closed, 0 open (as fraction of width)
@@ -203,6 +209,12 @@ private struct ChatRootView: View {
                         current = newChat
                     }
                 }
+            }
+            // Save/load per-chat drafts when switching threads
+            .onChange(of: current) { oldChat, newChat in
+                guard store.preserveDrafts else { return }
+                if let oldId = oldChat?.id { chatBridge.saveDraft(for: oldId) }
+                if let newId = newChat?.id { chatBridge.loadDraft(for: newId) }
             }
             // Jump directly to a requested chat
             .onReceive(NotificationCenter.default.publisher(for: AppNavEvent.openChat)) { note in

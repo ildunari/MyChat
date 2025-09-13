@@ -24,3 +24,4 @@ MyChat.xcodeproj/xcuserdata/
 # Env secrets (Debug-only bundle copy comes from this)
 MyChat/Env/.env
 MyChat/Env/*.env
+NoteChat/Env/.env

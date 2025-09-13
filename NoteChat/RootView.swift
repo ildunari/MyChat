@@ -7,17 +7,18 @@ struct RootView: View {
     @Environment(\.tokens) private var T
     @Environment(\.modelContext) private var modelContext
     @Environment(SettingsStore.self) private var store
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @State private var tab: MainTab = .home
     @Namespace private var highlightNS
     @StateObject private var chatBridge = ChatComposerBridge()
 
     var body: some View {
         ZStack {
-            // Liquid glass background spans the app (toggleable)
+            // Liquid glass background spans the app (toggleable), respects Reduce Transparency
             if store.useLiquidGlass {
                 LiquidGlassBackground()
                     .allowsHitTesting(false)
-                    .opacity(store.liquidGlassIntensity)
+                    .opacity(reduceTransparency ? 0 : store.liquidGlassIntensity)
             }
             Group {
                 switch tab {

@@ -144,7 +144,12 @@ struct GoogleProvider: AIProviderAdvanced {
                                     "HARM_CATEGORY_DANGEROUS_CONTENT"].map { Safety(category: $0, threshold: "BLOCK_NONE") }
 
         let url = apiBase.appendingPathComponent("models/\(model):generateContent")
-        var urlReq = URLRequest(url: URL(string: url.absoluteString + "?key=\(apiKey)")!)
+        var comps = URLComponents(url: url, resolvingAgainstBaseURL: false)!
+        var q = comps.queryItems ?? []
+        q.append(URLQueryItem(name: "key", value: apiKey))
+        comps.queryItems = q
+        guard let safeURL = comps.url else { throw NSError(domain: "Google", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"]) }
+        var urlReq = URLRequest(url: safeURL)
         urlReq.httpMethod = "POST"
         urlReq.setValue("application/json", forHTTPHeaderField: "Content-Type")
 

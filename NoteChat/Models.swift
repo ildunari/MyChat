@@ -80,6 +80,10 @@ final class AppSettings: Identifiable {
     var useLiquidGlass: Bool
     // Visuals: liquid glass intensity (0...1)
     var liquidGlassIntensity: Double
+    // Overlay: show subtle thinking HUD while generating
+    var showThinkingOverlay: Bool
+    // Overlay: attempt to surface small reasoning snippets (provider permitting)
+    var showReasoningSnippets: Bool
 
     // Home layout preferences
     var homeSectionOrder: [String] // e.g., ["chats", "agents"]
@@ -116,6 +120,8 @@ final class AppSettings: Identifiable {
         preserveDrafts: Bool = true,
         useLiquidGlass: Bool = true,
         liquidGlassIntensity: Double = 0.4,
+        showThinkingOverlay: Bool = true,
+        showReasoningSnippets: Bool = true,
         homeSectionOrder: [String] = ["chats", "agents"],
         homeChatsExpanded: Bool = true,
         homeAgentsExpanded: Bool = true,
@@ -146,6 +152,8 @@ final class AppSettings: Identifiable {
         self.preserveDrafts = preserveDrafts
         self.useLiquidGlass = useLiquidGlass
         self.liquidGlassIntensity = liquidGlassIntensity
+        self.showThinkingOverlay = showThinkingOverlay
+        self.showReasoningSnippets = showReasoningSnippets
         self.homeSectionOrder = homeSectionOrder
         self.homeChatsExpanded = homeChatsExpanded
         self.homeAgentsExpanded = homeAgentsExpanded

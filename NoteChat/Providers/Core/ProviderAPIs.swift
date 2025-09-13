@@ -35,7 +35,8 @@ struct ProviderAPIs {
             return decoded.data.map { $0.id }.sorted()
 
         case .anthropic:
-            var req = URLRequest(url: URL(string: "https://api.anthropic.com/v1/models")!)
+            guard let url = URL(string: "https://api.anthropic.com/v1/models") else { throw NSError(domain: "Anthropic", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"]) }
+            var req = URLRequest(url: url)
             req.httpMethod = "GET"
             req.setValue(apiKey, forHTTPHeaderField: "x-api-key")
             req.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
@@ -152,7 +153,8 @@ struct ProviderAPIs {
 
         case .anthropic:
             // Anthropic models endpoint lists IDs; public per‑model limits are documented, not returned here.
-            var req = URLRequest(url: URL(string: "https://api.anthropic.com/v1/models")!)
+            guard let url = URL(string: "https://api.anthropic.com/v1/models") else { throw NSError(domain: "Anthropic", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"]) }
+            var req = URLRequest(url: url)
             req.httpMethod = "GET"
             req.setValue(apiKey, forHTTPHeaderField: "x-api-key")
             req.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")

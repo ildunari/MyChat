@@ -83,6 +83,20 @@ struct SettingsView: View {
                         Slider(value: $store.liquidGlassIntensity, in: 0...1, step: 0.05)
                             .onChange(of: store.liquidGlassIntensity) { _, _ in store.save() }
                     }
+                    Toggle(isOn: $store.showThinkingOverlay) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Show Thinking Overlay")
+                            Text("Subtle capsule shown while generating").font(.footnote).foregroundStyle(.secondary)
+                        }
+                    }
+                    .onChange(of: store.showThinkingOverlay) { _, _ in store.save() }
+                    Toggle(isOn: $store.showReasoningSnippets) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Show Reasoning Snippets")
+                            Text("When supported; short, ephemeral tokens only").font(.footnote).foregroundStyle(.secondary)
+                        }
+                    }
+                    .onChange(of: store.showReasoningSnippets) { _, _ in store.save() }
                 }
                 Section("Defaults") {
                     Toggle(isOn: $store.enterToSend) {

@@ -10,6 +10,7 @@ struct ChatView: View {
     @Query private var settingsQuery: [AppSettings]
     @Environment(\.tokens) private var T
     @EnvironmentObject private var chatBridge: ChatComposerBridge
+    @Environment(SettingsStore.self) private var store
 
     let chat: Chat
     var onNewChat: (() -> Void)? = nil
@@ -108,7 +109,7 @@ struct ChatView: View {
         }
         // Subtle thinking overlay while streaming
         .overlay(alignment: .top) {
-            if isSending {
+            if isSending, store.showThinkingOverlay {
                 ThinkingOverlay(snippet: reasoningSnippet)
                     .transition(.opacity.combined(with: .move(edge: .top)))
                     .padding(.top, 6)
@@ -697,6 +698,7 @@ struct ChatView: View {
                         self.streamingText = (self.streamingText ?? "") + delta
                     }
                 } onReasoningDelta: { rdelta in
+                    guard store.showReasoningSnippets else { return }
                     Task { @MainActor in
                         let combined = (self.reasoningSnippet + rdelta).replacingOccurrences(of: "\n", with: " ")
                         self.reasoningSnippet = String(combined.suffix(90))
@@ -786,6 +788,7 @@ struct ChatView: View {
     private struct ThinkingOverlay: View {
         let snippet: String
         @Environment(\.tokens) private var T
+        @Environment(\.accessibilityReduceMotion) private var reduceMotion
         @State private var phase: Double = 0
         var body: some View {
             HStack(spacing: 10) {
@@ -806,7 +809,13 @@ struct ChatView: View {
             .background(.ultraThinMaterial, in: Capsule())
             .overlay(Capsule().stroke(T.borderSoft, lineWidth: 0.7))
             .shadow(color: T.shadow.opacity(0.12), radius: 6, y: 2)
-            .onAppear { withAnimation(.easeInOut(duration: 1.0).repeatForever()) { phase = 1 } }
+            .onAppear {
+                if reduceMotion {
+                    phase = 1
+                } else {
+                    withAnimation(.easeInOut(duration: 1.0).repeatForever()) { phase = 1 }
+                }
+            }
         }
         private func opacity(_ i: Int) -> Double { max(0.25, 1 - abs(sin(phase * .pi + Double(i) * 0.8))) }
     }

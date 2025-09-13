@@ -49,6 +49,8 @@ final class SettingsStore {
     var preserveDrafts: Bool
     var useLiquidGlass: Bool
     var liquidGlassIntensity: Double
+    var showThinkingOverlay: Bool
+    var showReasoningSnippets: Bool
     var defaultHistoryLimit: Int // -1 = all, otherwise last N messages
     // Home layout prefs
     var homeSectionOrder: [String]
@@ -140,6 +142,8 @@ final class SettingsStore {
         self.preserveDrafts = settings.preserveDrafts
         self.useLiquidGlass = settings.useLiquidGlass
         self.liquidGlassIntensity = settings.liquidGlassIntensity
+        self.showThinkingOverlay = settings.showThinkingOverlay
+        self.showReasoningSnippets = settings.showReasoningSnippets
         self.defaultHistoryLimit = settings.defaultHistoryLimit
         self.homeSectionOrder = settings.homeSectionOrder
         self.homeChatsExpanded = settings.homeChatsExpanded
@@ -173,6 +177,8 @@ final class SettingsStore {
         settings.preserveDrafts = preserveDrafts
         settings.useLiquidGlass = useLiquidGlass
         settings.liquidGlassIntensity = liquidGlassIntensity
+        settings.showThinkingOverlay = showThinkingOverlay
+        settings.showReasoningSnippets = showReasoningSnippets
         settings.defaultHistoryLimit = defaultHistoryLimit
         settings.homeSectionOrder = homeSectionOrder
         settings.homeChatsExpanded = homeChatsExpanded

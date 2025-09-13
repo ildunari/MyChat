@@ -34,10 +34,12 @@ struct SettingsView: View {
                                     .foregroundStyle(.secondary)
                             }
                         }
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 6)
                     }
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .listRowSeparator(.hidden)
                     .listRowBackground(
-                        RoundedRectangle(cornerRadius: 10)
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
                             .fill(Material.ultraThinMaterial)
                     )
                     
@@ -63,14 +65,19 @@ struct SettingsView: View {
                                     .foregroundStyle(.secondary)
                             }
                         }
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 6)
                     }
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                    .listRowSeparator(.hidden)
                     .listRowBackground(
-                        RoundedRectangle(cornerRadius: 10)
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
                             .fill(Material.ultraThinMaterial)
                     )
                 }
-                Section("Interface") {
+                Section {
+                    Text("Interface").font(.title3.weight(.semibold)).foregroundStyle(.secondary)
+                        .listRowInsets(EdgeInsets(top: 14, leading: 16, bottom: 4, trailing: 16))
+                        .listRowSeparator(.hidden)
                     NavigationLink {
                         InterfaceSettingsView()
                     } label: {
@@ -82,6 +89,7 @@ struct SettingsView: View {
                             }
                         }
                     }
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                     NavigationLink {
                         PersonalizationSettingsView()
                     } label: {
@@ -93,6 +101,7 @@ struct SettingsView: View {
                             }
                         }
                     }
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                     Toggle(isOn: $store.useWebCanvas) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Use Web Canvas")
@@ -100,6 +109,7 @@ struct SettingsView: View {
                         }
                     }
                     .toggleStyle(.liquidGlass)
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                     .onChange(of: store.useWebCanvas) { _, _ in store.save() }
 
                     Toggle(isOn: $store.useLiquidGlass) {
@@ -109,6 +119,7 @@ struct SettingsView: View {
                         }
                     }
                     .toggleStyle(.liquidGlass)
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                     .onChange(of: store.useLiquidGlass) { _, _ in store.save() }
 
                     if store.useLiquidGlass {
@@ -130,6 +141,7 @@ struct SettingsView: View {
                                 .accentColor(T.accent)
                                 .onChange(of: store.liquidGlassIntensity) { _, _ in store.save() }
                         }
+                        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 8, trailing: 16))
                         .transition(.opacity.combined(with: .move(edge: .top)))
                     }
                     
@@ -140,6 +152,7 @@ struct SettingsView: View {
                         }
                     }
                     .toggleStyle(.liquidGlass)
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                     .onChange(of: store.showThinkingOverlay) { _, _ in store.save() }
                     
                     Toggle(isOn: $store.showReasoningSnippets) {
@@ -149,15 +162,20 @@ struct SettingsView: View {
                         }
                     }
                     .toggleStyle(.liquidGlass)
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                     .onChange(of: store.showReasoningSnippets) { _, _ in store.save() }
                 }
-                Section("Defaults") {
+                Section {
+                    Text("Defaults").font(.title3.weight(.semibold)).foregroundStyle(.secondary)
+                        .listRowInsets(EdgeInsets(top: 14, leading: 16, bottom: 4, trailing: 16))
+                        .listRowSeparator(.hidden)
                     Toggle(isOn: $store.enterToSend) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Enter to Send")
                             Text("Return sends the message; otherwise it inserts a newline").font(.footnote).foregroundStyle(.secondary)
                         }
                     }
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                     .onChange(of: store.enterToSend) { _, _ in store.save() }
 
                     Toggle(isOn: $store.preserveDrafts) {
@@ -166,6 +184,7 @@ struct SettingsView: View {
                             Text("Keep your typed text when switching threads").font(.footnote).foregroundStyle(.secondary)
                         }
                     }
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                     .onChange(of: store.preserveDrafts) { _, _ in store.save() }
                     Picker("Default Provider", selection: $store.defaultProvider) {
                         Text("OpenAI").fontWeight(.semibold).tag("openai")
@@ -174,6 +193,7 @@ struct SettingsView: View {
                         Text("XAI").fontWeight(.semibold).tag("xai")
                     }
                     .fontWeight(.semibold)
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                     .onChange(of: store.defaultProvider) { _, _ in store.save() }
 
                     // Model picker based on enabled models for the selected provider
@@ -185,6 +205,7 @@ struct SettingsView: View {
                     .fontWeight(.semibold)
                     .pickerStyle(.menu)
                     .disabled(modelsForSelectedProvider().isEmpty)
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 12, trailing: 16))
                     .onChange(of: store.defaultModel) { _, _ in store.save() }
                     .onAppear { ensureValidDefaultModel() }
                     .onChange(of: store.defaultProvider) { _, _ in ensureValidDefaultModel() }

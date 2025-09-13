@@ -102,7 +102,7 @@ private struct DockTabBar: View {
                             if selected == it.tab {
                                 LiquidGlassTabIndicator(isSelected: true)
                                     .matchedGeometryEffect(id: "tabSelection", in: highlightNS)
-                                    .frame(width: 68, height: 52)
+                                    .frame(width: 72, height: 56)
                             }
                             
                             // Hover effect
@@ -135,8 +135,8 @@ private struct DockTabBar: View {
                 .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 12)
         .background {
             if reduceTransparency {
                 // Accessibility fallback

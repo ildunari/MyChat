@@ -105,7 +105,7 @@ private enum InputMetrics { // precise sizing
     static let edgePadding: CGFloat = 16
     static let rowSpacing: CGFloat = 10
     static let plusSize: CGFloat = 40
-    static let fieldHeight: CGFloat = 40
+    static let fieldHeight: CGFloat = 44
     static let fieldCorner: CGFloat = 18
     static let sendSize: CGFloat = 40 // match plusSize for visual consistency
 }
@@ -188,9 +188,10 @@ struct InputBar: View {
                     .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
-            .frame(minHeight: InputMetrics.fieldHeight) // compact baseline size
+            // Fix vertical centering by using a fixed height and balanced padding
+            .frame(height: InputMetrics.fieldHeight)
             .padding(.horizontal, 12)
-            .padding(.vertical, 6) // slight vertical padding so text never looks cut off
+            .padding(.vertical, 0)
             .background(
                 RoundedRectangle(cornerRadius: InputMetrics.fieldCorner, style: .continuous)
                     .fill(T.surfaceElevated)
@@ -201,6 +202,6 @@ struct InputBar: View {
             )
         }
         .padding(.horizontal, InputMetrics.edgePadding)
-        .padding(.bottom, 8)
+        .padding(.vertical, 6)
     }
 }

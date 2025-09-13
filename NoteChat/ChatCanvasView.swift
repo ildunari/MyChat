@@ -40,9 +40,9 @@ final class ChatCanvasController: ObservableObject {
     func scrollToBottom() { callJS("window.ChatCanvas && window.ChatCanvas.scrollToBottom();") }
     func appendToolCard(title: String, subtitle: String? = nil, status: String = "idle", request: String? = nil, response: String? = nil, open: Bool = false) {
         // Try ChatCanvas API first; fall back to ToolCard helper
-        let sub = subtitle != nil ? "\"\(escape(subtitle!))\"" : "null"
-        let req = request != nil ? "`\(escape(request!))`" : "null"
-        let res = response != nil ? "`\(escape(response!))`" : "null"
+        let sub = subtitle.map { "\"\(escape($0))\"" } ?? "null"
+        let req = request.map { "`\(escape($0))`" } ?? "null"
+        let res = response.map { "`\(escape($0))`" } ?? "null"
         let js = "(window.ChatCanvas && ChatCanvas.appendToolCard ? ChatCanvas.appendToolCard : (window.ToolCard ? ToolCard.append : null)) && (window.ChatCanvas && ChatCanvas.appendToolCard ? ChatCanvas.appendToolCard({title: \"\(escape(title))\", subtitle: \(sub), status: \"\(escape(status))\", request: \(req), response: \(res), open: \(open ? "true" : "false")}) : (window.ToolCard && ToolCard.append({title: \"\(escape(title))\", subtitle: \(sub), status: \"\(escape(status))\", request: \(req), response: \(res), open: \(open ? "true" : "false")})));"
         callJS(js)
     }

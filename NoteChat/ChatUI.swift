@@ -95,6 +95,7 @@ struct InputBar: View {
     var body: some View {
         HStack(spacing: InputMetrics.rowSpacing) {
             Button(action: { onPlus?() }) { AppIcon.plus(18) }
+            .accessibilityLabel("Attachments")
             .frame(width: InputMetrics.plusSize, height: InputMetrics.plusSize)
             .background(Circle().fill(T.accentSoft))
 
@@ -128,12 +129,14 @@ struct InputBar: View {
                             .frame(width: InputMetrics.plusSize, height: InputMetrics.plusSize)
                             .background(Circle().fill(T.accentSoft))
                     }
+                    .accessibilityLabel("Voice input")
                     Button(action: { onLive?() }) {
                         AppIcon.waveform(18)
                             .foregroundStyle(T.accent)
                             .frame(width: InputMetrics.plusSize, height: InputMetrics.plusSize)
                             .background(Circle().fill(T.accentSoft))
                     }
+                    .accessibilityLabel("Live mode")
                 } else {
                     // Send button only when there is text, styled like a small circle
                     Button(action: { if !isStreaming { onSend() } }) {
@@ -142,6 +145,7 @@ struct InputBar: View {
                             .frame(width: InputMetrics.sendSize, height: InputMetrics.sendSize)
                             .background(Circle().fill(T.accentSoft))
                     }
+                    .accessibilityLabel("Send")
                     .contextMenu {
                         if !isStreaming {
                             Button("Send") { onSend() }

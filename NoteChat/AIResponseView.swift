@@ -1,5 +1,6 @@
 // Views/AIResponseView.swift
 import SwiftUI
+import UIKit
 
 // MarkdownUI removed in favor of Down renderer
 
@@ -149,7 +150,7 @@ private struct CodeBlockSegment: View {
     let code: String
     @Environment(\.tokens) private var T
     var body: some View {
-        Group {
+        ZStack(alignment: .topTrailing) {
             #if canImport(Highlightr) || canImport(Highlighter) || canImport(HighlighterSwift)
             HighlightedCodeView(code: code, language: language)
                 .padding(6)
@@ -163,6 +164,7 @@ private struct CodeBlockSegment: View {
             ScrollView(.horizontal, showsIndicators: true) {
                 Text(code)
                     .font(.system(.body, design: .monospaced))
+                    .textSelection(.enabled)
                     .padding(12)
             }
             .background(T.codeBg)
@@ -172,6 +174,34 @@ private struct CodeBlockSegment: View {
             )
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             #endif
+
+            // Toolbar overlay (copy / expand)
+            HStack(spacing: 6) {
+                if let lang = language, lang.isEmpty == false {
+                    Text(lang.uppercased())
+                        .font(.caption2.weight(.semibold))
+                        .padding(.horizontal, 8).padding(.vertical, 4)
+                        .background(.ultraThinMaterial, in: Capsule())
+                        .accessibilityHidden(true)
+                }
+                Button(action: { UIPasteboard.general.string = code }) {
+                    Label("Copy", systemImage: "doc.on.doc")
+                        .labelStyle(.iconOnly)
+                        .font(.system(size: 12, weight: .semibold))
+                        .padding(8)
+                        .background(.ultraThinMaterial, in: Circle())
+                }
+                .accessibilityLabel("Copy code")
+                Button(action: { NotificationCenter.default.post(name: Notification.Name("ExpandResponse"), object: nil, userInfo: ["text": "```\(language ?? "")\n\(code)\n```"]) }) {
+                    Label("Expand", systemImage: "arrow.up.left.and.arrow.down.right")
+                        .labelStyle(.iconOnly)
+                        .font(.system(size: 12, weight: .semibold))
+                        .padding(8)
+                        .background(.ultraThinMaterial, in: Circle())
+                }
+                .accessibilityLabel("Expand code")
+            }
+            .padding(8)
         }
     }
 }
@@ -204,6 +234,7 @@ private struct HighlightedCodeView: UIViewRepresentable {
         let tv = UITextView()
         tv.isEditable = false
         tv.isScrollEnabled = false
+        tv.isSelectable = true
         tv.textContainerInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
         tv.backgroundColor = UIColor.clear
         return tv
@@ -229,6 +260,7 @@ private struct HighlightedCodeView: UIViewRepresentable {
         let tv = UITextView()
         tv.isEditable = false
         tv.isScrollEnabled = false
+        tv.isSelectable = true
         tv.textContainerInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
         tv.backgroundColor = UIColor.clear
         return tv
@@ -253,6 +285,7 @@ private struct HighlightedCodeView: UIViewRepresentable {
         let tv = UITextView()
         tv.isEditable = false
         tv.isScrollEnabled = false
+        tv.isSelectable = true
         tv.textContainerInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
         tv.backgroundColor = UIColor.clear
         return tv

@@ -71,3 +71,23 @@ Notes
 - Liquid Glass respects intensity and can be disabled. Default 0.40.
 - Enter-to-send gated in `InputBar.onSubmit`; newline insertion available via Send button context menu.
 - Next candidates: message reactions, per-chat pinning, export/share transcript, attachments tray, better code block controls.
+
+---
+
+## Phase 3 (2025-09-13) — Advanced Chat UX
+
+Features
+- Code blocks: inline actions (Copy, Expand), language label; selection enabled.
+  - File: `NoteChat/AIResponseView.swift`
+- Message menus & reactions: long-press menus, Like/Dislike reactions stored per message; delete user messages.
+  - Files: `NoteChat/ChatView.swift`, `NoteChat/Models.swift`
+- Export/Share transcript to Markdown via share sheet.
+  - File: `NoteChat/ChatView.swift`
+- Pin chats + search in history drawer; pinned sort to top.
+  - Files: `NoteChat/Models.swift`, `NoteChat/RootView.swift`
+- Accessibility: labeled composer controls; code and markdown text selection.
+  - Files: `NoteChat/ChatUI.swift`, `NoteChat/AIResponseView.swift`
+
+Build
+- Verified simulator build: `MyChat` scheme (generic iOS Simulator destination)
+

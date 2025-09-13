@@ -51,7 +51,9 @@ struct ChatView: View {
                                      aiModel: currentModel,
                                      onRetry: { msg in Task { await retryResponse(msg) } },
                                      onCopy: { copyResponse($0) },
-                                     onEdit: { editMessage($0) })
+                                     onEdit: { editMessage($0) },
+                                     onReact: { msg, reaction in setReaction(msg, reaction) },
+                                     onDelete: { msg in deleteMessage(msg) })
                     if showSuggestions && sortedMessages.isEmpty {
                         StarterCardGrid(suggestions: defaultSuggestions) { pick in
                             chatBridge.text = composePrompt(from: pick)
@@ -99,6 +101,9 @@ struct ChatView: View {
             if let t = expandedText {
                 NavigationStack { ScrollView { AIResponseView(content: t).padding() }.navigationTitle("Response").toolbar { ToolbarItem(placement: .cancellationAction) { Button("Done") { expandedText = nil } } } }
             }
+        }
+        .sheet(isPresented: $showShare) {
+            ShareSheet(activityItems: [shareText])
         }
         .onAppear {
             if isDefaultTitle, let first = sortedMessages.first {
@@ -184,6 +189,8 @@ struct ChatView: View {
         var onRetry: (Message) -> Void
         var onCopy: (Message) -> Void
         var onEdit: (Message) -> Void
+        var onReact: (Message, String?) -> Void
+        var onDelete: (Message) -> Void
         @State private var showJumpToBottom: Bool = false
         var body: some View {
             ScrollViewReader { proxy in
@@ -198,14 +205,18 @@ struct ChatView: View {
                                            aiModel: aiModel,
                                            showHeader: showHeader,
                                            onRetry: { onRetry(message) },
-                                           onCopy: { onCopy(message) })
+                                           onCopy: { onCopy(message) },
+                                           onReact: { onReact(message, $0) },
+                                           onDelete: { onDelete(message) })
                                     .id(message.id)
                                     .onAppear { if index == messages.count - 1 { showJumpToBottom = false } }
                                     .onDisappear { if index == messages.count - 1 { showJumpToBottom = true } }
                             } else {
                                 MessageRow(message: message,
                                            showHeader: showHeader,
-                                           onEdit: { onEdit(message) })
+                                           onEdit: { onEdit(message) },
+                                           onReact: { onReact(message, $0) },
+                                           onDelete: { onDelete(message) })
                                     .id(message.id)
                                     .onAppear { if index == messages.count - 1 { showJumpToBottom = false } }
                                     .onDisappear { if index == messages.count - 1 { showJumpToBottom = true } }
@@ -259,6 +270,8 @@ struct ChatView: View {
         var onRetry: (() -> Void)? = nil
         var onCopy: (() -> Void)? = nil
         var onEdit: (() -> Void)? = nil
+        var onReact: ((String?) -> Void)? = nil
+        var onDelete: (() -> Void)? = nil
         var body: some View {
             Group {
                 if message.role == "assistant" {
@@ -279,6 +292,10 @@ struct ChatView: View {
                             Button("Retry") { onRetry?() }
                             Button("Copy") { onCopy?() }
                             Button("Expand") { NotificationCenter.default.post(name: Notification.Name("ExpandResponse"), object: nil, userInfo: ["text": message.content]) }
+                            // Reactions
+                            Spacer(minLength: 8)
+                            Button(action: { onReact?(message.reaction == "up" ? nil : "up") }) { Image(systemName: message.reaction == "up" ? "hand.thumbsup.fill" : "hand.thumbsup") }
+                            Button(action: { onReact?(message.reaction == "down" ? nil : "down") }) { Image(systemName: message.reaction == "down" ? "hand.thumbsdown.fill" : "hand.thumbsdown") }
                         }
                         .font(.footnote)
                         .padding(.top, 4)
@@ -287,6 +304,14 @@ struct ChatView: View {
                             .foregroundStyle(.secondary)
                     }
                     .padding(.horizontal)
+                    .contextMenu {
+                        Button("Copy") { onCopy?() }
+                        Button("Retry") { onRetry?() }
+                        Button("Expand") { NotificationCenter.default.post(name: Notification.Name("ExpandResponse"), object: nil, userInfo: ["text": message.content]) }
+                        Divider()
+                        Button(message.reaction == "up" ? "Remove Like" : "Like") { onReact?(message.reaction == "up" ? nil : "up") }
+                        Button(message.reaction == "down" ? "Remove Dislike" : "Dislike") { onReact?(message.reaction == "down" ? nil : "down") }
+                    }
                 } else {
                     // User message aligned to the right with tighter corner radius
                     VStack(alignment: .trailing, spacing: 4) {
@@ -317,6 +342,12 @@ struct ChatView: View {
                             .foregroundStyle(.secondary)
                     }
                     .padding(.horizontal)
+                    .contextMenu {
+                        Button("Copy") { onCopy?() }
+                        Button("Edit") { onEdit?() }
+                        Divider()
+                        Button("Delete", role: .destructive) { onDelete?() }
+                    }
                 }
             }
         }
@@ -382,6 +413,7 @@ struct ChatView: View {
                 Button("Other models…") { showFullModelPicker = true }
                 Divider()
                 Button("Chat Settings…") { showChatSettings = true }
+                Button("Export / Share Transcript") { shareText = composeTranscript(); showShare = true }
             } label: {
                 HStack(spacing: 4) {
                     Text(currentModelDisplay()).font(.headline)
@@ -745,6 +777,8 @@ struct ChatView: View {
     @State private var showModelEditor: Bool = false
     @State private var showFullModelPicker: Bool = false
     @State private var showChatSettings: Bool = false
+    @State private var showShare: Bool = false
+    @State private var shareText: String = ""
 
     private func updateChatTitle(from text: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -783,6 +817,21 @@ struct ChatView: View {
         }
     }
 
+    // Compose Markdown transcript for export/share
+    private func composeTranscript() -> String {
+        var out = "# \(chat.title.isEmpty ? "Chat" : chat.title)\n\n"
+        for m in sortedMessages {
+            if m.role == "user" {
+                out += "**You** (\(relativeTime(m.createdAt))):\n\n"
+                out += m.content + "\n\n"
+            } else {
+                out += "**Assistant** (\(relativeTime(m.createdAt))):\n\n"
+                out += m.content + "\n\n"
+            }
+        }
+        return out
+    }
+
     // MARK: - Message actions
     private func retryResponse(_ message: Message) async {
         guard let idx = sortedMessages.firstIndex(where: { $0.id == message.id }) else { return }
@@ -799,6 +848,18 @@ struct ChatView: View {
         UIPasteboard.general.string = message.content
     }
 
+    @MainActor
+    private func setReaction(_ message: Message, _ reaction: String?) {
+        message.reaction = reaction
+        try? modelContext.save()
+    }
+
+    @MainActor
+    private func deleteMessage(_ message: Message) {
+        modelContext.delete(message)
+        try? modelContext.save()
+    }
+
     private func editMessage(_ message: Message) {
         editingMessage = message
         chatBridge.text = message.content
@@ -806,6 +867,15 @@ struct ChatView: View {
 }
 
 // (Expanded response is handled via Notification + sheet above.)
+
+// Share sheet wrapper
+private struct ShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+    }
+    func updateUIViewController(_ vc: UIActivityViewController, context: Context) {}
+}
 
 #Preview {
     if let container = try? ModelContainer(

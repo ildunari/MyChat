@@ -135,6 +135,7 @@ private struct ChatRootView: View {
     @State private var current: Chat? = nil
     @State private var drawerX: CGFloat = -1 // -1 closed, 0 open (as fraction of width)
     @State private var drawerOpen: Bool = false
+    @State private var search: String = ""
 
     var body: some View {
         GeometryReader { geo in
@@ -243,12 +244,22 @@ private struct ChatRootView: View {
             .background(T.surfaceElevated)
             .overlay(Rectangle().fill(T.borderSoft).frame(height: 1), alignment: .bottom)
 
+            // Search
+            HStack {
+                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                TextField("Search chats", text: $search)
+                    .textFieldStyle(.plain)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(T.surface)
+
             ScrollView {
                 LazyVStack(spacing: 10) {
-                    ForEach(chats) { c in
+                    ForEach(filteredAndSortedChats) { c in
                         Button(action: { current = c; withAnimation(.spring()) { drawerX = -1 } }) {
                             HStack {
-                                AppIcon.text(16).foregroundStyle(T.accent)
+                                if c.isPinned { Image(systemName: "pin.fill").foregroundStyle(T.accent) } else { AppIcon.text(16).foregroundStyle(T.accent) }
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(c.title.isEmpty ? "New Chat" : c.title).foregroundStyle(T.text)
                                         .lineLimit(1)
@@ -263,6 +274,11 @@ private struct ChatRootView: View {
                             )
                         }
                         .buttonStyle(.plain)
+                        .contextMenu {
+                            Button(c.isPinned ? "Unpin" : "Pin") { c.isPinned.toggle(); try? modelContext.save() }
+                            Divider()
+                            Button("Delete", role: .destructive) { modelContext.delete(c); try? modelContext.save(); if current?.id == c.id { current = chats.first } }
+                        }
                     }
                 }
                 .padding(12)
@@ -288,6 +304,12 @@ private struct ChatRootView: View {
         let days = hrs / 24
         if days < 14 { return "\(days)d" }
         return "\(days/7)w"
+    }
+
+    private var filteredAndSortedChats: [Chat] {
+        let q = search.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let filtered = q.isEmpty ? chats : chats.filter { ($0.title.lowercased().contains(q)) }
+        return filtered.sorted { (a, b) in (a.isPinned == b.isPinned) ? (a.createdAt > b.createdAt) : (a.isPinned && !b.isPinned) }
     }
 }
 

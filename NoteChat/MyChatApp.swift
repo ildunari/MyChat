@@ -56,18 +56,23 @@ struct NoteChatApp: App {
         }
 
         // 1) First attempt: normal on-disk store
-        do {
-            return try ModelContainer(for: schema, configurations: [makeConfig()])
-        } catch {
-            // 2) Destroy and retry once
-            destroyStoreFiles(at: storeURL)
-            do {
-                return try ModelContainer(for: schema, configurations: [makeConfig()])
-            } catch {
-                // 3) Fall back to in-memory so the app can still run
-                return try! ModelContainer(for: schema, configurations: [makeConfig(inMemory: true)])
-            }
+        if let primary = try? ModelContainer(for: schema, configurations: [makeConfig()]) {
+            return primary
         }
+
+        // 2) If the store is corrupted, destroy files and retry once
+        destroyStoreFiles(at: storeURL)
+        if let retried = try? ModelContainer(for: schema, configurations: [makeConfig()]) {
+            return retried
+        }
+
+        // 3) Fall back to in-memory so the app can still run (no crash)
+        if let inMemory = try? ModelContainer(for: schema, configurations: [makeConfig(inMemory: true)]) {
+            return inMemory
+        }
+
+        // 4) As a last resort, abort with a clear message (extremely unlikely)
+        fatalError("Unable to initialize SwiftData ModelContainer even in memory.")
     }()
 
     // Create a single SettingsStore and keep it alive for the app’s lifetime

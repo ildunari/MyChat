@@ -2,6 +2,7 @@ import SwiftUI
 
 struct LiquidGlassBackground: View {
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var t: CGFloat = 0
     @State private var morphPhase: CGFloat = 0
     
@@ -21,10 +22,16 @@ struct LiquidGlassBackground: View {
     }
     
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1/60)) { timeline in
+        TimelineView(.animation(minimumInterval: 1/60)) { _ in
             Canvas { ctx, size in
                 let baseHue = configuration.baseHue ?? (scheme == .dark ? 0.60 : 0.15)
-                let colors = generateColors(baseHue: baseHue)
+                // Performance/adaptivity guards
+                let lowPower = ProcessInfo.processInfo.isLowPowerModeEnabled
+                let effectiveComplexity = max(1, min(configuration.complexity, (reduceMotion || lowPower) ? 2 : configuration.complexity))
+                let effectiveSpeed = (reduceMotion || lowPower) ? 0.2 * configuration.animationSpeed : configuration.animationSpeed
+                let effectiveBlur = (reduceMotion || lowPower) ? configuration.blurIntensity * 0.5 : configuration.blurIntensity
+
+                let colors = generateColors(baseHue: baseHue, count: effectiveComplexity)
                 let w = size.width, h = size.height
                 let maxRadius = min(w, h) * 0.4
                 
@@ -34,12 +41,12 @@ struct LiquidGlassBackground: View {
                     
                     var shape = Path()
                     
-                    for j in 0..<configuration.complexity {
+                    for j in 0..<effectiveComplexity {
                         let subPhase = layerTime + CGFloat(j) * 0.5
                         let radius = maxRadius * (0.6 + 0.4 * sin(morphOffset + CGFloat(j)))
                         
-                        let x = w * (0.5 + 0.3 * sin(subPhase * configuration.animationSpeed))
-                        let y = h * (0.5 + 0.3 * cos(subPhase * configuration.animationSpeed * 1.2))
+                        let x = w * (0.5 + 0.3 * sin(subPhase * effectiveSpeed))
+                        let y = h * (0.5 + 0.3 * cos(subPhase * effectiveSpeed * 1.2))
                         
                         if j == 0 {
                             shape.addEllipse(in: CGRect(
@@ -62,7 +69,7 @@ struct LiquidGlassBackground: View {
                     }
                     
                     ctx.drawLayer { layer in
-                        layer.addFilter(.blur(radius: maxRadius * configuration.blurIntensity))
+                        layer.addFilter(.blur(radius: maxRadius * effectiveBlur))
                         layer.addFilter(.alphaThreshold(min: 0.15))
                         layer.opacity = 0.8
                         layer.fill(shape, with: .color(color))
@@ -88,10 +95,12 @@ struct LiquidGlassBackground: View {
             .background(Material.thin)
             .ignoresSafeArea()
             .onAppear {
-                withAnimation(.linear(duration: 8).repeatForever(autoreverses: false)) {
+                let baseTDuration = (reduceMotion ? 16.0 : 8.0)
+                let baseMorphDuration = (reduceMotion ? 24.0 : 12.0)
+                withAnimation(.linear(duration: baseTDuration).repeatForever(autoreverses: false)) {
                     t = .pi * 2
                 }
-                withAnimation(.easeInOut(duration: 12).repeatForever(autoreverses: true)) {
+                withAnimation(.easeInOut(duration: baseMorphDuration).repeatForever(autoreverses: true)) {
                     morphPhase = .pi * 2
                 }
             }
@@ -101,8 +110,8 @@ struct LiquidGlassBackground: View {
         .blendMode(.normal)
     }
     
-    private func generateColors(baseHue: CGFloat) -> [Color] {
-        let count = configuration.complexity
+    private func generateColors(baseHue: CGFloat, count: Int? = nil) -> [Color] {
+        let count = count ?? configuration.complexity
         return (0..<count).map { i in
             let hueOffset = CGFloat(i) * 0.06
             let hue = baseHue + hueOffset

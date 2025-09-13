@@ -37,36 +37,67 @@ struct StarterCardGrid: View {
     let suggestions: [SuggestionChipItem]
     var onPick: (SuggestionChipItem) -> Void
     @Environment(\.tokens) private var T
-    private var gridItems: [GridItem] { [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)] }
+    private var gridItems: [GridItem] { 
+        [GridItem(.flexible(), spacing: 20), 
+         GridItem(.flexible(), spacing: 20)] 
+    }
     var body: some View {
-        VStack(spacing: 16) {
-            LazyVGrid(columns: gridItems, alignment: .center, spacing: 14) {
+        VStack(spacing: 24) {
+            LazyVGrid(columns: gridItems, alignment: .center, spacing: 20) {
                 ForEach(Array(suggestions.prefix(4))) { s in
                     Button(action: { onPick(s) }) {
-                        VStack(alignment: .leading, spacing: 6) {
+                        VStack(alignment: .leading, spacing: 8) {
                             Text(s.title)
-                                .font(.headline.weight(.semibold))
+                                .font(.system(size: 15, weight: .semibold, design: .rounded))
                                 .foregroundStyle(T.text)
                                 .multilineTextAlignment(.leading)
+                                .lineLimit(2)
                             Text(s.subtitle)
-                                .font(.footnote)
+                                .font(.system(size: 12, weight: .regular))
                                 .foregroundStyle(T.textSecondary)
                                 .multilineTextAlignment(.leading)
+                                .lineLimit(2)
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(14)
+                        .frame(maxWidth: .infinity, minHeight: 80, alignment: .topLeading)
+                        .padding(18)
                         .background(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(T.surfaceElevated)
-                                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(T.borderSoft))
-                                .shadow(color: T.shadow.opacity(0.12), radius: 8, y: 3)
+                            Group {
+                                if #available(iOS 18.0, *) {
+                                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                        .fill(.regularMaterial)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                                .strokeBorder(
+                                                    LinearGradient(
+                                                        colors: [
+                                                            Color.white.opacity(0.2),
+                                                            Color.white.opacity(0.05)
+                                                        ],
+                                                        startPoint: .topLeading,
+                                                        endPoint: .bottomTrailing
+                                                    ),
+                                                    lineWidth: 1
+                                                )
+                                        )
+                                        .shadow(color: T.shadow.opacity(0.08), radius: 12, x: 0, y: 4)
+                                        .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
+                                } else {
+                                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                        .fill(T.surfaceElevated)
+                                        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(T.borderSoft))
+                                        .shadow(color: T.shadow.opacity(0.12), radius: 8, y: 3)
+                                }
+                            }
                         )
                     }
                     .buttonStyle(.plain)
+                    .scaleEffect(1.0)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: suggestions)
                 }
             }
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 24)
+        .padding(.vertical, 8)
     }
 }
 

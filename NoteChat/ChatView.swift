@@ -25,6 +25,7 @@ struct ChatView: View {
     @State private var currentSendTask: Task<Void, Never>? = nil
     @State private var expandedText: String? = nil
     private let expandEvent = Notification.Name("ExpandResponse")
+    @State private var reasoningSnippet: String = ""
 
     var body: some View {
         VStack(spacing: 0) {
@@ -104,6 +105,14 @@ struct ChatView: View {
         }
         .sheet(isPresented: $showShare) {
             ShareSheet(activityItems: [shareText])
+        }
+        // Subtle thinking overlay while streaming
+        .overlay(alignment: .top) {
+            if isSending {
+                ThinkingOverlay(snippet: reasoningSnippet)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    .padding(.top, 6)
+            }
         }
         .onAppear {
             if isDefaultTitle, let first = sortedMessages.first {
@@ -209,6 +218,7 @@ struct ChatView: View {
                                            onReact: { onReact(message, $0) },
                                            onDelete: { onDelete(message) })
                                     .id(message.id)
+                                    .transition(.asymmetric(insertion: .move(edge: .bottom).combined(with: .opacity), removal: .opacity))
                                     .onAppear { if index == messages.count - 1 { showJumpToBottom = false } }
                                     .onDisappear { if index == messages.count - 1 { showJumpToBottom = true } }
                             } else {
@@ -218,6 +228,7 @@ struct ChatView: View {
                                            onReact: { onReact(message, $0) },
                                            onDelete: { onDelete(message) })
                                     .id(message.id)
+                                    .transition(.asymmetric(insertion: .move(edge: .bottom).combined(with: .opacity), removal: .opacity))
                                     .onAppear { if index == messages.count - 1 { showJumpToBottom = false } }
                                     .onDisappear { if index == messages.count - 1 { showJumpToBottom = true } }
                             }
@@ -669,7 +680,29 @@ struct ChatView: View {
             let verbosityEff = caps?.preferredVerbosity
 
             let reply: String
-            if let streaming = provider as? AIStreamingProvider {
+            if let streaming2 = provider as? AIStreamingProviderV2 {
+                streamingText = ""
+                reasoningSnippet = ""
+                reply = try await streaming2.streamChat(
+                    messages: aiMessages,
+                    model: model,
+                    temperature: tempEff,
+                    topP: topPEff,
+                    topK: topKEff,
+                    maxOutputTokens: finalMaxOut,
+                    reasoningEffort: reasoningEff,
+                    verbosity: verbosityEff
+                ) { delta in
+                    Task { @MainActor in
+                        self.streamingText = (self.streamingText ?? "") + delta
+                    }
+                } onReasoningDelta: { rdelta in
+                    Task { @MainActor in
+                        let combined = (self.reasoningSnippet + rdelta).replacingOccurrences(of: "\n", with: " ")
+                        self.reasoningSnippet = String(combined.suffix(90))
+                    }
+                }
+            } else if let streaming = provider as? AIStreamingProvider {
                 streamingText = ""
                 reply = try await streaming.streamChat(
                     messages: aiMessages,
@@ -702,6 +735,7 @@ struct ChatView: View {
 
             // Add assistant message
             streamingText = nil
+            reasoningSnippet = ""
             let aiMsg = Message(role: "assistant", content: reply, chat: chat)
             modelContext.insert(aiMsg)
 
@@ -719,13 +753,13 @@ struct ChatView: View {
                 let aiMsg = Message(role: "assistant", content: partial, chat: chat)
                 modelContext.insert(aiMsg)
                 try? modelContext.save()
-            } else {
-                streamingText = nil
-            }
+            } else { streamingText = nil }
+            reasoningSnippet = ""
             errorMessage = nil
         } catch {
             // Any non-cancellation error: clear streaming state and surface message
             streamingText = nil
+            reasoningSnippet = ""
             errorMessage = (error as NSError).localizedDescription
         }
     }
@@ -746,6 +780,35 @@ struct ChatView: View {
         }
         isSending = false
         attachments.removeAll()
+    }
+
+    // Subtle "thinking" overlay with glass capsule and animated dots. Shows a short, rolling snippet.
+    private struct ThinkingOverlay: View {
+        let snippet: String
+        @Environment(\.tokens) private var T
+        @State private var phase: Double = 0
+        var body: some View {
+            HStack(spacing: 10) {
+                HStack(spacing: 4) {
+                    Circle().frame(width: 6, height: 6).opacity(opacity(0))
+                    Circle().frame(width: 6, height: 6).opacity(opacity(1))
+                    Circle().frame(width: 6, height: 6).opacity(opacity(2))
+                }
+                .foregroundStyle(T.accent)
+                Text(snippet.isEmpty ? "Thinking…" : snippet)
+                    .font(.footnote)
+                    .foregroundStyle(T.text)
+                    .lineLimit(1)
+                    .frame(maxWidth: 240, alignment: .leading)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(.ultraThinMaterial, in: Capsule())
+            .overlay(Capsule().stroke(T.borderSoft, lineWidth: 0.7))
+            .shadow(color: T.shadow.opacity(0.12), radius: 6, y: 2)
+            .onAppear { withAnimation(.easeInOut(duration: 1.0).repeatForever()) { phase = 1 } }
+        }
+        private func opacity(_ i: Int) -> Double { max(0.25, 1 - abs(sin(phase * .pi + Double(i) * 0.8))) }
     }
 
     // MARK: - Provider header helpers

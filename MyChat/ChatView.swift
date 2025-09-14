@@ -100,6 +100,7 @@ struct ChatView: View {
             }
         }
         .toolbar { toolbarContent }
+        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {

@@ -94,6 +94,8 @@ struct ChatView: View {
             }
         }
         .toolbar { toolbarContent }
+        // Apply glass material to navigation bar to match liquid glass design
+        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .onReceive(NotificationCenter.default.publisher(for: expandEvent)) { note in

@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Pre-push branch name guard
+# Enforces branches to include runtime app name prefix (e.g., notechat/ui-polish-20250914[-HHMM]).
+# Bypass with: BYPASS_BRANCH_NAME_CHECK=1 git push …
+
+set -euo pipefail
+
+# Allow CI or explicit bypass
+if [[ "${BYPASS_BRANCH_NAME_CHECK:-}" == "1" ]]; then
+  exit 0
+fi
+
+# Read current branch
+branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+if [[ -z "$branch" ]]; then
+  exit 0
+fi
+
+# Exemptions (existing long-lived or service branches)
+case "$branch" in
+  main|master|develop|development)
+    exit 0 ;;
+  release/*|hotfix/*|dependabot/*|renovate/*)
+    exit 0 ;;
+esac
+
+# Required pattern: notechat/<purpose>-YYYYMMDD or notechat/<purpose>-YYYYMMDD-HHMM
+pattern='^notechat/[a-z0-9-]+-[0-9]{8}(-[0-9]{4})?$'
+
+if [[ "$branch" =~ ^(feat|fix|docs|refactor|chore|test|perf|ci|build)/ ]]; then
+  # Legacy conventional branches are allowed but will warn
+  echo "[branch-check] Warning: '$branch' uses conventional prefix."
+  echo "[branch-check] Prefer: notechat/<purpose>-YYYYMMDD[-HHMM] (e.g., notechat/ui-polish-20250914)." >&2
+  exit 0
+fi
+
+if [[ ! "$branch" =~ $pattern ]]; then
+  echo "[branch-check] Branch '$branch' must match: notechat/<purpose>-YYYYMMDD[-HHMM]." >&2
+  echo "[branch-check] Example: notechat/fix-math-render-20250914-1810" >&2
+  echo "[branch-check] Set BYPASS_BRANCH_NAME_CHECK=1 to override for this push." >&2
+  exit 1
+fi
+
+exit 0
+

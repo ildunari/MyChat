@@ -47,7 +47,8 @@ struct ChatView: View {
                     .padding(.horizontal)
             }
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) { // pins bottom controls and prevents overlap
+        // Pins bottom controls and prevents overlap
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             VStack(spacing: 0) {
                 if showSuggestions {
                     SuggestionChips(suggestions: defaultSuggestions)
@@ -69,6 +70,13 @@ struct ChatView: View {
                     Rectangle().fill(T.surface).ignoresSafeArea()
                 }
             )
+        }
+        // Thinking overlay just under the model name in the toolbar area
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if isSending {
+                ThinkingOverlay()
+                    .padding(.top, 6)
+            }
         }
         .background(T.bg.ignoresSafeArea())
         .tint(T.accent)
@@ -190,10 +198,7 @@ struct ChatView: View {
                         }
                 if let partial = streamingText, !partial.isEmpty {
                     StreamingRow(partial: partial, aiDisplayName: aiDisplayName, aiModel: aiModel)
-                } else if isSending {
-                            HStack { ProgressView(); Text("Thinking…").foregroundStyle(.secondary) }
-                                .padding(.horizontal)
-                        }
+                }
                     }
                 }
                 .padding(.bottom, 72)
@@ -204,6 +209,33 @@ struct ChatView: View {
                 }
             }
         }
+    }
+
+    // Minimal glassy thinking overlay shown under the model name while streaming
+    private struct ThinkingOverlay: View {
+        @Environment(\.tokens) private var T
+        @State private var phase: Double = 0
+        var body: some View {
+            HStack(spacing: 10) {
+                HStack(spacing: 4) {
+                    Circle().frame(width: 6, height: 6).opacity(opacity(0))
+                    Circle().frame(width: 6, height: 6).opacity(opacity(1))
+                    Circle().frame(width: 6, height: 6).opacity(opacity(2))
+                }
+                .foregroundStyle(T.accent)
+                Text("Thinking…")
+                    .font(.footnote)
+                    .foregroundStyle(T.text)
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(.ultraThinMaterial, in: Capsule())
+            .overlay(Capsule().stroke(T.borderSoft, lineWidth: 0.7))
+            .shadow(color: T.shadow.opacity(0.12), radius: 6, y: 2)
+            .onAppear { withAnimation(.easeInOut(duration: 1.0).repeatForever()) { phase = 1 } }
+        }
+        private func opacity(_ i: Int) -> Double { max(0.25, 1 - abs(sin(phase * .pi + Double(i) * 0.8))) }
     }
 
     private struct MessageRow: View {

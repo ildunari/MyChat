@@ -107,11 +107,10 @@ struct ChatView: View {
         .sheet(isPresented: $showShare) {
             ShareSheet(activityItems: [shareText])
         }
-        // Subtle thinking overlay while streaming
-        .overlay(alignment: .top) {
+        // Subtle thinking overlay just under the model name (navigation title area)
+        .safeAreaInset(edge: .top, spacing: 0) {
             if isSending, store.showThinkingOverlay {
                 ThinkingOverlay(snippet: reasoningSnippet)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
                     .padding(.top, 6)
             }
         }

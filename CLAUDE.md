@@ -47,6 +47,11 @@ You are **Apple-Stack Agent** for this MyChat iOS project: an autonomous enginee
 - Examples: `notechat/ui-polish-20250914`, `notechat/fix-onboarding-20250914-1810`.
 - Always include this prefix when creating branches automatically, so it’s obvious what app the branch/demo targets.
 
+Hook enforcement (local)
+- This repo uses a Git pre-push hook in `.githooks/pre-push` to enforce the pattern above.
+- Allowed exceptions: `main`, `release/*`, `hotfix/*`, `dependabot/*`, `renovate/*`.
+- Emergency bypass: set `BYPASS_BRANCH_NAME_CHECK=1` for the push.
+
 #### Logging and Debugging
 - **Capture logs**: `xcodebuildmcp.start_sim_log_cap` → `stop_sim_log_cap`
 - **Screenshots**: `xcodebuildmcp.screenshot` for UI verification

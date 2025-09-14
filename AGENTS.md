@@ -49,6 +49,12 @@ Update flow per session:
   - `notechat/ci-smoke-tests-20250914`
 - Rationale: makes it obvious which app variant a branch demos in CI/TestFlight and keeps screenshots/logs grouped per app.
 
+Hook enforcement
+- Repo contains a pre-push hook at `.githooks/pre-push` and local config `core.hooksPath=.githooks` is set.
+- The hook blocks pushes unless the branch matches `^notechat/[a-z0-9-]+-[0-9]{8}(-[0-9]{4})?$`.
+- Exemptions: `main`, `release/*`, `hotfix/*`, `dependabot/*`, `renovate/*`.
+- Bypass for emergencies: `BYPASS_BRANCH_NAME_CHECK=1 git push` (document the reason in the PR).
+
 ## Security & Configuration Tips
 - Never hardcode API keys; store secrets with `KeychainService` and expose configuration via Settings.
 - Do not commit secrets or personal data; review `Info.plist` diffs carefully.

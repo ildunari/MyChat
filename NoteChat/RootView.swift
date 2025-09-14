@@ -213,6 +213,15 @@ private struct ChatRootView: View {
                     withAnimation(.spring()) { current = target; drawerX = -1 }
                 }
             }
+            .onReceive(NotificationCenter.default.publisher(for: AppNavEvent.openDrawer)) { _ in
+                withAnimation(.spring()) { drawerX = 0 }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: AppNavEvent.closeDrawer)) { _ in
+                withAnimation(.spring()) { drawerX = -1 }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: AppNavEvent.toggleDrawer)) { _ in
+                withAnimation(.spring()) { drawerX = (drawerX < -0.5 ? 0 : -1) }
+            }
         }
     }
 

@@ -450,6 +450,13 @@ struct ChatView: View {
                 .contentShape(Rectangle())
             }
         }
+        // Leading button: toggle chat history drawer
+        ToolbarItem(placement: .topBarLeading) {
+            Button(action: { AppNavEvent.toggleHistoryDrawer() }) {
+                Image(systemName: "sidebar.leading").font(.system(size: 16, weight: .semibold))
+            }
+            .accessibilityLabel("Toggle Chat History")
+        }
         // Top-right new chat button
         ToolbarItem(placement: .topBarTrailing) {
             Button(action: { onNewChat?() }) { AppIcon.plus(18) }

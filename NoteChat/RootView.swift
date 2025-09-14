@@ -14,46 +14,34 @@ struct RootView: View {
 
     var body: some View {
         ZStack {
-            // Liquid glass background spans the app (toggleable), respects Reduce Transparency
             if store.useLiquidGlass {
                 LiquidGlassBackground()
                     .allowsHitTesting(false)
                     .opacity(reduceTransparency ? 0 : store.liquidGlassIntensity)
             }
-            Group {
-                switch tab {
-                case .home: ContentView()
-                case .chat: ChatRootView()
-                case .notes: NotesPlaceholderView()
-                case .media: MediaPlaceholderView()
-                case .settings: SettingsView()
-                }
-            }
-        // Ensure scrollable content never goes underneath the dock
-        .safeAreaPadding(.bottom, DockMetrics.height)
-        .environmentObject(chatBridge)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .overlay(alignment: .bottom) {
-            ZStack(alignment: .bottom) {
-                // Composer overlays above the dock when in Chat tab
-                if tab == .chat {
-                    InputBar(text: $chatBridge.text,
-                             onSend: { chatBridge.onSend?() },
-                             isStreaming: chatBridge.isStreaming,
-                             onStop: { chatBridge.onStop?() },
-                             onMic: { chatBridge.onMic?() },
-                             onLive: { chatBridge.onLive?() },
-                             onPlus: { chatBridge.onPlus?() })
-                    .padding(.horizontal)
-                    .padding(.bottom, DockMetrics.height + 6) // sit above dock
-                    .zIndex(1)
-                }
+            TabView(selection: $tab) {
+                ContentView()
+                    .tag(MainTab.home)
+                    .tabItem { Label("Home", systemImage: "house") }
 
-                DockTabBar(selected: $tab, highlightNS: highlightNS)
-                    .zIndex(0)
+                ChatRootView()
+                    .tag(MainTab.chat)
+                    .tabItem { Label("Chat", systemImage: "bubble.left.and.text.bubble") }
+
+                NotesPlaceholderView()
+                    .tag(MainTab.notes)
+                    .tabItem { Label("Notes", systemImage: "note.text") }
+
+                MediaPlaceholderView()
+                    .tag(MainTab.media)
+                    .tabItem { Label("Media", systemImage: "photo.on.rectangle") }
+
+                SettingsView()
+                    .tag(MainTab.settings)
+                    .tabItem { Label("Settings", systemImage: "gearshape") }
             }
-            .ignoresSafeArea(edges: .bottom)
-        }
+            .toolbarBackground(.ultraThinMaterial, for: .tabBar)
+            .environmentObject(chatBridge)
         }
         .background(T.bg.opacity(0.4).ignoresSafeArea())
         // Respond to global open-chat events from anywhere (e.g., Home)

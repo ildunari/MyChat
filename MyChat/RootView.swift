@@ -10,86 +10,29 @@ struct RootView: View {
     @Namespace private var highlightNS
 
     var body: some View {
-        Group {
-            switch tab {
-            case .home: ContentView()
-            case .chat: ChatRootView()
-            case .notes: NotesPlaceholderView()
-            case .media: MediaPlaceholderView()
-            case .settings: SettingsView()
-            }
+        TabView(selection: $tab) {
+            ContentView()
+                .tag(MainTab.home)
+                .tabItem { Label("Home", systemImage: "house") }
+
+            ChatRootView()
+                .tag(MainTab.chat)
+                .tabItem { Label("Chat", systemImage: "bubble.left.and.text.bubble") }
+
+            NotesPlaceholderView()
+                .tag(MainTab.notes)
+                .tabItem { Label("Notes", systemImage: "note.text") }
+
+            MediaPlaceholderView()
+                .tag(MainTab.media)
+                .tabItem { Label("Media", systemImage: "photo.on.rectangle") }
+
+            SettingsView()
+                .tag(MainTab.settings)
+                .tabItem { Label("Settings", systemImage: "gearshape") }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            DockTabBar(selected: $tab, highlightNS: highlightNS)
-        }
+        .toolbarBackground(.ultraThinMaterial, for: .tabBar)
         .background(T.bg.ignoresSafeArea())
-    }
-}
-
-private struct DockTabBar: View {
-    @Environment(\.tokens) private var T
-    @Environment(\.colorScheme) private var scheme
-    @Binding var selected: MainTab
-    var highlightNS: Namespace.ID
-
-    private struct Item { let tab: MainTab; let title: String; let icon: AnyView }
-    private var items: [Item] {
-        [
-            .init(tab: .chat, title: "Chat", icon: AnyView(AppIcon.chat(20))),
-            .init(tab: .notes, title: "Notes", icon: AnyView(AppIcon.note(20))),
-            .init(tab: .home, title: "Home", icon: AnyView(AppIcon.home(20))),
-            .init(tab: .media, title: "Media", icon: AnyView(AppIcon.image(20))),
-            .init(tab: .settings, title: "Settings", icon: AnyView(AppIcon.gear(20)))
-        ]
-    }
-
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(items, id: \.tab) { it in
-                Button(action: { withAnimation(.smooth(duration: 0.45, extraBounce: 0.25)) { selected = it.tab } }) {
-                    VStack(spacing: 6) {
-                        ZStack {
-                            if selected == it.tab {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .fill(T.accent.opacity(0.25))
-                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .fill(.ultraThinMaterial)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                                .stroke(T.accent.opacity(0.6), lineWidth: 1)
-                                        )
-                                }
-                                .matchedGeometryEffect(id: "hl", in: highlightNS)
-                                .frame(width: 64, height: 44)
-                                .shadow(color: T.accent.opacity(0.3), radius: 8, x: 0, y: 2)
-                            }
-                            VStack(spacing: 4) {
-                                it.icon
-                                    .foregroundStyle(selected == it.tab ? Color.white : T.textSecondary)
-                                Text(it.title)
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(selected == it.tab ? Color.white : T.textSecondary)
-                            }
-                            .frame(width: 72, height: 52)
-                            .padding(.horizontal, 4)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(.horizontal, 0)
-        .padding(.vertical, 10)
-        .background(
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .overlay(Rectangle().fill(T.surface.opacity(scheme == .dark ? 0.5 : 0.7)))
-                .shadow(color: T.shadow.opacity(0.08), radius: 10, x: 0, y: -2)
-        )
-        .ignoresSafeArea(edges: .bottom)
     }
 }
 

@@ -116,6 +116,21 @@ struct ChatView: View {
                     .padding(.top, 6)
             }
         }
+        // Native bottom composer anchored above the system tab bar
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            InputBar(text: $chatBridge.text,
+                     onSend: { chatBridge.onSend?() },
+                     isStreaming: chatBridge.isStreaming,
+                     onStop: { chatBridge.onStop?() },
+                     onMic: { chatBridge.onMic?() },
+                     onLive: { chatBridge.onLive?() },
+                     onPlus: { chatBridge.onPlus?() })
+            .padding(.horizontal)
+            .background(
+                // slight material to sit well with glass/tab bar
+                Rectangle().fill(T.surface).overlay(Rectangle().fill(T.borderSoft).frame(height: 0.5), alignment: .top)
+            )
+        }
         .onAppear {
             if isDefaultTitle, let first = sortedMessages.first {
                 updateChatTitle(from: first.content)

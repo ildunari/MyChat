@@ -1,6 +1,6 @@
 import XCTest
 import SwiftData
-@testable import MyChat
+@testable import NoteChat
 
 final class ThemeSwitchingTests: XCTestCase {
     func testThemeSwitchingUpdatesSettings() throws {

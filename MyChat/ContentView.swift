@@ -33,17 +33,26 @@ struct ContentView: View {
                                 isExpanded: kind == .chats ? $chatHistoryExpanded : $agentsExpanded,
                                 maxHeight: cap,
                                 draggedOffset: offsetY,
-                                onDragChanged: { value in dragOffsets[kind] = value.translation.height },
-                                onDragEnded: { value in
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
-                                        let threshold: CGFloat = 40
-                                        if value.translation.height < -threshold, let idx = sectionOrder.firstIndex(of: kind), idx > 0 {
+                                onDragChanged: { value in
+                                    let dy = value.translation.height
+                                    dragOffsets[kind] = dy
+                                    let threshold: CGFloat = 40
+                                    if dy < -threshold, let idx = sectionOrder.firstIndex(of: kind), idx > 0 {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
                                             sectionOrder.swapAt(idx, idx-1)
                                             Haptics.selection()
-                                        } else if value.translation.height > threshold, let idx = sectionOrder.firstIndex(of: kind), idx < sectionOrder.count-1 {
+                                        }
+                                        dragOffsets[kind] = 0
+                                    } else if dy > threshold, let idx = sectionOrder.firstIndex(of: kind), idx < sectionOrder.count-1 {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
                                             sectionOrder.swapAt(idx, idx+1)
                                             Haptics.selection()
                                         }
+                                        dragOffsets[kind] = 0
+                                    }
+                                },
+                                onDragEnded: { _ in
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
                                         dragOffsets[kind] = 0
                                     }
                                 }

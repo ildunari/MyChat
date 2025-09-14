@@ -1,0 +1,48 @@
+{
+  "configurations" : [
+    {
+      "id" : "AC2F8685-0000-0000-0000-000000000001",
+      "name" : "All Tests",
+      "options" : {
+        "language" : "",
+        "region" : ""
+      },
+      "testDestinations" : [
+        {
+          "device" : {
+            "platform" : "iOS Simulator",
+            "name" : "iPhone 16",
+            "id" : "F04E79C3-5634-474D-9D4B-64B2523130C1",
+            "os" : "iOS 26.0"
+          }
+        }
+      ]
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : false,
+    "testTimeoutsEnabled" : false,
+    "targetForVariableExpansion" : {
+      "containerPath" : "NoteChat-AI.xcodeproj",
+      "identifier" : "NoteChat",
+      "name" : "MyChat"
+    }
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "NoteChat-AI.xcodeproj",
+        "identifier" : "MyChatTests",
+        "name" : "MyChatTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "NoteChat-AI.xcodeproj",
+        "identifier" : "MyChatUITests",
+        "name" : "MyChatUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "0A0484872E6F833800670BBE"
-               BuildableName = "MyChat.app"
-               BlueprintName = "MyChat"
-               ReferencedContainer = "container:MyChat.xcodeproj">
+               BuildableName = "NoteChat.app"
+               BlueprintName = "NoteChat"
+               ReferencedContainer = "container:NoteChat-AI.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
@@ -29,9 +29,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "FE58F7433D74E0574A2393A7"
-               BuildableName = "MyChatTests.xctest"
-               BlueprintName = "MyChatTests"
-               ReferencedContainer = "container:MyChat.xcodeproj">
+               BuildableName = "NoteChatTests.xctest"
+               BlueprintName = "NoteChatTests"
+               ReferencedContainer = "container:NoteChat-AI.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
@@ -43,9 +43,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "FF4E70207F8FAEDC268AEA9E"
-               BuildableName = "MyChatUITests.xctest"
-               BlueprintName = "MyChatUITests"
-               ReferencedContainer = "container:MyChat.xcodeproj">
+               BuildableName = "NoteChatUITests.xctest"
+               BlueprintName = "NoteChatUITests"
+               ReferencedContainer = "container:NoteChat-AI.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -59,14 +59,14 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "0A0484872E6F833800670BBE"
-            BuildableName = "MyChat.app"
-            BlueprintName = "MyChat"
-            ReferencedContainer = "container:MyChat.xcodeproj">
+            BuildableName = "NoteChat.app"
+            BlueprintName = "NoteChat"
+            ReferencedContainer = "container:NoteChat-AI.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
       <TestPlans>
          <TestPlanReference
-            reference = "container:MyChat.xctestplan"
+            reference = "container:NoteChat-AI.xctestplan"
             default = "YES">
          </TestPlanReference>
       </TestPlans>
@@ -76,9 +76,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "FE58F7433D74E0574A2393A7"
-               BuildableName = "MyChatTests.xctest"
-               BlueprintName = "MyChatTests"
-               ReferencedContainer = "container:MyChat.xcodeproj">
+               BuildableName = "NoteChatTests.xctest"
+               BlueprintName = "NoteChatTests"
+               ReferencedContainer = "container:NoteChat-AI.xcodeproj">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -86,9 +86,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "FF4E70207F8FAEDC268AEA9E"
-               BuildableName = "MyChatUITests.xctest"
-               BlueprintName = "MyChatUITests"
-               ReferencedContainer = "container:MyChat.xcodeproj">
+               BuildableName = "NoteChatUITests.xctest"
+               BlueprintName = "NoteChatUITests"
+               ReferencedContainer = "container:NoteChat-AI.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -108,9 +108,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "0A0484872E6F833800670BBE"
-            BuildableName = "MyChat.app"
-            BlueprintName = "MyChat"
-            ReferencedContainer = "container:MyChat.xcodeproj">
+            BuildableName = "NoteChat.app"
+            BlueprintName = "NoteChat"
+            ReferencedContainer = "container:NoteChat-AI.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -125,9 +125,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "0A0484872E6F833800670BBE"
-            BuildableName = "MyChat.app"
-            BlueprintName = "MyChat"
-            ReferencedContainer = "container:MyChat.xcodeproj">
+            BuildableName = "NoteChat.app"
+            BlueprintName = "NoteChat"
+            ReferencedContainer = "container:NoteChat-AI.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

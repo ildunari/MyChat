@@ -12,8 +12,8 @@ Build/
 *.xcuserstate
 *.xcscmblueprint
 *.xcworkspace/xcuserdata/
-MyChat.xcodeproj/project.xcworkspace/xcuserdata/
-MyChat.xcodeproj/xcuserdata/
+NoteChat-AI.xcodeproj/project.xcworkspace/xcuserdata/
+NoteChat-AI.xcodeproj/xcuserdata/
 
 # Swift Package Manager artifacts
 /.build/

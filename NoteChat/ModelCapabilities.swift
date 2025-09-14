@@ -9,6 +9,7 @@ struct ProviderModelInfo: Codable, Equatable {
     var outputTokenLimit: Int?
     var maxTemperature: Double?
     var supportsPromptCaching: Bool?
+    var supportsImages: Bool?
 
     // Preferred request-time defaults (user overrides live here; provider defaults may populate some)
     var preferredTemperature: Double?
@@ -34,6 +35,7 @@ struct ProviderModelInfo: Codable, Equatable {
                           outputTokenLimit: nil,
                           maxTemperature: 2.0,
                           supportsPromptCaching: false,
+                          supportsImages: nil,
                           preferredTemperature: nil,
                           preferredTopP: nil,
                           preferredTopK: nil,
@@ -46,7 +48,8 @@ struct ProviderModelInfo: Codable, Equatable {
                           stopSequences: nil,
                           anthropicThinkingEnabled: nil,
                           anthropicThinkingBudget: nil,
-                          enablePromptCaching: nil)
+                          enablePromptCaching: nil,
+                          supportsImages: nil)
     }
 }
 

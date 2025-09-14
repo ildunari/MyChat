@@ -1,6 +1,6 @@
 // Providers/OpenAIImageProvider.swift
 import Foundation
-import Combine // TODO: Temporary import to unblock build; remove after Observation migration if no longer needed.
+// Combine not used here; removed to keep code clean.
 
 struct OpenAIImageProvider: ImageProvider {
     let id = "openai-images"

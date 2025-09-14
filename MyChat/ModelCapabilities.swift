@@ -48,8 +48,7 @@ struct ProviderModelInfo: Codable, Equatable {
                           stopSequences: nil,
                           anthropicThinkingEnabled: nil,
                           anthropicThinkingBudget: nil,
-                          enablePromptCaching: nil,
-                          supportsImages: nil)
+                          enablePromptCaching: nil)
     }
 }
 

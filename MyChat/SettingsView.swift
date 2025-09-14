@@ -69,6 +69,23 @@ struct SettingsView: View {
                         }
                     }
                     .onChange(of: store.useWebCanvas) { _, _ in store.save() }
+
+                    Toggle(isOn: $store.useLiquidGlass) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Animated Background")
+                            Text("Liquid glass effect behind content").font(.footnote).foregroundStyle(.secondary)
+                        }
+                    }
+                    .onChange(of: store.useLiquidGlass) { _, _ in store.save() }
+
+                    HStack {
+                        Text("Background Intensity")
+                        Spacer()
+                        Text("\(Int(store.liquidGlassIntensity * 100))%")
+                            .foregroundStyle(.secondary)
+                    }
+                    Slider(value: $store.liquidGlassIntensity, in: 0...1, step: 0.01)
+                        .onChange(of: store.liquidGlassIntensity) { _, _ in store.save() }
                 }
                 Section("Defaults") {
                     Picker("Default Provider", selection: $store.defaultProvider) {

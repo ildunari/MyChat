@@ -6,33 +6,42 @@ enum MainTab: Int, CaseIterable { case chat, notes, home, media, settings }
 struct RootView: View {
     @Environment(\.tokens) private var T
     @Environment(\.modelContext) private var modelContext
+    @Environment(SettingsStore.self) private var store
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @State private var tab: MainTab = .home
     @Namespace private var highlightNS
 
     var body: some View {
-        TabView(selection: $tab) {
-            ContentView()
-                .tag(MainTab.home)
-                .tabItem { Label("Home", systemImage: "house") }
+        ZStack {
+            if store.useLiquidGlass {
+                LiquidGlassBackground()
+                    .allowsHitTesting(false)
+                    .opacity(reduceTransparency ? 0 : store.liquidGlassIntensity)
+            }
+            TabView(selection: $tab) {
+                ContentView()
+                    .tag(MainTab.home)
+                    .tabItem { Label("Home", systemImage: "house") }
 
-            ChatRootView()
-                .tag(MainTab.chat)
-                .tabItem { Label("Chat", systemImage: "bubble.left.and.text.bubble") }
+                ChatRootView()
+                    .tag(MainTab.chat)
+                    .tabItem { Label("Chat", systemImage: "bubble.left.and.text.bubble") }
 
-            NotesPlaceholderView()
-                .tag(MainTab.notes)
-                .tabItem { Label("Notes", systemImage: "note.text") }
+                NotesPlaceholderView()
+                    .tag(MainTab.notes)
+                    .tabItem { Label("Notes", systemImage: "note.text") }
 
-            MediaPlaceholderView()
-                .tag(MainTab.media)
-                .tabItem { Label("Media", systemImage: "photo.on.rectangle") }
+                MediaPlaceholderView()
+                    .tag(MainTab.media)
+                    .tabItem { Label("Media", systemImage: "photo.on.rectangle") }
 
-            SettingsView()
-                .tag(MainTab.settings)
-                .tabItem { Label("Settings", systemImage: "gearshape") }
+                SettingsView()
+                    .tag(MainTab.settings)
+                    .tabItem { Label("Settings", systemImage: "gearshape") }
+            }
+            .toolbarBackground(.ultraThinMaterial, for: .tabBar)
         }
-        .toolbarBackground(.ultraThinMaterial, for: .tabBar)
-        .background(T.bg.ignoresSafeArea())
+        .background(T.bg.opacity(0.4).ignoresSafeArea())
     }
 }
 

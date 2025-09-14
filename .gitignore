@@ -25,3 +25,14 @@ MyChat.xcodeproj/xcuserdata/
 MyChat/Env/.env
 MyChat/Env/*.env
 NoteChat/Env/.env
+DerivedData/
+.DerivedData-*/
+**/SourcePackages/**
+xcuserdata/
+*.xcuserstate
+*.xcworkspace/xcshareddata/swiftpm/Package.resolved
+*.DS_Store
+build/
+*.ipa
+*.dSYM
+MyChat/Env/.env

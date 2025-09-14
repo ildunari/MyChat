@@ -67,6 +67,10 @@ final class AppSettings: Identifiable {
     var promptCachingEnabled: Bool
     // Feature flag: use WKWebView WebCanvas for transcript rendering
     var useWebCanvas: Bool
+    // Visuals: animated liquid glass background
+    var useLiquidGlass: Bool
+    // Visuals: liquid glass intensity (0...1)
+    var liquidGlassIntensity: Double
 
     // Home layout preferences
     var homeSectionOrder: [String] // e.g., ["chats", "agents"]
@@ -99,6 +103,8 @@ final class AppSettings: Identifiable {
         chatBubbleColorID: String = "coolSlate",
         promptCachingEnabled: Bool = false,
         useWebCanvas: Bool = true,
+        useLiquidGlass: Bool = true,
+        liquidGlassIntensity: Double = 0.22,
         homeSectionOrder: [String] = ["chats", "agents"],
         homeChatsExpanded: Bool = true,
         homeAgentsExpanded: Bool = true,
@@ -125,6 +131,8 @@ final class AppSettings: Identifiable {
         self.chatBubbleColorID = chatBubbleColorID
         self.promptCachingEnabled = promptCachingEnabled
         self.useWebCanvas = useWebCanvas
+        self.useLiquidGlass = useLiquidGlass
+        self.liquidGlassIntensity = min(1, max(0, liquidGlassIntensity))
         self.homeSectionOrder = homeSectionOrder
         self.homeChatsExpanded = homeChatsExpanded
         self.homeAgentsExpanded = homeAgentsExpanded

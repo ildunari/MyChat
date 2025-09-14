@@ -45,6 +45,8 @@ final class SettingsStore {
     var chatBubbleColorID: String // palette id
     var promptCachingEnabled: Bool
     var useWebCanvas: Bool
+    var useLiquidGlass: Bool
+    var liquidGlassIntensity: Double // 0...1
     var defaultHistoryLimit: Int // -1 = all, otherwise last N messages
     // Home layout prefs
     var homeSectionOrder: [String]
@@ -132,6 +134,8 @@ final class SettingsStore {
         self.chatBubbleColorID = settings.chatBubbleColorID
         self.promptCachingEnabled = settings.promptCachingEnabled
         self.useWebCanvas = settings.useWebCanvas
+        self.useLiquidGlass = settings.useLiquidGlass
+        self.liquidGlassIntensity = settings.liquidGlassIntensity
         self.defaultHistoryLimit = settings.defaultHistoryLimit
         self.homeSectionOrder = settings.homeSectionOrder
         self.homeChatsExpanded = settings.homeChatsExpanded
@@ -161,6 +165,8 @@ final class SettingsStore {
         settings.chatBubbleColorID = chatBubbleColorID
         settings.promptCachingEnabled = promptCachingEnabled
         settings.useWebCanvas = useWebCanvas
+        settings.useLiquidGlass = useLiquidGlass
+        settings.liquidGlassIntensity = liquidGlassIntensity
         settings.defaultHistoryLimit = defaultHistoryLimit
         settings.homeSectionOrder = homeSectionOrder
         settings.homeChatsExpanded = homeChatsExpanded

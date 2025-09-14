@@ -104,3 +104,75 @@ final class AppSettings: Identifiable {
         self.useWebCanvas = useWebCanvas
     }
 }
+
+// MARK: - Notes Models
+
+@Model
+final class NoteFolder: Identifiable {
+    @Attribute(.unique) var id: UUID
+    var name: String
+    var createdAt: Date
+    @Relationship(deleteRule: .cascade, inverse: \Note.folder) var notes: [Note]
+
+    init(id: UUID = UUID(), name: String, createdAt: Date = Date(), notes: [Note] = []) {
+        self.id = id
+        self.name = name
+        self.createdAt = createdAt
+        self.notes = notes
+    }
+}
+
+@Model
+final class Note: Identifiable {
+    @Attribute(.unique) var id: UUID
+    var title: String
+    // Markdown content
+    var content: String
+    var createdAt: Date
+    var updatedAt: Date
+    var folder: NoteFolder?
+
+    init(id: UUID = UUID(), title: String = "Untitled", content: String = "", createdAt: Date = Date(), updatedAt: Date = Date(), folder: NoteFolder? = nil) {
+        self.id = id
+        self.title = title
+        self.content = content
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.folder = folder
+    }
+
+    // MARK: - Editing & Metrics (for future AI tooling)
+
+    var lineCount: Int { content.components(separatedBy: .newlines).count }
+    var characterCount: Int { content.count }
+
+    // Returns the starting UTF-16 offset for each line in the document
+    func lineStartOffsetsUTF16() -> [Int] {
+        var offsets: [Int] = [0]
+        var running = 0
+        for line in content.split(separator: "\n", omittingEmptySubsequences: false) {
+            running += (line as Substring).utf16.count + 1 // +1 for the newline
+            offsets.append(running)
+        }
+        // Remove the trailing offset if it equals length (past-end)
+        if let last = offsets.last, last == content.utf16.count { _ = offsets.popLast() }
+        return offsets
+    }
+
+    // Replace a UTF-16 range with text. Safer for interoperability with external tooling.
+    func replaceUTF16Range(_ range: NSRange, with replacement: String) {
+        guard let r = Range(range, in: content) else { return }
+        content.replaceSubrange(r, with: replacement)
+        updatedAt = Date()
+    }
+
+    // Regex replace all matches (case-insensitive by default)
+    func regexReplace(pattern: String, replacement: String, options: NSRegularExpression.Options = [.caseInsensitive]) {
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: options) else { return }
+        let mutable = NSMutableString(string: content)
+        let range = NSRange(location: 0, length: mutable.length)
+        regex.replaceMatches(in: mutable, options: [], range: range, withTemplate: replacement)
+        content = String(mutable)
+        updatedAt = Date()
+    }
+}

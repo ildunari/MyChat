@@ -12,6 +12,105 @@ enum AppIcon {
         Image(systemName: "gear").font(.system(size: size, weight: .bold))
         #endif
     }
+
+    // MARK: - Common glyphs used across the app
+    @ViewBuilder static func note(_ size: CGFloat = 18) -> some View {
+        #if canImport(PhosphorSwift)
+        Ph.note.bold.frame(width: size, height: size)
+        #else
+        Image(systemName: "note.text").font(.system(size: size, weight: .bold))
+        #endif
+    }
+    @ViewBuilder static func folder(_ size: CGFloat = 18) -> some View {
+        #if canImport(PhosphorSwift)
+        Ph.folder.bold.frame(width: size, height: size)
+        #else
+        Image(systemName: "folder.fill").font(.system(size: size, weight: .bold))
+        #endif
+    }
+    @ViewBuilder static func image(_ size: CGFloat = 18) -> some View {
+        #if canImport(PhosphorSwift)
+        Ph.image.bold.frame(width: size, height: size)
+        #else
+        Image(systemName: "photo.fill").font(.system(size: size, weight: .bold))
+        #endif
+    }
+    @ViewBuilder static func text(_ size: CGFloat = 18) -> some View {
+        #if canImport(PhosphorSwift)
+        Ph.textT.bold.frame(width: size, height: size)
+        #else
+        Image(systemName: "textformat").font(.system(size: size, weight: .bold))
+        #endif
+    }
+    @ViewBuilder static func code(_ size: CGFloat = 18) -> some View {
+        #if canImport(PhosphorSwift)
+        Ph.code.bold.frame(width: size, height: size)
+        #else
+        Image(systemName: "chevron.left.forwardslash.chevron.right").font(.system(size: size, weight: .bold))
+        #endif
+    }
+    @ViewBuilder static func importIcon(_ size: CGFloat = 18) -> some View {
+        #if canImport(PhosphorSwift)
+        Ph.arrowSquareIn.bold.frame(width: size, height: size)
+        #else
+        Image(systemName: "tray.and.arrow.down.fill").font(.system(size: size, weight: .bold))
+        #endif
+    }
+    @ViewBuilder static func wand(_ size: CGFloat = 18) -> some View {
+        #if canImport(PhosphorSwift)
+        Ph.magicWand.bold.frame(width: size, height: size)
+        #else
+        Image(systemName: "wand.and.stars").font(.system(size: size, weight: .bold))
+        #endif
+    }
+    @ViewBuilder static func link(_ size: CGFloat = 16) -> some View {
+        #if canImport(PhosphorSwift)
+        Ph.linkSimple.bold.frame(width: size, height: size)
+        #else
+        Image(systemName: "link").font(.system(size: size, weight: .bold))
+        #endif
+    }
+    @ViewBuilder static func list(_ size: CGFloat = 16) -> some View {
+        #if canImport(PhosphorSwift)
+        Ph.listDashes.bold.frame(width: size, height: size)
+        #else
+        Image(systemName: "list.bullet").font(.system(size: size, weight: .bold))
+        #endif
+    }
+    @ViewBuilder static func h1(_ size: CGFloat = 16) -> some View {
+        #if canImport(PhosphorSwift)
+        Ph.textHOne.bold.frame(width: size, height: size)
+        #else
+        Image(systemName: "textformat.size").font(.system(size: size, weight: .bold))
+        #endif
+    }
+    @ViewBuilder static func italic(_ size: CGFloat = 16) -> some View {
+        #if canImport(PhosphorSwift)
+        Ph.textItalic.bold.frame(width: size, height: size)
+        #else
+        Image(systemName: "italic").font(.system(size: size, weight: .bold))
+        #endif
+    }
+    @ViewBuilder static func bold(_ size: CGFloat = 16) -> some View {
+        #if canImport(PhosphorSwift)
+        Ph.textB.bold.frame(width: size, height: size)
+        #else
+        Image(systemName: "bold").font(.system(size: size, weight: .bold))
+        #endif
+    }
+    @ViewBuilder static func grabber(_ size: CGFloat = 14) -> some View {
+        #if canImport(PhosphorSwift)
+        Ph.dotsSixVertical.bold.frame(width: size, height: size)
+        #else
+        Image(systemName: "line.3.horizontal").font(.system(size: size, weight: .regular))
+        #endif
+    }
+    @ViewBuilder static func notePencil(_ size: CGFloat = 18) -> some View {
+        Image(systemName: "note.text.badge.plus").font(.system(size: size, weight: .bold))
+    }
+    @ViewBuilder static func check(_ size: CGFloat = 18) -> some View {
+        Image(systemName: "checkmark").font(.system(size: size, weight: .bold))
+    }
     @ViewBuilder static func plus(_ size: CGFloat = 18) -> some View {
         #if canImport(PhosphorSwift)
         Ph.plus.bold.frame(width: size, height: size)

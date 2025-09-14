@@ -1,0 +1,81 @@
+{
+  "object" : {
+    "artifacts" : [
+
+    ],
+    "dependencies" : [
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "down",
+          "kind" : "remoteSourceControl",
+          "location" : "https://github.com/johnxnguyen/Down",
+          "name" : "Down"
+        },
+        "state" : {
+          "checkoutState" : {
+            "branch" : "master",
+            "revision" : "e754ab1c80920dd51a8e08290c912ac1c2ac8b58"
+          },
+          "name" : "sourceControlCheckout"
+        },
+        "subpath" : "Down"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "highlighterswift",
+          "kind" : "remoteSourceControl",
+          "location" : "https://github.com/smittytone/HighlighterSwift",
+          "name" : "Highlighter"
+        },
+        "state" : {
+          "checkoutState" : {
+            "revision" : "120d654b7126559b68127a0a0f5b1d57742dd900",
+            "version" : "1.1.7"
+          },
+          "name" : "sourceControlCheckout"
+        },
+        "subpath" : "HighlighterSwift"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "swift",
+          "kind" : "remoteSourceControl",
+          "location" : "https://github.com/phosphor-icons/swift",
+          "name" : "PhosphorSwift"
+        },
+        "state" : {
+          "checkoutState" : {
+            "revision" : "9a9467181782bbe319ad4935d0993c77cd8a5fbc",
+            "version" : "2.1.0"
+          },
+          "name" : "sourceControlCheckout"
+        },
+        "subpath" : "swift"
+      },
+      {
+        "basedOn" : null,
+        "packageRef" : {
+          "identity" : "swiftmath",
+          "kind" : "remoteSourceControl",
+          "location" : "https://github.com/mgriebling/SwiftMath",
+          "name" : "SwiftMath"
+        },
+        "state" : {
+          "checkoutState" : {
+            "revision" : "fa8244ed032f4a1ade4cb0571bf87d2f1a9fd2d7",
+            "version" : "1.7.3"
+          },
+          "name" : "sourceControlCheckout"
+        },
+        "subpath" : "SwiftMath"
+      }
+    ],
+    "prebuilts" : [
+
+    ]
+  },
+  "version" : 7
+}

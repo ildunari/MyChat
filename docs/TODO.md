@@ -14,3 +14,14 @@ Updated: 2025-09-09
 - [x] Remove temporary `Combine` imports once Observation migration completes
 - [x] Integrate SwiftMath inline view to replace placeholder in `AIResponseView`
 
+## Notes (new)
+
+- [x] Add SwiftData models: `Note`, `NoteFolder`
+- [x] Notes Home with movable sections (Folders/Media toggle, Quick Actions, All Notes)
+- [x] Search across note titles and content
+- [x] Markdown editor MVP with formatting toolbar + preview
+- [x] AI editing engine skeleton (search/replace, regex, minimal unified diff)
+- [ ] Folder management (rename, delete, move)
+- [ ] Import/attachments (images, audio)
+- [ ] Evaluate integrating SwiftDown editor via SPM
+- [ ] Unit tests for `NoteEditingEngine`

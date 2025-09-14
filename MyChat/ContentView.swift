@@ -14,6 +14,7 @@ struct ContentView: View {
     @Query(sort: \Chat.createdAt, order: .reverse) private var chats: [Chat]
     @Query private var settingsQuery: [AppSettings]
     @State private var showingSettings = false
+    @State private var showingNotes = false
     @State private var initialChat: Chat? = nil
     @State private var showInitialChat = false
 
@@ -49,8 +50,12 @@ struct ContentView: View {
             .navigationTitle("Chats")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button { showingSettings = true } label: { AppIcon.gear() }
-                    .accessibilityLabel("Settings")
+                    HStack(spacing: 10) {
+                        Button { showingNotes = true } label: { AppIcon.note() }
+                            .accessibilityLabel("Notes")
+                        Button { showingSettings = true } label: { AppIcon.gear() }
+                            .accessibilityLabel("Settings")
+                    }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button { addChat() } label: { AppIcon.plus() }
@@ -65,6 +70,9 @@ struct ContentView: View {
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
                     .interactiveDismissDisabled(false)
+            }
+            .sheet(isPresented: $showingNotes) {
+                NotesHomeView()
             }
             .onAppear { ensureInitialChatIfNeeded() }
             .navigationDestination(isPresented: $showInitialChat) {

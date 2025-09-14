@@ -688,8 +688,16 @@ struct ChatView: View {
 
             // Compose the current user message with optional image parts (preserve MIME) if not editing
             if editingMessage == nil {
-                let imageParts = attachments.map { AIMessage.Part.imageData($0.data, mime: $0.mime) }
-                aiMessages.append(AIMessage(role: .user, parts: [.text(userText)] + imageParts))
+                var parts: [AIMessage.Part] = [.text(userText)]
+                let capsSend = ModelCapabilitiesStore.get(provider: providerID, model: model)
+                let canSendImages = capsSend?.supportsImages ?? true
+                if canSendImages {
+                    parts += attachments.map { AIMessage.Part.imageData($0.data, mime: $0.mime) }
+                }
+                aiMessages.append(AIMessage(role: .user, parts: parts))
+                if !canSendImages && !attachments.isEmpty {
+                    errorMessage = "This model doesn’t support image inputs. Images were omitted from the request."
+                }
             }
 
             // Apply per-model overrides from ModelCapabilitiesStore

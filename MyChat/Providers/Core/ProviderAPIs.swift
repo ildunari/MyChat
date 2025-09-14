@@ -140,12 +140,14 @@ struct ProviderAPIs {
             let decoded = try JSONDecoder().decode(ModelList.self, from: data)
             let infos = decoded.data.map { item in
                 // Heuristic defaults. Adjust as needed when OpenAI exposes richer metadata.
-                ProviderModelInfo(id: item.id,
+                let supportsImages = item.id.hasPrefix("gpt-4o") || item.id.hasPrefix("o4") || item.id.hasPrefix("o3") || item.id.lowercased().contains("vision")
+                return ProviderModelInfo(id: item.id,
                                   displayName: nil,
                                   inputTokenLimit: nil,
                                   outputTokenLimit: 8192,
                                   maxTemperature: 2.0,
-                                  supportsPromptCaching: false)
+                                  supportsPromptCaching: false,
+                                  supportsImages: supportsImages)
             }
             ModelCapabilitiesStore.putDefault(provider: provider.rawValue, infos: infos)
             return infos
@@ -183,12 +185,14 @@ struct ProviderAPIs {
             }
             let infos = decoded.data.map { item in
                 let d = defaults(for: item.id)
+                let supportsImages = item.id.starts(with: "claude-3") || item.id.starts(with: "claude-3.5") || item.id.contains("haiku") || item.id.contains("sonnet") || item.id.contains("opus")
                 return ProviderModelInfo(id: item.id,
                                          displayName: nil,
                                          inputTokenLimit: d.input,
                                          outputTokenLimit: d.output,
                                          maxTemperature: d.temp,
-                                         supportsPromptCaching: d.caching)
+                                         supportsPromptCaching: d.caching,
+                                         supportsImages: supportsImages)
             }
             ModelCapabilitiesStore.putDefault(provider: provider.rawValue, infos: infos)
             return infos
@@ -202,13 +206,13 @@ struct ProviderAPIs {
             guard (200..<300).contains(http.statusCode) else {
                 // if listing fails, synthesize common IDs to seed UI
                 let common = ["grok-3-mini", "grok-3-mini-high", "grok-2", "grok-beta"]
-                return common.map { ProviderModelInfo(id: $0, displayName: nil, inputTokenLimit: 131_072, outputTokenLimit: 8_192, maxTemperature: 2.0, supportsPromptCaching: true) }
+                return common.map { ProviderModelInfo(id: $0, displayName: nil, inputTokenLimit: 131_072, outputTokenLimit: 8_192, maxTemperature: 2.0, supportsPromptCaching: true, supportsImages: true) }
             }
             struct ModelList: Decodable { struct Item: Decodable { let id: String }
                 let data: [Item] }
             let decoded = try JSONDecoder().decode(ModelList.self, from: data)
             let infos = decoded.data.map { item in
-                ProviderModelInfo(id: item.id, displayName: nil, inputTokenLimit: 131_072, outputTokenLimit: 8_192, maxTemperature: 2.0, supportsPromptCaching: true)
+                ProviderModelInfo(id: item.id, displayName: nil, inputTokenLimit: 131_072, outputTokenLimit: 8_192, maxTemperature: 2.0, supportsPromptCaching: true, supportsImages: true)
             }
             ModelCapabilitiesStore.putDefault(provider: provider.rawValue, infos: infos)
             return infos

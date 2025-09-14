@@ -40,6 +40,15 @@ Update flow per session:
 - Use Conventional Commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`.
 - PRs include: concise summary, scope, before/after screenshots for UI changes, test steps, linked issues, and potential risks/roll-back plan.
 
+### Branch Naming (include runtime app name)
+- Format: `<runtimeApp>/<purpose>-<yyyymmdd[-hhmm]>`.
+- `runtimeApp` is the on-device app name you see on the simulator (e.g., `notechat`).
+- Examples:
+  - `notechat/ui-polish-20250914`
+  - `notechat/fix-math-render-20250914-1805`
+  - `notechat/ci-smoke-tests-20250914`
+- Rationale: makes it obvious which app variant a branch demos in CI/TestFlight and keeps screenshots/logs grouped per app.
+
 ## Security & Configuration Tips
 - Never hardcode API keys; store secrets with `KeychainService` and expose configuration via Settings.
 - Do not commit secrets or personal data; review `Info.plist` diffs carefully.

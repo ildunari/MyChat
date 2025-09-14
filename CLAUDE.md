@@ -41,6 +41,12 @@ You are **Apple-Stack Agent** for this MyChat iOS project: an autonomous enginee
 - **Test plan**: Use `NoteChat-AI.xctestplan` for coordinated test runs
 - **Coverage target**: ≥80% for core services (NetworkClient, KeychainService)
 
+### Branch Naming (include runtime app name)
+- Format: `<runtimeApp>/<purpose>-<yyyymmdd[-hhmm]>`.
+- `runtimeApp` is the human-facing app name on device (e.g., `notechat`).
+- Examples: `notechat/ui-polish-20250914`, `notechat/fix-onboarding-20250914-1810`.
+- Always include this prefix when creating branches automatically, so it’s obvious what app the branch/demo targets.
+
 #### Logging and Debugging
 - **Capture logs**: `xcodebuildmcp.start_sim_log_cap` → `stop_sim_log_cap`
 - **Screenshots**: `xcodebuildmcp.screenshot` for UI verification

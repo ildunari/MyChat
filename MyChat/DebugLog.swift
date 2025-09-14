@@ -3,7 +3,7 @@ import os
 
 #if DEBUG
 enum Log {
-    private static let subsystem = Bundle.main.bundleIdentifier ?? "personal.MyChat"
+    private static let subsystem = Bundle.main.bundleIdentifier ?? "personal.NoteChat"
     private static let general = Logger(subsystem: subsystem, category: "app")
     private static let net = Logger(subsystem: subsystem, category: "net")
     private static let sse = Logger(subsystem: subsystem, category: "sse")

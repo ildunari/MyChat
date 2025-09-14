@@ -24,35 +24,35 @@
 			containerPortal = 0A0484802E6F833800670BBE /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 0A0484872E6F833800670BBE;
-			remoteInfo = MyChat;
+			remoteInfo = NoteChat;
 		};
 		416D403E34514DCCD5C162F4 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 0A0484802E6F833800670BBE /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 0A0484872E6F833800670BBE;
-			remoteInfo = MyChat;
+			remoteInfo = NoteChat;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		0A0484882E6F833800670BBE /* MyChat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0A0484882E6F833800670BBE /* NoteChat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NoteChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		16A29328F62006CAE4E535F9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		2793EC5F11618EE4BBE42D2B /* MyChatTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MyChatTests.swift; sourceTree = "<group>"; };
-		AE1A6FCCDA930B4FB0A8B50C /* MyChatTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyChatTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AE1A6FCCDA930B4FB0A8B50C /* NoteChatTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NoteChatTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D293B726E6C8B732C4B49CA5 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		E4773D774129CCD5AD4B7857 /* MyChatUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyChatUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E4773D774129CCD5AD4B7857 /* NoteChatUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NoteChatUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		EBBF3A65AF88B6B6858C48F9 /* MyChatUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MyChatUITests.swift; sourceTree = "<group>"; };
 		F6C0B9CA3675C8D14DDB87A3 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		0A0484E62E6FA48D00670BBE /* Exceptions for "MyChat" folder in "MyChat" target */ = {
+		0A0484E62E6FA48D00670BBE /* Exceptions for "MyChat" folder in "NoteChat" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 0A0484872E6F833800670BBE /* MyChat */;
+			target = 0A0484872E6F833800670BBE /* NoteChat */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -60,7 +60,7 @@
 		0A04848A2E6F833800670BBE /* MyChat */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				0A0484E62E6FA48D00670BBE /* Exceptions for "MyChat" folder in "MyChat" target */,
+				0A0484E62E6FA48D00670BBE /* Exceptions for "MyChat" folder in "NoteChat" target */,
 			);
 			path = MyChat;
 			sourceTree = "<group>";
@@ -119,9 +119,9 @@
 		0A0484892E6F833800670BBE /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				0A0484882E6F833800670BBE /* MyChat.app */,
-				AE1A6FCCDA930B4FB0A8B50C /* MyChatTests.xctest */,
-				E4773D774129CCD5AD4B7857 /* MyChatUITests.xctest */,
+				0A0484882E6F833800670BBE /* NoteChat.app */,
+				AE1A6FCCDA930B4FB0A8B50C /* NoteChatTests.xctest */,
+				E4773D774129CCD5AD4B7857 /* NoteChatUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -163,9 +163,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		0A0484872E6F833800670BBE /* MyChat */ = {
+		0A0484872E6F833800670BBE /* NoteChat */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 0A0484932E6F833A00670BBE /* Build configuration list for PBXNativeTarget "MyChat" */;
+			buildConfigurationList = 0A0484932E6F833A00670BBE /* Build configuration list for PBXNativeTarget "NoteChat" */;
 			buildPhases = (
 				0A0484842E6F833800670BBE /* Sources */,
 				0A0484852E6F833800670BBE /* Frameworks */,
@@ -179,18 +179,18 @@
 			fileSystemSynchronizedGroups = (
 				0A04848A2E6F833800670BBE /* MyChat */,
 			);
-			name = MyChat;
+			name = NoteChat;
 			packageProductDependencies = (
 				0A0484972E6F9A0400670BBE /* Down */,
 				0A04849A2E6F9A5A00670BBE /* Highlighter */,
 				0A04849D2E6F9A9700670BBE /* SwiftMath */,
 				0A0484E82E6FAC4900670BBE /* PhosphorSwift */,
 			);
-			productName = MyChat;
-			productReference = 0A0484882E6F833800670BBE /* MyChat.app */;
+			productName = NoteChat;
+			productReference = 0A0484882E6F833800670BBE /* NoteChat.app */;
 			productType = "com.apple.product-type.application";
 		};
-		FE58F7433D74E0574A2393A7 /* MyChatTests */ = {
+		FE58F7433D74E0574A2393A7 /* NoteChatTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = FEBEA7BF6309E7857C288100 /* Build configuration list for PBXNativeTarget "MyChatTests" */;
 			buildPhases = (
@@ -203,15 +203,15 @@
 			dependencies = (
 				17C2F7E62DD6021645A3BC2D /* PBXTargetDependency */,
 			);
-			name = MyChatTests;
+			name = NoteChatTests;
 			packageProductDependencies = (
 				B0D0D0CF2F00000100000001 /* Down */,
 			);
-			productName = MyChatTests;
-			productReference = AE1A6FCCDA930B4FB0A8B50C /* MyChatTests.xctest */;
+			productName = NoteChatTests;
+			productReference = AE1A6FCCDA930B4FB0A8B50C /* NoteChatTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		FF4E70207F8FAEDC268AEA9E /* MyChatUITests */ = {
+		FF4E70207F8FAEDC268AEA9E /* NoteChatUITests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 32FE80C943908FC2E516B8F2 /* Build configuration list for PBXNativeTarget "MyChatUITests" */;
 			buildPhases = (
@@ -224,9 +224,9 @@
 			dependencies = (
 				2B3A79F810B660926B6AB119 /* PBXTargetDependency */,
 			);
-			name = MyChatUITests;
-			productName = MyChatUITests;
-			productReference = E4773D774129CCD5AD4B7857 /* MyChatUITests.xctest */;
+			name = NoteChatUITests;
+			productName = NoteChatUITests;
+			productReference = E4773D774129CCD5AD4B7857 /* NoteChatUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -244,7 +244,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 0A0484832E6F833800670BBE /* Build configuration list for PBXProject "MyChat" */;
+			buildConfigurationList = 0A0484832E6F833800670BBE /* Build configuration list for PBXProject "NoteChat-AI" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -264,9 +264,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				0A0484872E6F833800670BBE /* MyChat */,
-				FE58F7433D74E0574A2393A7 /* MyChatTests */,
-				FF4E70207F8FAEDC268AEA9E /* MyChatUITests */,
+				0A0484872E6F833800670BBE /* NoteChat */,
+				FE58F7433D74E0574A2393A7 /* NoteChatTests */,
+				FF4E70207F8FAEDC268AEA9E /* NoteChatUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -366,12 +366,12 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				INFOPLIST_FILE = MyChatUITests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.MyChatUITests;
-				PRODUCT_NAME = MyChatUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.NoteChatUITests;
+				PRODUCT_NAME = NoteChatUITests;
 				SDKROOT = iphonesimulator;
 				SUPPORTED_PLATFORMS = iphonesimulator;
 				SWIFT_VERSION = 5.0;
-				TEST_TARGET_NAME = MyChat;
+				TEST_TARGET_NAME = NoteChat;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -519,7 +519,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = personal.MyChat;
+				PRODUCT_BUNDLE_IDENTIFIER = personal.NoteChat;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -553,7 +553,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = personal.MyChat;
+				PRODUCT_BUNDLE_IDENTIFIER = personal.NoteChat;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -572,8 +572,8 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				INFOPLIST_FILE = MyChatTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.MyChatTests;
-				PRODUCT_NAME = MyChatTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.NoteChatTests;
+				PRODUCT_NAME = NoteChatTests;
 				SDKROOT = iphonesimulator;
 				SUPPORTED_PLATFORMS = iphonesimulator;
 				SWIFT_VERSION = 5.0;
@@ -587,8 +587,8 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				INFOPLIST_FILE = MyChatUITests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.MyChatUITests;
-				PRODUCT_NAME = MyChatUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.NoteChatUITests;
+				PRODUCT_NAME = NoteChatUITests;
 				SDKROOT = iphonesimulator;
 				SUPPORTED_PLATFORMS = iphonesimulator;
 				SWIFT_VERSION = 5.0;
@@ -603,8 +603,8 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				INFOPLIST_FILE = MyChatTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.MyChatTests;
-				PRODUCT_NAME = MyChatTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.NoteChatTests;
+				PRODUCT_NAME = NoteChatTests;
 				SDKROOT = iphonesimulator;
 				SUPPORTED_PLATFORMS = iphonesimulator;
 				SWIFT_VERSION = 5.0;
@@ -616,7 +616,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		0A0484832E6F833800670BBE /* Build configuration list for PBXProject "MyChat" */ = {
+		0A0484832E6F833800670BBE /* Build configuration list for PBXProject "NoteChat-AI" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				0A0484912E6F833A00670BBE /* Debug */,
@@ -625,7 +625,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		0A0484932E6F833A00670BBE /* Build configuration list for PBXNativeTarget "MyChat" */ = {
+		0A0484932E6F833A00670BBE /* Build configuration list for PBXNativeTarget "NoteChat" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				0A0484942E6F833A00670BBE /* Debug */,
@@ -634,7 +634,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		32FE80C943908FC2E516B8F2 /* Build configuration list for PBXNativeTarget "MyChatUITests" */ = {
+		32FE80C943908FC2E516B8F2 /* Build configuration list for PBXNativeTarget "NoteChatUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				043831A1EE8039FEF468079D /* Release */,
@@ -643,7 +643,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		FEBEA7BF6309E7857C288100 /* Build configuration list for PBXNativeTarget "MyChatTests" */ = {
+		FEBEA7BF6309E7857C288100 /* Build configuration list for PBXNativeTarget "NoteChatTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				F0AC1ED87DCDDA78FB345D60 /* Release */,

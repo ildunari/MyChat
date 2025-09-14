@@ -146,6 +146,13 @@ Use **context7** to pull current documentation:
 - Store architectural decisions with doc links
 - Prefer Apple Developer docs over unofficial sources
 
+> IMPORTANT — Use Context7 Before API Changes
+> 
+> Before modifying any provider API calls or request/response syntax (OpenAI, Anthropic, Google Generative Language, XAI), fetch up‑to‑date docs via Context7:
+> - `context7.resolve-library-id('<provider name> API')` to locate the canonical docs.
+> - `context7.get-library-docs(..., topic='models | prompt caching | streaming | request syntax', tokens≈3000)` to retrieve focused guidance.
+> - Only then update code; note doc source + date in code comments.
+
 ## Apple Design & Platform Rules
 
 ### Human Interface Guidelines

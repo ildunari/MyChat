@@ -62,7 +62,11 @@ struct AnthropicProvider: AIProviderAdvanced {
 
         // Map user/assistant messages
         let caps = ModelCapabilitiesStore.get(provider: id, model: model)
-        let cacheFlag = (caps?.enablePromptCaching ?? false)
+        // Combine global preference with model support and any explicit per‑model override
+        let globalCaching = UserDefaults.standard.bool(forKey: "GlobalPromptCachingEnabled")
+        let supportsCaching = caps?.supportsPromptCaching ?? false
+        let explicitEnable = caps?.enablePromptCaching
+        let cacheFlag = explicitEnable ?? (globalCaching && supportsCaching)
         func toBlocks(_ parts: [AIMessage.Part]) -> [ContentBlock] {
             parts.compactMap { p in
                 switch p {

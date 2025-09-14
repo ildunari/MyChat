@@ -11,68 +11,41 @@ struct SettingsView: View {
         @Bindable var store = store
         NavigationStack {
             List {
+                // AI Settings section — match the layout of other sections
                 Section {
+                    Text("AI Settings").font(.title3.weight(.semibold)).foregroundStyle(.secondary)
+                        .listRowInsets(EdgeInsets(top: 14, leading: 16, bottom: 4, trailing: 16))
+                        .listRowSeparator(.hidden)
+
                     NavigationLink {
                         ProvidersSettingsView()
                     } label: {
                         HStack(spacing: 12) {
-                            ZStack {
-                                Circle()
-                                    .fill(Material.ultraThinMaterial)
-                                    .frame(width: 32, height: 32)
-                                    .overlay {
-                                        Circle()
-                                            .fill(T.accent.opacity(0.1))
-                                    }
-                                AppIcon.info(18).foregroundStyle(T.accent)
-                            }
+                            AppIcon.info(18).foregroundStyle(T.accent)
                             VStack(alignment: .leading) {
                                 Text("Providers")
-                                    .fontWeight(.medium)
                                 Text("Manage API keys and models")
                                     .font(.footnote)
                                     .foregroundStyle(.secondary)
                             }
                         }
-                        .padding(.vertical, 6)
                     }
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(Material.ultraThinMaterial)
-                    )
-                    
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+
                     NavigationLink {
                         DefaultChatSettingsView()
                     } label: {
                         HStack(spacing: 12) {
-                            ZStack {
-                                Circle()
-                                    .fill(Material.ultraThinMaterial)
-                                    .frame(width: 32, height: 32)
-                                    .overlay {
-                                        Circle()
-                                            .fill(T.accent.opacity(0.1))
-                                    }
-                                AppIcon.info(18).foregroundStyle(T.accent)
-                            }
+                            AppIcon.info(18).foregroundStyle(T.accent)
                             VStack(alignment: .leading) {
-                                Text("Default Chat")
-                                    .fontWeight(.medium)
+                                Text("Default Agent Settings")
                                 Text("System prompt, temperature, tokens")
                                     .font(.footnote)
                                     .foregroundStyle(.secondary)
                             }
                         }
-                        .padding(.vertical, 6)
                     }
-                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(Material.ultraThinMaterial)
-                    )
+                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
                 }
                 Section {
                     Text("Interface").font(.title3.weight(.semibold)).foregroundStyle(.secondary)
@@ -295,20 +268,14 @@ private struct PersonalizationSettingsView: View {
 private struct ProvidersSettingsView: View {
     @Environment(SettingsStore.self) private var store
     @Environment(\.tokens) private var T
+    @State private var searchText: String = ""
 
     var body: some View {
         List {
-            ProviderRow(title: ProviderID.openai.displayName, iconView: AnyView(AppIcon.providerOpenAI(16))) {
-                ProviderDetailView(provider: .openai)
-            }
-            ProviderRow(title: ProviderID.anthropic.displayName, iconView: AnyView(AppIcon.providerAnthropic(16))) {
-                ProviderDetailView(provider: .anthropic)
-            }
-            ProviderRow(title: ProviderID.google.displayName, iconView: AnyView(AppIcon.providerGoogle(16))) {
-                ProviderDetailView(provider: .google)
-            }
-            ProviderRow(title: ProviderID.xai.displayName, iconView: AnyView(AppIcon.providerXAI(16))) {
-                ProviderDetailView(provider: .xai)
+            ForEach(filteredProviders(), id: \.rawValue) { p in
+                ProviderRow(title: p.displayName, iconView: icon(for: p)) {
+                    ProviderDetailView(provider: p)
+                }
             }
         }
         .scrollContentBackground(.hidden)
@@ -317,6 +284,25 @@ private struct ProvidersSettingsView: View {
         .navigationTitle("Providers")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(T.surface, for: .navigationBar)
+        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .automatic), prompt: "Search providers")
+    }
+
+    private func icon(for p: ProviderID) -> AnyView {
+        switch p {
+        case .openai: return AnyView(AppIcon.providerOpenAI(16))
+        case .anthropic: return AnyView(AppIcon.providerAnthropic(16))
+        case .google: return AnyView(AppIcon.providerGoogle(16))
+        case .xai: return AnyView(AppIcon.providerXAI(16))
+        }
+    }
+
+    private func filteredProviders() -> [ProviderID] {
+        let all = ProviderID.allCases
+        let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard q.isEmpty == false else { return all }
+        return all.filter { p in
+            p.displayName.localizedCaseInsensitiveContains(q) || p.rawValue.localizedCaseInsensitiveContains(q)
+        }
     }
 }
 
@@ -347,6 +333,7 @@ private struct ProviderDetailView: View {
     @State private var loadingModels = false
     private struct SelectedModel: Identifiable { let id: String }
     @State private var activeModelForEdit: SelectedModel? = nil
+    @State private var modelSearchText: String = ""
 
     var body: some View {
         Form {
@@ -388,7 +375,7 @@ private struct ProviderDetailView: View {
                     Text("No models. Verify API key and refresh.")
                         .foregroundStyle(.secondary)
                 } else {
-                    ForEach(available, id: \.self) { m in
+                    ForEach(filteredModels(), id: \.self) { m in
                         ModelRowWithInfo(title: m,
                                          isOn: bindingForModel(m),
                                          onInfo: { activeModelForEdit = SelectedModel(id: m) })
@@ -402,6 +389,7 @@ private struct ProviderDetailView: View {
         .navigationTitle(provider.displayName)
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(T.surface, for: .navigationBar)
+        .searchable(text: $modelSearchText, placement: .navigationBarDrawer(displayMode: .automatic), prompt: "Search models")
         .sheet(item: $activeModelForEdit) { selected in
             ModelSettingsView(providerID: provider.rawValue, modelID: selected.id)
         }
@@ -409,6 +397,12 @@ private struct ProviderDetailView: View {
             apiKey = readAPIKey()
             available = enabledModelsAll()
         }
+    }
+
+    private func filteredModels() -> [String] {
+        let q = modelSearchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard q.isEmpty == false else { return available }
+        return available.filter { $0.localizedCaseInsensitiveContains(q) }
     }
 
     private func bindingForModel(_ m: String) -> Binding<Bool> {
@@ -484,7 +478,6 @@ private struct ProviderDetailView: View {
             do {
                 let infos = try await ProviderAPIs.listModelInfos(provider: provider, apiKey: apiKey)
                 await MainActor.run {
-                    ModelCapabilitiesStore.putDefault(provider: provider.rawValue, infos: infos)
                     self.available = infos.map { $0.id }
                     // If defaults target this provider, clamp tokens to model limit when possible
                     if store.defaultProvider == provider.rawValue,
@@ -494,7 +487,17 @@ private struct ProviderDetailView: View {
                     }
                 }
             } catch {
-                // ignore; keep simple list population as fallback
+                // Fallback: simple list + seed basic defaults so downstream code has caps
+                do {
+                    let models = try await ProviderAPIs.listModels(provider: provider, apiKey: apiKey)
+                    let fallbacks = models.map { ProviderModelInfo.fallback(id: $0) }
+                    await MainActor.run {
+                        ModelCapabilitiesStore.putDefault(provider: provider.rawValue, infos: fallbacks)
+                        self.available = models
+                    }
+                } catch {
+                    // keep silent; available remains unchanged
+                }
             }
         }
         await MainActor.run { verified = ok; verifying = false }
@@ -505,7 +508,6 @@ private struct ProviderDetailView: View {
         do {
             let infos = try await ProviderAPIs.listModelInfos(provider: provider, apiKey: apiKey)
             await MainActor.run {
-                ModelCapabilitiesStore.putDefault(provider: provider.rawValue, infos: infos)
                 let models = infos.map { $0.id }
                 self.available = models
                 if models.isEmpty == false { // seed enabled set if empty
@@ -526,7 +528,12 @@ private struct ProviderDetailView: View {
             // Fallback to simple list
             do {
                 let models = try await ProviderAPIs.listModels(provider: provider, apiKey: apiKey)
-                await MainActor.run { self.available = models }
+                let fallbacks = models.map { ProviderModelInfo.fallback(id: $0) }
+                await MainActor.run {
+                    // Seed basic defaults so ChatView can clamp/drive params even without rich metadata
+                    ModelCapabilitiesStore.putDefault(provider: provider.rawValue, infos: fallbacks)
+                    self.available = models
+                }
             } catch {
                 await MainActor.run { self.available = [] }
             }
@@ -616,7 +623,7 @@ private struct DefaultChatSettingsView: View {
         .scrollContentBackground(.hidden)
         .background(T.bg)
         .dockBottomInset()
-        .navigationTitle("Default Chat")
+        .navigationTitle("Default Agent Settings")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(T.surface, for: .navigationBar)
     }
@@ -1061,33 +1068,43 @@ private struct PaletteOptionCard: View {
         return Button(action: onSelect) {
             ZStack(alignment: .topTrailing) {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [tokens.accent, tokens.accentSoft],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                VStack(alignment: .leading, spacing: 6) {
-                    Spacer(minLength: 0)
-                    HStack(spacing: 6) {
-                        // Small swatches that hint at palette roles
-                        RoundedRectangle(cornerRadius: 3).fill(tokens.accent).frame(width: 12, height: 12)
-                        RoundedRectangle(cornerRadius: 3).fill(tokens.surface).frame(width: 12, height: 12)
-                        RoundedRectangle(cornerRadius: 3).fill(tokens.surfaceElevated).frame(width: 12, height: 12)
-                        RoundedRectangle(cornerRadius: 3).fill(tokens.bubbleUser).frame(width: 12, height: 12)
+                    .fill(Material.ultraThinMaterial)
+                HStack(spacing: 12) {
+                    // LEFT: label + swatches
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(label)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                        HStack(spacing: 6) {
+                            RoundedRectangle(cornerRadius: 3).fill(tokens.accent).frame(width: 14, height: 14)
+                            RoundedRectangle(cornerRadius: 3).fill(tokens.surface).frame(width: 14, height: 14)
+                            RoundedRectangle(cornerRadius: 3).fill(tokens.surfaceElevated).frame(width: 14, height: 14)
+                            RoundedRectangle(cornerRadius: 3).fill(tokens.bubbleUser).frame(width: 14, height: 14)
+                        }
                     }
-                    .padding(.horizontal, 8)
-                    Text(label)
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(Color.white.opacity(0.95))
-                        .padding(.horizontal, 8)
-                        .padding(.bottom, 8)
+                    .padding(.leading, 12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    // RIGHT: gradient preview
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [tokens.accent, tokens.accentSoft],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 110, height: 68)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.white.opacity(0.25), lineWidth: 0.5)
+                        )
+                        .padding(.trailing, 12)
                 }
                 if selected {
                     AppIcon.checkCircle(true, size: 18)
-                        .foregroundStyle(Color.white)
+                        .foregroundStyle(Color.accentColor)
                         .padding(8)
                 }
             }
@@ -1115,33 +1132,73 @@ private struct FontOptionCard: View {
             ZStack(alignment: .topTrailing) {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(background)
-                VStack(alignment: .center, spacing: 6) {
+                VStack(alignment: .leading, spacing: 8) {
+                    // Title in the candidate font
                     Text(label)
                         .font(titleFont)
                         .fontWeight(.semibold)
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity)
-                    Text(sample)
-                        .font(bodyFont)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity)
+
+                    // Mini app-preview: chat bubbles + action button rendered with this font
+                    HStack(spacing: 6) {
+                        Capsule()
+                            .fill(Material.ultraThinMaterial)
+                            .overlay(
+                                Text("Hello!")
+                                    .font(bodyFont)
+                                    .foregroundStyle(.primary)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                            )
+                            .frame(height: 24)
+                        Spacer(minLength: 0)
+                        Capsule()
+                            .fill(Color.accentColor.opacity(0.15))
+                            .overlay(
+                                Text("Sure")
+                                    .font(bodyFont)
+                                    .foregroundStyle(.primary)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                            )
+                            .frame(height: 24)
+                    }
+
+                    HStack(spacing: 8) {
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(Material.thinMaterial)
+                            .frame(height: 24)
+                            .overlay(
+                                HStack {
+                                    Image(systemName: "text.cursor")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    Text("Type a message")
+                                        .font(bodyFont)
+                                        .foregroundStyle(.secondary)
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 8)
+                            )
+                        Capsule()
+                            .fill(Color.accentColor.opacity(0.2))
+                            .frame(width: 54, height: 24)
+                            .overlay(Text("Send").font(bodyFont).fontWeight(.semibold).foregroundStyle(.primary))
+                    }
+
                     Spacer(minLength: 0)
                 }
-                .padding(14)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .padding(12)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 if selected {
                     AppIcon.checkCircle(true, size: 18)
                         .foregroundStyle(Color.accentColor)
                         .padding(8)
                 }
             }
-            .frame(height: 98)
+            .frame(height: 120)
         }
         .buttonStyle(.plain)
         .overlay(
@@ -1151,7 +1208,7 @@ private struct FontOptionCard: View {
         .animation(.easeInOut(duration: 0.2), value: selected)
     }
 
-    private var sample: String { "Aa • Readable preview" }
+    // No separate sample string; preview elements above reflect the font
 }
 
 #Preview {

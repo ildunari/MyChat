@@ -19,7 +19,7 @@ final class AccessibilitySmokeTests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
 
         // Verify key rows exist and are hittable
-        let keys = ["Providers", "Default Chat", "Appearance", "Personalization"]
+        let keys = ["Providers", "Default Agent Settings", "Appearance", "Personalization"]
         for key in keys {
             let cell = app.staticTexts[key]
             XCTAssertTrue(cell.waitForExistence(timeout: 3), "Missing row \(key)")
@@ -27,4 +27,3 @@ final class AccessibilitySmokeTests: XCTestCase {
         }
     }
 }
-

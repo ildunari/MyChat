@@ -6,6 +6,7 @@ struct ContentView: View {
     @Environment(\.tokens) private var T
     @Environment(SettingsStore.self) private var store
     @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var chatBridge: ChatComposerBridge
     @Query(sort: \Chat.createdAt, order: .reverse) private var chats: [Chat]
     
     @State private var showingSettings = false
@@ -18,6 +19,13 @@ struct ContentView: View {
     @State private var renamingChat: Chat? = nil
     @State private var newChatTitle: String = ""
     @State private var navNewChat: Chat? = nil
+    // Floating composer overlay state
+    @State private var showComposer = false
+    @State private var draftText: String = ""
+    @State private var selectedActions: [String] = []
+    @State private var providerTab: String = "openai"
+    @State private var selectedModel: String = ""
+    @State private var swirlOut = false
     
     var body: some View {
         NavigationStack {
@@ -25,6 +33,20 @@ struct ContentView: View {
                 let cap = max(220, proxy.size.height * 0.33)
                 ScrollView {
                     VStack(spacing: 16) {
+                        // Page title + trailing plus
+                        HStack(alignment: .center) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Home")
+                                    .font(.largeTitle).bold()
+                                    .foregroundStyle(T.text)
+                                Text("Your AI workspace")
+                                    .font(.subheadline)
+                                    .foregroundStyle(T.textSecondary)
+                            }
+                            Spacer()
+                            ComposeButton { withAnimation(.spring()) { showComposer = true } }
+                        }
+                        .padding(.top, 4)
                         ForEach(sectionOrder, id: \.self) { kind in
                             let offsetY = dragOffsets[kind] ?? 0
                             SectionContainer(
@@ -66,7 +88,7 @@ struct ContentView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                ComposeButton { createAndNavigate() }
+                ComposeButton { withAnimation(.spring()) { showComposer = true } }
                     .padding(.trailing, 2)
             }
         }
@@ -92,7 +114,27 @@ struct ContentView: View {
             }
         }
         .background(T.bg.ignoresSafeArea())
-        .onAppear { loadOrderFromStore() }
+        // Floating compose overlay
+        .overlay {
+            if showComposer {
+                NewChatOverlay(
+                    show: $showComposer,
+                    text: $draftText,
+                    selectedActions: $selectedActions,
+                    providerTab: $providerTab,
+                    selectedModel: $selectedModel,
+                    onSend: { performOverlaySend() }
+                )
+                .transition(.asymmetric(insertion: .opacity.combined(with: .scale),
+                                        removal: .opacity.combined(with: .scale)))
+                .zIndex(10)
+            }
+        }
+        .onAppear { 
+            loadOrderFromStore()
+            providerTab = store.defaultProvider
+            selectedModel = store.defaultModel
+        }
         .onChange(of: sectionOrder) { _, _ in saveOrderToStore() }
         .onChange(of: chatHistoryExpanded) { _, newVal in store.homeChatsExpanded = newVal; store.save() }
         .onChange(of: agentsExpanded) { _, newVal in store.homeAgentsExpanded = newVal; store.save() }
@@ -108,7 +150,7 @@ struct ContentView: View {
             }
         } else {
             let gridSpacing: CGFloat = 12
-            let verticalPad: CGFloat = 8
+            let verticalPad: CGFloat = 0
             let cardH = max(120, (cap - gridSpacing - verticalPad) / 2)
             LazyVGrid(columns: [
                 GridItem(.flexible(), spacing: 12),
@@ -121,7 +163,7 @@ struct ContentView: View {
                     }
                 }
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, 0)
         }
     }
     
@@ -148,6 +190,220 @@ struct ContentView: View {
                 .stroke(T.borderSoft, lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: T.radiusMedium))
+    }
+    
+    // MARK: - Floating New Chat Overlay
+    private func performOverlaySend() {
+        let message = draftText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !message.isEmpty else { return }
+        // Apply selected model/provider to global defaults for now
+        var modelToUse = selectedModel
+        if modelToUse.isEmpty {
+            // fall back to store default model for the chosen provider
+            modelToUse = store.defaultModel
+        }
+        store.defaultProvider = providerTab
+        store.defaultModel = modelToUse
+        store.save()
+        
+        // Create chat and hand off message to Chat tab via bridge
+        let newChat = Chat(title: draftText.split(separator: "\n").first.map(String.init) ?? "New Chat")
+        modelContext.insert(newChat)
+        try? modelContext.save()
+        
+        chatBridge.text = message
+        chatBridge.pendingAutoSend = true
+        // Dismiss overlay with animation, then navigate to Chat tab
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+            showComposer = false
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            AppNavEvent.openChat(id: newChat.id)
+        }
+        // Reset overlay fields
+        draftText = ""; selectedActions.removeAll()
+    }
+
+    private struct NewChatOverlay: View {
+        @Environment(\.tokens) private var T
+        @Environment(\.colorScheme) private var scheme
+        @Binding var show: Bool
+        @Binding var text: String
+        @Binding var selectedActions: [String]
+        @Binding var providerTab: String
+        @Binding var selectedModel: String
+        var onSend: () -> Void
+        @State private var swirl = false
+        private let actions = ["Agent", "Image", "Video", "Media Edit", "Deep Research", "Artifact"]
+
+        var body: some View {
+            ZStack {
+                // Blurred backdrop
+                Rectangle()
+                    .fill(Color.black.opacity(0.25))
+                    .background(.ultraThinMaterial)
+                    .ignoresSafeArea()
+                    .onTapGesture { withAnimation(.spring()) { show = false } }
+                
+                // Center card
+                VStack(spacing: 14) {
+                    // Provider tabs
+                    ProviderTabs(selected: $providerTab)
+                    
+                    // Model row for selected provider
+                    ModelChips(provider: providerTab, selected: $selectedModel)
+                        .padding(.bottom, 4)
+
+                    // Selected action thumbnails
+                    if selectedActions.isEmpty == false {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(selectedActions, id: \.self) { act in
+                                    Text(act)
+                                        .font(.caption)
+                                        .padding(.horizontal, 10)
+                                        .padding(.vertical, 6)
+                                        .foregroundStyle(.white)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                                .fill(T.accent)
+                                                .shadow(color: T.accent.opacity(0.6), radius: 6)
+                                        )
+                                }
+                            }
+                        }
+                        .frame(height: 32)
+                    }
+
+                    // Chatbox
+                    ZStack(alignment: .topLeading) {
+                        TextEditor(text: $text)
+                            .frame(minHeight: 90, maxHeight: 140)
+                            .padding(10)
+                            .background(T.surface)
+                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .stroke(T.borderSoft, lineWidth: 1)
+                            )
+                        if text.isEmpty {
+                            Text("Ask anything…")
+                                .foregroundStyle(T.textSecondary)
+                                .padding(.top, 16)
+                                .padding(.leading, 16)
+                                .allowsHitTesting(false)
+                        }
+                    }
+
+                    // Action chips
+                    // Our custom FlowLayout doesn't support an `alignment:` parameter.
+                    // Use default left alignment and just control spacing.
+                    FlowLayout(spacing: 8) {
+                        ForEach(actions, id: \.self) { act in
+                            let isOn = selectedActions.contains(act)
+                            Button(action: {
+                                if isOn { selectedActions.removeAll { $0 == act } }
+                                else { selectedActions.append(act) }
+                            }) {
+                                HStack(spacing: 6) {
+                                    Circle().fill(isOn ? T.accent : T.borderSoft).frame(width: 6, height: 6)
+                                    Text(act)
+                                }
+                                .font(.caption)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .foregroundStyle(isOn ? .white : T.text)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .fill(isOn ? T.accent : T.surface)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .stroke(T.borderSoft, lineWidth: 1)
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .shadow(color: isOn ? T.accent.opacity(0.4) : .clear, radius: isOn ? 6 : 0)
+                        }
+                    }
+
+                    HStack {
+                        Button("Cancel") { withAnimation(.spring()) { show = false } }
+                            .buttonStyle(.liquidGlass(.subtle, cornerRadius: 10))
+                        Spacer()
+                        Button(action: {
+                            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) { swirl = true }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { onSend() }
+                        }) {
+                            HStack(spacing: 8) { AppIcon.paperPlane(14); Text("Send") }
+                        }
+                        .buttonStyle(.liquidGlass(.prominent, cornerRadius: 12))
+                        .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
+                }
+                .padding(16)
+                .liquidGlass(.regular, cornerRadius: 20)
+                .padding(.horizontal, 16)
+                .frame(maxWidth: 520)
+                .rotationEffect(.degrees(swirl ? 18 : 0))
+                .scaleEffect(swirl ? 0.9 : 1)
+                .shadow(color: Color.black.opacity(scheme == .dark ? 0.4 : 0.2), radius: 18, y: 6)
+            }
+        }
+
+        // Provider segmented tabs
+        private struct ProviderTabs: View {
+            @Environment(\.tokens) private var T
+            @Binding var selected: String
+            private let providers: [(id: String, title: String)] = [
+                ("openai", "OpenAI"), ("anthropic", "Anthropic"), ("google", "Google"), ("xai", "X.AI")
+            ]
+            var body: some View {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(providers, id: \.id) { p in
+                            let isSel = selected == p.id
+                            Button(action: { selected = p.id }) {
+                                Text(p.title).font(.caption).bold()
+                            }
+                            .buttonStyle(.liquidGlass(isSel ? .prominent : .subtle, cornerRadius: 10))
+                        }
+                    }
+                }
+            }
+        }
+
+        // Models enabled for the given provider (chips)
+        private struct ModelChips: View {
+            @Environment(SettingsStore.self) private var store
+            @Environment(\.tokens) private var T
+            let provider: String
+            @Binding var selected: String
+            var models: [String] {
+                switch provider {
+                case "openai": return Array(store.openAIEnabled).sorted()
+                case "anthropic": return Array(store.anthropicEnabled).sorted()
+                case "google": return Array(store.googleEnabled).sorted()
+                case "xai": return Array(store.xaiEnabled).sorted()
+                default: return []
+                }
+            }
+            var body: some View {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(models, id: \.self) { m in
+                            let active = (selected == m)
+                            Button(action: { selected = m }) {
+                                Text(m)
+                                    .font(.caption)
+                                    .lineLimit(1)
+                            }
+                            .buttonStyle(.liquidGlass(active ? .prominent : .subtle, cornerRadius: 10))
+                        }
+                    }
+                }
+            }
+        }
     }
     
     @ViewBuilder
@@ -291,7 +547,7 @@ private struct SectionContainer<Content: View>: View {
     @ViewBuilder var content: () -> Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
                 AppIcon.grabber(14).foregroundStyle(T.textSecondary)
                     .gesture(

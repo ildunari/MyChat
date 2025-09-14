@@ -12,14 +12,18 @@ struct MathWebView: UIViewRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
+    private static let sharedPool = WKProcessPool()
+
     func makeUIView(context: Context) -> WKWebView {
         let conf = WKWebViewConfiguration()
         conf.defaultWebpagePreferences.allowsContentJavaScript = true
         conf.limitsNavigationsToAppBoundDomains = false
+        conf.processPool = Self.sharedPool
         let web = WKWebView(frame: .zero, configuration: conf)
         web.isOpaque = false
         web.backgroundColor = .clear
-        web.scrollView.isScrollEnabled = true // allow horizontal scroll if needed
+        // Inline math should not scroll; block math may need horizontal scroll for wide equations
+        web.scrollView.isScrollEnabled = displayMode
         web.navigationDelegate = context.coordinator
 
         // Prefer local KaTeX assets if bundled: ChatApp.app/KaTeX/{katex.min.js, auto-render.min.js, katex.min.css}

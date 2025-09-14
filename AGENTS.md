@@ -300,3 +300,14 @@ To keep the human in the loop at all times, follow these rules in every session:
 
 - 2025-09-08: Migrated from ChatApp to MyChat, pending Down markdown integration
 - Package change: MarkdownUI → Down for markdown rendering
+### Documentation Discipline (Zero‑Hallucination Policy)
+- Never invent APIs; verify with official documentation before implementing.
+- Cite sources and include doc versions in code comments when relevant.
+- Prefer official vendor docs over third‑party sources.
+- Record architectural decisions with supporting documentation.
+
+> IMPORTANT — Always Use Context7 Before API/Syntax Changes
+> - Resolve docs: `context7.resolve-library-id('<provider name> API')` (OpenAI, Anthropic, Google Generative Language, XAI).
+> - Fetch lean docs: `context7.get-library-docs(..., topic='models | prompt caching | streaming | request syntax', tokens≈3000)`.
+> - Confirm parameters, headers, and endpoints against the returned docs before changing code.
+> - Add a brief comment in code with the doc source + retrieval date.

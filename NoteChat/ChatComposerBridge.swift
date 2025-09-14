@@ -9,6 +9,10 @@ final class ChatComposerBridge: ObservableObject {
     // Store per-chat drafts
     @Published var drafts: [UUID: String] = [:]
 
+    // If true, the next time a ChatView sets up the bridge,
+    // it should immediately trigger onSend() using current `text`.
+    @Published var pendingAutoSend: Bool = false
+
     var onSend: (() -> Void)?
     var onStop: (() -> Void)?
     var onPlus: (() -> Void)?

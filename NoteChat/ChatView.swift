@@ -27,6 +27,9 @@ struct ChatView: View {
     @State private var expandedText: String? = nil
     private let expandEvent = Notification.Name("ExpandResponse")
     @State private var reasoningSnippet: String = ""
+    // Thinking glass state
+    @State private var showThinkingPanel: Bool = false
+    @State private var reasoningFull: String = ""
 
     var body: some View {
         VStack(spacing: 0) {
@@ -107,12 +110,21 @@ struct ChatView: View {
         .sheet(isPresented: $showShare) {
             ShareSheet(activityItems: [shareText])
         }
-        // Subtle thinking overlay while streaming
-        .overlay(alignment: .top) {
+        // Thinking glass: compact bubble (tap to expand) anchored at bottom‑right
+        .overlay(alignment: .bottomTrailing) {
             if isSending, store.showThinkingOverlay {
-                ThinkingOverlay(snippet: reasoningSnippet)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
-                    .padding(.top, 6)
+                ThinkingGlassBubble(snippet: reasoningSnippet) {
+                    showThinkingPanel = true
+                }
+                .padding(.trailing, 14)
+                .padding(.bottom, 20)
+                .sheet(isPresented: $showThinkingPanel) {
+                    ThinkingGlassPanel(title: "Thinking (\(providerDisplayName))", text: $reasoningFull) {
+                        showThinkingPanel = false
+                    }
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+                }
             }
         }
         .onAppear {
@@ -125,6 +137,16 @@ struct ChatView: View {
             chatBridge.onStop = { self.stopStreaming() }
             chatBridge.onPlus = { self.showPhotoPicker = true }
             chatBridge.isStreaming = (self.streamingText != nil)
+
+            // If Home's floating composer requested an auto send,
+            // trigger it once after ChatView has appeared.
+            if chatBridge.pendingAutoSend, !chatBridge.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                chatBridge.pendingAutoSend = false
+                // slight delay to allow layout + InputBar attach
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    chatBridge.onSend?()
+                }
+            }
         }
         .onChange(of: streamingText) { _, v in chatBridge.isStreaming = (v != nil) }
     }
@@ -368,7 +390,7 @@ struct ChatView: View {
                         .font(.footnote)
                         .foregroundStyle(T.textSecondary)
                 }
-                AIResponseView(content: partial)
+                AIResponseView(content: partial, mode: .streaming)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.horizontal)
@@ -673,6 +695,7 @@ struct ChatView: View {
             if let streaming2 = provider as? AIStreamingProviderV2 {
                 streamingText = ""
                 reasoningSnippet = ""
+                reasoningFull = ""
                 reply = try await streaming2.streamChat(
                     messages: aiMessages,
                     model: model,
@@ -687,10 +710,14 @@ struct ChatView: View {
                         self.streamingText = (self.streamingText ?? "") + delta
                     }
                 } onReasoningDelta: { rdelta in
-                    guard store.showReasoningSnippets else { return }
                     Task { @MainActor in
-                        let combined = (self.reasoningSnippet + rdelta).replacingOccurrences(of: "\n", with: " ")
-                        self.reasoningSnippet = String(combined.suffix(90))
+                        // Accumulate full stream for the expanded panel
+                        self.reasoningFull += rdelta
+                        // Maintain snippet for compact bubble when enabled
+                        if store.showReasoningSnippets {
+                            let combined = (self.reasoningSnippet + rdelta).replacingOccurrences(of: "\n", with: " ")
+                            self.reasoningSnippet = String(combined.suffix(90))
+                        }
                     }
                 }
             } else if let streaming = provider as? AIStreamingProvider {
@@ -727,6 +754,7 @@ struct ChatView: View {
             // Add assistant message
             streamingText = nil
             reasoningSnippet = ""
+            reasoningFull = ""
             let aiMsg = Message(role: "assistant", content: reply, chat: chat)
             modelContext.insert(aiMsg)
 
@@ -751,6 +779,7 @@ struct ChatView: View {
             // Any non-cancellation error: clear streaming state and surface message
             streamingText = nil
             reasoningSnippet = ""
+            reasoningFull = ""
             errorMessage = (error as NSError).localizedDescription
         }
     }
@@ -773,41 +802,7 @@ struct ChatView: View {
         attachments.removeAll()
     }
 
-    // Subtle "thinking" overlay with glass capsule and animated dots. Shows a short, rolling snippet.
-    private struct ThinkingOverlay: View {
-        let snippet: String
-        @Environment(\.tokens) private var T
-        @Environment(\.accessibilityReduceMotion) private var reduceMotion
-        @State private var phase: Double = 0
-        var body: some View {
-            HStack(spacing: 10) {
-                HStack(spacing: 4) {
-                    Circle().frame(width: 6, height: 6).opacity(opacity(0))
-                    Circle().frame(width: 6, height: 6).opacity(opacity(1))
-                    Circle().frame(width: 6, height: 6).opacity(opacity(2))
-                }
-                .foregroundStyle(T.accent)
-                Text(snippet.isEmpty ? "Thinking…" : snippet)
-                    .font(.footnote)
-                    .foregroundStyle(T.text)
-                    .lineLimit(1)
-                    .frame(maxWidth: 240, alignment: .leading)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(.ultraThinMaterial, in: Capsule())
-            .overlay(Capsule().stroke(T.borderSoft, lineWidth: 0.7))
-            .shadow(color: T.shadow.opacity(0.12), radius: 6, y: 2)
-            .onAppear {
-                if reduceMotion {
-                    phase = 1
-                } else {
-                    withAnimation(.easeInOut(duration: 1.0).repeatForever()) { phase = 1 }
-                }
-            }
-        }
-        private func opacity(_ i: Int) -> Double { max(0.25, 1 - abs(sin(phase * .pi + Double(i) * 0.8))) }
-    }
+    // ThinkingOverlay replaced by ThinkingGlassBubble + ThinkingGlassPanel in ThinkingGlass.swift
 
     // MARK: - Provider header helpers
     private var providerDisplayName: String {

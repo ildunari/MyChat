@@ -155,6 +155,8 @@ final class SettingsStore {
         self.userUsername = settings.userUsername
         self.aiName = settings.aiDisplayName
         self.personalInfo = settings.personalInfo
+        // Mirror global prompt-caching preference after all stored properties are initialized
+        UserDefaults.standard.set(self.promptCachingEnabled, forKey: "GlobalPromptCachingEnabled")
     }
 
     func save() {
@@ -194,6 +196,8 @@ final class SettingsStore {
         saveKeychain(key: ANTHROPIC_KEY_KEYCHAIN, value: anthropicAPIKey)
         saveKeychain(key: GOOGLE_KEY_KEYCHAIN, value: googleAPIKey)
         saveKeychain(key: XAI_KEY_KEYCHAIN, value: xaiAPIKey)
+        // Keep mirror updated so providers can read without SwiftData access
+        UserDefaults.standard.set(promptCachingEnabled, forKey: "GlobalPromptCachingEnabled")
         
         // Reset the flag after saving
         hasUnsavedChanges = false

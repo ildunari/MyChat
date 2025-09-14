@@ -4,14 +4,12 @@ import UIKit
 
 // MarkdownUI removed in favor of Down renderer
 
-#if canImport(Highlightr)
-import Highlightr
-#endif
-
 import SwiftMath // SwiftMath provides MTMathUILabel for native LaTeX rendering
 
 struct AIResponseView: View {
+    enum Mode { case streaming, final }
     let content: String
+    var mode: Mode = .final
     @Environment(\.tokens) private var T
 
     var body: some View {
@@ -19,7 +17,7 @@ struct AIResponseView: View {
             ForEach(parseBlocks(from: content)) { block in
                 switch block.kind {
                 case .markdown(let text):
-                    MarkdownSegment(text: text)
+                    MarkdownSegment(text: text, mode: mode)
                 case .code(let lang, let code):
                     CodeBlockSegment(language: lang, code: code)
                 case .math(let latex):
@@ -109,7 +107,10 @@ private func parseBlocks(from text: String) -> [Block] {
 
 private struct MarkdownSegment: View {
     let text: String
+    let mode: AIResponseView.Mode
     @Environment(\.tokens) private var T
+    @State private var attributed: AttributedString? = nil
+    @State private var parseTask: Task<Void, Never>? = nil
 
     // Lightweight detector for Markdown tables (header and pipes present)
     private var containsTable: Bool {
@@ -119,27 +120,64 @@ private struct MarkdownSegment: View {
     var body: some View {
         Group {
             if text.contains("$") {
-                // Use our inline math renderer when inline $...$ detected
                 InlineMathParagraph(text: text)
                     .foregroundStyle(T.text)
             } else {
-                // Down-based renderer → AttributedString → SwiftUI Text
-                let attributed = renderMarkdownAttributed(text,
-                                                          linkColor: T.link,
-                                                          preferSystemStyling: true)
-                if containsTable {
-                    ScrollView(.horizontal, showsIndicators: true) {
-                        Text(attributed)
-                            .font(.body)
-                            .foregroundStyle(T.text)
-                            .textSelection(.enabled)
-                    }
-                } else {
-                    Text(attributed)
+                contentView
+            }
+        }
+        .task(id: taskID) {
+            // Cancel any in-flight parse
+            parseTask?.cancel()
+            parseTask = Task { [text, mode] in
+                // Small debounce during streaming to coalesce updates
+                if mode == .streaming {
+                    try? await Task.sleep(nanoseconds: 120_000_000) // ~120ms
+                }
+                let out: AttributedString
+                switch mode {
+                case .streaming:
+                    out = await MarkdownParser.shared.parseStreaming(text)
+                case .final:
+                    out = await MarkdownParser.shared.parseFinal(text, preferSystem: true)
+                }
+                await MainActor.run { self.attributed = out }
+            }
+        }
+    }
+
+    private var taskID: String { (mode == .streaming ? "s|" : "f|") + String(text.hashValue) }
+
+    @ViewBuilder
+    private var contentView: some View {
+        if let a = attributed {
+            if containsTable {
+                ScrollView(.horizontal, showsIndicators: true) {
+                    Text(a)
                         .font(.body)
                         .foregroundStyle(T.text)
                         .textSelection(.enabled)
                 }
+            } else {
+                Text(a)
+                    .font(.body)
+                    .foregroundStyle(T.text)
+                    .textSelection(.enabled)
+            }
+        } else {
+            // Fallback while parsing: render a quick plaintext preview
+            if containsTable {
+                ScrollView(.horizontal, showsIndicators: true) {
+                    Text(String(text.prefix(200)))
+                        .font(.body)
+                        .foregroundStyle(T.text)
+                        .textSelection(.enabled)
+                }
+            } else {
+                Text(String(text.prefix(200)))
+                    .font(.body)
+                    .foregroundStyle(T.text)
+                    .textSelection(.enabled)
             }
         }
     }
@@ -151,7 +189,6 @@ private struct CodeBlockSegment: View {
     @Environment(\.tokens) private var T
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            #if canImport(Highlightr) || canImport(Highlighter) || canImport(HighlighterSwift)
             HighlightedCodeView(code: code, language: language)
                 .padding(6)
                 .background(T.codeBg)
@@ -160,20 +197,6 @@ private struct CodeBlockSegment: View {
                         .stroke(T.borderSoft, lineWidth: 1)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            #else
-            ScrollView(.horizontal, showsIndicators: true) {
-                Text(code)
-                    .font(.system(.body, design: .monospaced))
-                    .textSelection(.enabled)
-                    .padding(12)
-            }
-            .background(T.codeBg)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(T.borderSoft, lineWidth: 1)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            #endif
 
             // Toolbar overlay (copy / expand)
             HStack(spacing: 6) {
@@ -225,11 +248,18 @@ private struct MathBlockSegment: View {
     }
 }
 
-#if canImport(Highlightr)
+// Unified highlighted code view using CodeHighlighter actor (library-agnostic)
 private struct HighlightedCodeView: UIViewRepresentable {
     let code: String
     let language: String?
     @Environment(\.colorScheme) private var colorScheme
+
+    final class Coordinator {
+        var task: Task<Void, Never>? = nil
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
     func makeUIView(context: Context) -> UITextView {
         let tv = UITextView()
         tv.isEditable = false
@@ -237,72 +267,25 @@ private struct HighlightedCodeView: UIViewRepresentable {
         tv.isSelectable = true
         tv.textContainerInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
         tv.backgroundColor = UIColor.clear
+        tv.font = UIFont.monospacedSystemFont(ofSize: UIFont.systemFontSize, weight: .regular)
         return tv
     }
+
     func updateUIView(_ uiView: UITextView, context: Context) {
-        if let highlightr = Highlightr(),
-           let theme = highlightr.setTheme(to: CodeTheme.current(for: colorScheme)) {
-            highlightr.theme = theme
-            let highlighted = highlightr.highlight(code, as: language)
-            uiView.attributedText = highlighted
-            uiView.textColor = UIColor.label
-        } else {
-            uiView.text = code
+        // Cancel any inflight highlight task
+        context.coordinator.task?.cancel()
+        uiView.attributedText = NSAttributedString(string: code, attributes: [.font: UIFont.monospacedSystemFont(ofSize: UIFont.systemFontSize, weight: .regular)])
+        let theme = CodeTheme.current(for: colorScheme)
+        context.coordinator.task = Task {
+            let out = await CodeHighlighter.shared.highlight(code, lang: language, theme: theme)
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                uiView.attributedText = out
+                uiView.textColor = UIColor.label
+            }
         }
     }
 }
-#elseif canImport(Highlighter)
-import Highlighter
-private struct HighlightedCodeView: UIViewRepresentable {
-    let code: String
-    let language: String?
-    func makeUIView(context: Context) -> UITextView {
-        let tv = UITextView()
-        tv.isEditable = false
-        tv.isScrollEnabled = false
-        tv.isSelectable = true
-        tv.textContainerInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
-        tv.backgroundColor = UIColor.clear
-        return tv
-    }
-    func updateUIView(_ uiView: UITextView, context: Context) {
-        // Attempt a common theme; fall back gracefully
-        if let highlighter = Highlighter() {
-            let highlighted = highlighter.highlight(code, as: language ?? "") ?? NSAttributedString(string: code)
-            uiView.attributedText = highlighted
-            uiView.textColor = UIColor.label
-        } else {
-            uiView.text = code
-        }
-    }
-}
-#elseif canImport(HighlighterSwift)
-import HighlighterSwift
-private struct HighlightedCodeView: UIViewRepresentable {
-    let code: String
-    let language: String?
-    func makeUIView(context: Context) -> UITextView {
-        let tv = UITextView()
-        tv.isEditable = false
-        tv.isScrollEnabled = false
-        tv.isSelectable = true
-        tv.textContainerInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
-        tv.backgroundColor = UIColor.clear
-        return tv
-    }
-    func updateUIView(_ uiView: UITextView, context: Context) {
-        // API shape assumption: HighlighterSwift().highlight(code:as:)
-        // If unavailable, fall back to plain text gracefully.
-        if let highlighter = HighlighterSwift() {
-            let highlighted = highlighter.highlight(code: code, as: language ?? "") ?? NSAttributedString(string: code)
-            uiView.attributedText = highlighted
-            uiView.textColor = UIColor.label
-        } else {
-            uiView.text = code
-        }
-    }
-}
-#endif
 
 // SwiftMath UIViewRepresentable wrapper for MTMathUILabel
 private struct SwiftMathLabel: UIViewRepresentable {

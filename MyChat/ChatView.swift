@@ -574,7 +574,17 @@ struct ChatView: View {
             }
 
             // Apply per-model overrides from ModelCapabilitiesStore
-            let caps = ModelCapabilitiesStore.get(provider: providerID, model: model) // effective (user over default)
+            var caps = ModelCapabilitiesStore.get(provider: providerID, model: model) // effective (user over default)
+            // If per-model caching isn't set, honor global AppSettings toggle as a soft default
+            if caps?.enablePromptCaching == nil {
+                let globalCaching = (settingsQuery.first?.promptCachingEnabled ?? false)
+                if globalCaching {
+                    var updated = caps ?? .fallback(id: model)
+                    updated.enablePromptCaching = true
+                    ModelCapabilitiesStore.putUser(provider: providerID, model: model, info: updated)
+                    caps = updated
+                }
+            }
             let tempEff = caps?.preferredTemperature ?? settings.defaultTemperature
             let topPEff = caps?.preferredTopP
             let topKEff = caps?.preferredTopK

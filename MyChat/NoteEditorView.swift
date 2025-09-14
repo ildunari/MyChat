@@ -37,8 +37,9 @@ struct NoteEditorView: View, Identifiable {
 
             Group {
                 if mode == .edit {
-                    MarkdownTextEditor(text: $note.content)
+                    NoteMarkdownEditor(text: $note.content)
                         .background(T.surface)
+                        .onChange(of: note.content) { _, _ in scheduleAutosave() }
                 } else {
                     ScrollView {
                         Text(renderMarkdownAttributed(note.content, linkColor: T.accent))
@@ -69,8 +70,15 @@ struct NoteEditorView: View, Identifiable {
     }
 
     private func applyTitle() { note.title = titleDraft; saveNow() }
-    private func debounceApplyTitle() { /* TODO: debounce if needed */ }
+    private func debounceApplyTitle() { scheduleAutosave() }
     private func saveNow() { note.updatedAt = Date(); try? modelContext.save() }
+    @State private var pendingSaveWorkItem: DispatchWorkItem? = nil
+    private func scheduleAutosave() {
+        pendingSaveWorkItem?.cancel()
+        let work = DispatchWorkItem { saveNow() }
+        pendingSaveWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6, execute: work)
+    }
 
     // Insert simple markdown tokens
     private func applyFormatting(_ action: FormattingAction) {
@@ -143,4 +151,3 @@ private struct MarkdownTextEditor: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 }
-

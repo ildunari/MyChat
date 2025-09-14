@@ -22,3 +22,8 @@ MyChat.xcodeproj/xcuserdata/
 MyChat/Env/.env
 MyChat/Env/*.env
 
+
+# Local DerivedData caches
+.DerivedData-*/
+# Local editor settings
+.vscode/

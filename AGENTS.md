@@ -6,12 +6,12 @@ This guide helps contributors work efficiently in this SwiftUI iOS project.
 - `MyChat/`: App code — views (`ChatView.swift`, `SettingsView.swift`, `ContentView.swift`), services (`NetworkClient.swift`, `KeychainService.swift`), providers (`AIProvider.swift`, `OpenAIProvider.swift`, `OpenAIImageProvider.swift`), models (`Models.swift`, `Item.swift`), app entry (`MyChatApp.swift`), config (`Info.plist`), assets (`Assets.xcassets/`), entitlements.
 - `MyChatTests/`: Unit tests (XCTest) - TO BE CREATED
 - `MyChatUITests/`: UI tests (XCUITest) - TO BE CREATED
-- `MyChat.xcodeproj/`: Xcode project
-- `MyChat.xctestplan`: Test plan - TO BE CREATED
+- `NoteChat-AI.xcodeproj/`: Xcode project
+- `NoteChat-AI.xctestplan`: Test plan - TO BE CREATED
 
 ## Build, Test, and Development Commands
-- Open in Xcode: `open MyChat.xcodeproj`.
-- Build (CLI): `xcodebuild -project MyChat.xcodeproj -scheme MyChat build`.
+- Open in Xcode: `open NoteChat-AI.xcodeproj`.
+- Build (CLI): `xcodebuild -project NoteChat-AI.xcodeproj -scheme NoteChat build`.
 - Run tests (CLI): `xcodebuild test -project MyChat.xcodeproj -scheme MyChat -destination 'platform=iOS Simulator,name=iPhone 16'`.
 - Run a specific test: `xcodebuild test -only-testing:MyChatTests/YourTestName …` (adjust names). Use `xcrun simctl list devices` to pick an available simulator.
 
@@ -124,7 +124,7 @@ To keep the human in the loop at all times, follow these rules in every session:
 3. Code: Small focused edits; avoid blocking the main thread.
 4. Build: `build_sim` → fix warnings before proceeding.
 5. Run & Observe: `build_run_sim` → attach logs → `stop_sim_log_cap`.
-6. Test: `xcodebuild test -project MyChat.xcodeproj -scheme MyChat -destination 'platform=iOS Simulator,name=iPhone 16'` (or use `MyChat.xctestplan`); include UI tests where UI changed.
+6. Test: `xcodebuild test -project MyChat.xcodeproj -scheme MyChat -destination 'platform=iOS Simulator,name=iPhone 16'` (or use `NoteChat-AI.xctestplan`); include UI tests where UI changed.
 7. Accessibility: Verify Dynamic Type, dark mode, VoiceOver.
 8. Cleanup: Remove temp files/log captures.
 9. Report: Structured summary with artifacts and next steps.
@@ -234,7 +234,7 @@ To keep the human in the loop at all times, follow these rules in every session:
 - Tests (TO BE CREATED)
   - `MyChatTests/*` — Unit test target scaffold.
   - `MyChatUITests/*` — UI test target scaffold.
-  - `MyChat.xctestplan` — Test plan for coordinated runs.
+  - `NoteChat-AI.xctestplan` — Test plan for coordinated runs.
 
 ## Build & Dependencies Snapshot
 
@@ -251,7 +251,7 @@ To keep the human in the loop at all times, follow these rules in every session:
   - **HighlighterSwift** (product: Highlighter) 1.1.7: Code syntax highlighting (optional)
   - **SwiftMath** 1.7.3: Mathematical formula rendering (optional)
   - **PhosphorSwift** 2.1.0: Icon set
-- Quick build check: `xcodebuild -project MyChat.xcodeproj -scheme MyChat -destination 'generic/platform=iOS Simulator' build`
+- Quick build check: `xcodebuild -project NoteChat-AI.xcodeproj -scheme NoteChat -destination 'generic/platform=iOS Simulator' build`
 
 ## Key Flows
 
@@ -294,7 +294,7 @@ To keep the human in the loop at all times, follow these rules in every session:
 - [ ] Test basic chat functionality with API keys
 - [ ] Add UI polish for code themes (optional)
 - [ ] Create test targets (MyChatTests, MyChatUITests)
-- [ ] Create MyChat.xctestplan
+- [ ] Create NoteChat-AI.xctestplan
 
 ## Decision Log
 

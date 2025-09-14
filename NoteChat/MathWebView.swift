@@ -12,13 +12,18 @@ struct MathWebView: UIViewRepresentable {
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
-    private static let sharedPool = WKProcessPool()
+    // WKProcessPool/processPool were effectively made no‑ops starting iOS 15.
+    // Apple notes: “Creating and using multiple instances of WKProcessPool no longer has any effect.”
+    // Ref: Apple WebKit docs — WKProcessPool and WKWebViewConfiguration.processPool
+    // https://developer.apple.com/documentation/webkit/wkprocesspool (retrieved 2025-09-14)
+    // https://developer.apple.com/documentation/webkit/wkwebviewconfiguration/processpool (retrieved 2025-09-14)
 
     func makeUIView(context: Context) -> WKWebView {
         let conf = WKWebViewConfiguration()
         conf.defaultWebpagePreferences.allowsContentJavaScript = true
         conf.limitsNavigationsToAppBoundDomains = false
-        conf.processPool = Self.sharedPool
+        // Note: Do not set a custom processPool.
+        // Since iOS 15, all WKWebViews effectively share a single pool; explicit pools are deprecated.
         let web = WKWebView(frame: .zero, configuration: conf)
         web.isOpaque = false
         web.backgroundColor = .clear

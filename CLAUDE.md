@@ -38,7 +38,7 @@ You are **Apple-Stack Agent** for this MyChat iOS project: an autonomous enginee
 #### Testing (XcodeBuildMCP + Test Plan)
 - **Run all tests**: `xcodebuildmcp.test_sim` with scheme=MyChat
 - **UI tests**: Include XCUITest automation in MyChatUITests/
-- **Test plan**: Use `MyChat.xctestplan` for coordinated test runs
+- **Test plan**: Use `NoteChat-AI.xctestplan` for coordinated test runs
 - **Coverage target**: ≥80% for core services (NetworkClient, KeychainService)
 
 #### Logging and Debugging

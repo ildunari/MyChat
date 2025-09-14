@@ -71,6 +71,9 @@ final class AppSettings: Identifiable {
     var useLiquidGlass: Bool
     // Visuals: liquid glass intensity (0...1)
     var liquidGlassIntensity: Double
+    // UI affordances
+    var showThinkingOverlay: Bool
+    var showReasoningSnippets: Bool
 
     // Home layout preferences
     var homeSectionOrder: [String] // e.g., ["chats", "agents"]
@@ -113,7 +116,9 @@ final class AppSettings: Identifiable {
         userUsername: String = "",
         aiDisplayName: String = "",
         personalInfo: String = "",
-        defaultHistoryLimit: Int = -1
+        defaultHistoryLimit: Int = -1,
+        showThinkingOverlay: Bool = true,
+        showReasoningSnippets: Bool = true
     ) {
         self.id = id
         self.defaultProvider = defaultProvider
@@ -133,6 +138,8 @@ final class AppSettings: Identifiable {
         self.useWebCanvas = useWebCanvas
         self.useLiquidGlass = useLiquidGlass
         self.liquidGlassIntensity = min(1, max(0, liquidGlassIntensity))
+        self.showThinkingOverlay = showThinkingOverlay
+        self.showReasoningSnippets = showReasoningSnippets
         self.homeSectionOrder = homeSectionOrder
         self.homeChatsExpanded = homeChatsExpanded
         self.homeAgentsExpanded = homeAgentsExpanded

@@ -23,22 +23,22 @@
     "codeCoverage" : false,
     "testTimeoutsEnabled" : false,
     "targetForVariableExpansion" : {
-      "containerPath" : "MyChat.xcodeproj",
-      "identifier" : "MyChat",
-      "name" : "MyChat"
+      "containerPath" : "NoteChat.xcodeproj",
+      "identifier" : "NoteChat",
+      "name" : "NoteChat"
     }
   },
   "testTargets" : [
     {
       "target" : {
-        "containerPath" : "MyChat.xcodeproj",
+        "containerPath" : "NoteChat.xcodeproj",
         "identifier" : "MyChatTests",
         "name" : "MyChatTests"
       }
     },
     {
       "target" : {
-        "containerPath" : "MyChat.xcodeproj",
+        "containerPath" : "NoteChat.xcodeproj",
         "identifier" : "MyChatUITests",
         "name" : "MyChatUITests"
       }

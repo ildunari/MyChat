@@ -1,5 +1,5 @@
 import XCTest
-@testable import MyChat
+@testable import NoteChat
 
 final class ProviderPayloadInterceptTests: XCTestCase {
     override class func setUp() {

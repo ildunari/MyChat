@@ -1,6 +1,6 @@
 import XCTest
 
-final class MyChatUITests: XCTestCase {
+final class NoteChatUITests: XCTestCase {
     override func setUp() {
         continueAfterFailure = false
     }

@@ -32,15 +32,15 @@
     {
       "target" : {
         "containerPath" : "NoteChat.xcodeproj",
-        "identifier" : "MyChatTests",
-        "name" : "MyChatTests"
+      "identifier" : "NoteChatTests",
+      "name" : "NoteChatTests"
       }
     },
     {
       "target" : {
         "containerPath" : "NoteChat.xcodeproj",
-        "identifier" : "MyChatUITests",
-        "name" : "MyChatUITests"
+        "identifier" : "NoteChatUITests",
+        "name" : "NoteChatUITests"
       }
     }
   ],

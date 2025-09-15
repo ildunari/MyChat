@@ -2,7 +2,7 @@
 
 ## Summary
 - Observation migration applied for `SettingsStore` usage across the app.
-- Single `SettingsStore` instance created in `MyChatApp` and injected via `.environment(settingsStore)`.
+- Single `SettingsStore` instance created in `NoteChatApp` and injected via `.environment(settingsStore)`.
 - Deployment target set to iOS 17.0 for the app target (macOS target not present).
 - `SettingsView` and its subviews refactored to use `@Environment(SettingsStore.self)` with `@Bindable` in bodies where needed.
 - Previews updated: `SettingsView` uses an in-memory `ModelContainer` and injects a preview `SettingsStore`.
@@ -11,7 +11,7 @@
 - Settings page adopts a glass-like material background for a modern, layered look; list rows use thin material with inset grouping.
 
 ## Artifacts
-- Built app: `~/Library/Developer/Xcode/DerivedData/.../Build/Products/Debug-iphonesimulator/MyChat.app`
+- Built app: `~/Library/Developer/Xcode/DerivedData/.../Build/Products/Debug-iphonesimulator/NoteChat.app`
 
 ## Risks / Follow-ups
 - UIPlayground relies on Combine for `MockChat` preview types; consider wrapping in `#if DEBUG` or migrating to Observation if desired.

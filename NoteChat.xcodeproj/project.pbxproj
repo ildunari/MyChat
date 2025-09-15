@@ -109,36 +109,36 @@
 			children = (
 				0A0484FE2E6FB87B00670BBE /* UIPlayground */,
                 0A04848A2E6F833800670BBE /* NoteChat */,
-				0A0484892E6F833800670BBE /* Products */,
-				A5749B06259ADC0499980D73 /* MyChatTests */,
+                0A0484892E6F833800670BBE /* Products */,
+                A5749B06259ADC0499980D73 /* NoteChatTests */,
 				FBECCDE4F5BD53B128B90026 /* Frameworks */,
-				F6644796AB1060B22C3F0AD6 /* MyChatUITests */,
+                F6644796AB1060B22C3F0AD6 /* NoteChatUITests */,
 			);
 			sourceTree = "<group>";
 		};
 		0A0484892E6F833800670BBE /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				0A0484882E6F833800670BBE /* MyChat.app */,
-				AE1A6FCCDA930B4FB0A8B50C /* MyChatTests.xctest */,
-				E4773D774129CCD5AD4B7857 /* MyChatUITests.xctest */,
+                0A0484882E6F833800670BBE /* NoteChat.app */,
+                AE1A6FCCDA930B4FB0A8B50C /* NoteChatTests.xctest */,
+                E4773D774129CCD5AD4B7857 /* NoteChatUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		A5749B06259ADC0499980D73 /* MyChatTests */ = {
+A5749B06259ADC0499980D73 /* NoteChatTests */ = {
 			isa = PBXGroup;
 			children = (
-				2793EC5F11618EE4BBE42D2B /* MyChatTests.swift */,
+                    2793EC5F11618EE4BBE42D2B /* NoteChatTests.swift */,
 				F6C0B9CA3675C8D14DDB87A3 /* Info.plist */,
 			);
 			path = NoteChatTests;
 			sourceTree = "<group>";
 		};
-		F6644796AB1060B22C3F0AD6 /* MyChatUITests */ = {
+F6644796AB1060B22C3F0AD6 /* NoteChatUITests */ = {
 			isa = PBXGroup;
 			children = (
-				EBBF3A65AF88B6B6858C48F9 /* MyChatUITests.swift */,
+                    EBBF3A65AF88B6B6858C48F9 /* NoteChatUITests.swift */,
 				D293B726E6C8B732C4B49CA5 /* Info.plist */,
 			);
 			path = NoteChatUITests;

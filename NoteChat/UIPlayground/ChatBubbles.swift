@@ -1,6 +1,6 @@
 //
 //  ChatBubbles.swift
-//  MyChat UIPlayground
+//  NoteChat UIPlayground
 //
 //  Test different chat bubble designs and animations
 //

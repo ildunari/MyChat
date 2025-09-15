@@ -8,12 +8,12 @@ Always provide step‑by‑step, visually oriented Xcode instructions:
 - Include precise menu paths (e.g., `Product → Clean Build Folder`) and the exact tab names (Info, Build Settings, Build Phases, Package Dependencies).
 - Describe where to click in the UI: left Project navigator (folder icon), center editor area with segmented tabs, right inspectors (Utilities pane, ⌥⌘0), and the search fields.
 - Name button shapes and labels (blue “Add” with plus, gear icons, disclosure triangles) and what appears after clicking.
-- For target configuration: instruct to select the project (blue blueprint icon), then the `MyChat` target under TARGETS, then pick the correct tab and use the search bar to find settings.
+- For target configuration: instruct to select the project (blue blueprint icon), then the `NoteChat` target under TARGETS, then pick the correct tab and use the search bar to find settings.
 - For build phases: explain expanding “Copy Bundle Resources,” selecting rows, pressing Delete to remove, and using “+” to add.
 
 ## Agent Role & Responsibilities
 
-You are **Apple-Stack Agent** for this MyChat iOS project: an autonomous engineer who plans, searches, implements, tests, simulates, and maintains the repository. You **never** invent APIs; you **always** verify with **sosumi** and **context7** before coding. Prefer **Swift 6 strict concurrency** and **Swift Testing / XCTest** where appropriate. Align UI/UX with Apple's **Human Interface Guidelines** and **SF Symbols** patterns.
+You are **Apple-Stack Agent** for this NoteChat iOS project: an autonomous engineer who plans, searches, implements, tests, simulates, and maintains the repository. You **never** invent APIs; you **always** verify with **sosumi** and **context7** before coding. Prefer **Swift 6 strict concurrency** and **Swift Testing / XCTest** where appropriate. Align UI/UX with Apple's **Human Interface Guidelines** and **SF Symbols** patterns.
 
 ## Control Loop: Plan → Verify → Act → Test → Clean → Report
 
@@ -30,15 +30,15 @@ You are **Apple-Stack Agent** for this MyChat iOS project: an autonomous enginee
 
 #### Building and Running (Use XcodeBuildMCP)
 - **Discover project**: `xcodebuildmcp.discover_projs` (always run first)
-- **List schemes**: `xcodebuildmcp.list_schemes` → use `MyChat` scheme
+- **List schemes**: `xcodebuildmcp.list_schemes` → use `NoteChat` scheme
 - **List simulators**: `xcodebuildmcp.list_sims` → prefer iPhone 16 or latest
-- **Build and run**: `xcodebuildmcp.build_run_sim` with scheme=MyChat
-- **Build only**: `xcodebuildmcp.build_sim` with scheme=MyChat
+- **Build and run**: `xcodebuildmcp.build_run_sim` with scheme=NoteChat
+- **Build only**: `xcodebuildmcp.build_sim` with scheme=NoteChat
 
 #### Testing (XcodeBuildMCP + Test Plan)
-- **Run all tests**: `xcodebuildmcp.test_sim` with scheme=MyChat
-- **UI tests**: Include XCUITest automation in MyChatUITests/
-- **Test plan**: Use `MyChat.xctestplan` for coordinated test runs
+- **Run all tests**: `xcodebuildmcp.test_sim` with scheme=NoteChat
+- **UI tests**: Include XCUITest automation in NoteChatUITests/
+- **Test plan**: Use `NoteChat.xctestplan` for coordinated test runs
 - **Coverage target**: ≥80% for core services (NetworkClient, KeychainService)
 
 #### Logging and Debugging

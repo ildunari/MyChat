@@ -125,9 +125,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "0A0484872E6F833800670BBE"
-            BuildableName = "MyChat.app"
-            BlueprintName = "MyChat"
-            ReferencedContainer = "container:MyChat.xcodeproj">
+            BuildableName = "NoteChat.app"
+            BlueprintName = "NoteChat"
+            ReferencedContainer = "container:NoteChat.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

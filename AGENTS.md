@@ -3,20 +3,20 @@
 This guide helps contributors work efficiently in this SwiftUI iOS project.
 
 ## Project Structure & Module Organization
-- `MyChat/`: App code — views (`ChatView.swift`, `SettingsView.swift`, `ContentView.swift`), services (`NetworkClient.swift`, `KeychainService.swift`), providers (`AIProvider.swift`, `OpenAIProvider.swift`, `OpenAIImageProvider.swift`), models (`Models.swift`, `Item.swift`), app entry (`MyChatApp.swift`), config (`Info.plist`), assets (`Assets.xcassets/`), entitlements.
-- `MyChatTests/`: Unit tests (XCTest) - TO BE CREATED
-- `MyChatUITests/`: UI tests (XCUITest) - TO BE CREATED
-- `MyChat.xcodeproj/`: Xcode project
-- `MyChat.xctestplan`: Test plan - TO BE CREATED
+- `NoteChat/`: App code — views (`ChatView.swift`, `SettingsView.swift`, `ContentView.swift`), services (`NetworkClient.swift`, `KeychainService.swift`), providers (`AIProvider.swift`, `OpenAIProvider.swift`, `OpenAIImageProvider.swift`), models (`Models.swift`, `Item.swift`), app entry (`NoteChatApp.swift`), config (`Info.plist`), assets (`Assets.xcassets/`), entitlements.
+- `NoteChatTests/`: Unit tests (XCTest) - TO BE CREATED
+- `NoteChatUITests/`: UI tests (XCUITest) - TO BE CREATED
+- `NoteChat.xcodeproj/`: Xcode project
+- `NoteChat.xctestplan`: Test plan - TO BE CREATED
 
 ## Build, Test, and Development Commands
-- Open in Xcode: `open MyChat.xcodeproj`.
-- Build (CLI): `xcodebuild -project MyChat.xcodeproj -scheme MyChat build`.
-- Run tests (CLI): `xcodebuild test -project MyChat.xcodeproj -scheme MyChat -destination 'platform=iOS Simulator,name=iPhone 16'`.
-- Run a specific test: `xcodebuild test -only-testing:MyChatTests/YourTestName …` (adjust names). Use `xcrun simctl list devices` to pick an available simulator.
+- Open in Xcode: `open NoteChat.xcodeproj`.
+- Build (CLI): `xcodebuild -project NoteChat.xcodeproj -scheme NoteChat build`.
+- Run tests (CLI): `xcodebuild test -project NoteChat.xcodeproj -scheme NoteChat -destination 'platform=iOS Simulator,name=iPhone 16'`.
+- Run a specific test: `xcodebuild test -only-testing:NoteChatTests/YourTestName …` (adjust names). Use `xcrun simctl list devices` to pick an available simulator.
 
 ## Project Status & Docs
-- **Migration Notes**: `porting.md` (migration from ChatApp to MyChat)
+- **Migration Notes**: `porting.md` (migration from ChatApp to NoteChat)
 - **Rolling TODO**: `docs/TODO.md` (checklist; keep fresh)
 
 Update flow per session:
@@ -33,7 +33,7 @@ Update flow per session:
 
 ## Testing Guidelines
 - Frameworks: XCTest + XCUITest. Keep tests fast and isolated from network; mock `NetworkClient`.
-- Naming: Mirror target type with `Tests` suffix (e.g., `NetworkClientTests`). UI tests live in `MyChatUITests`.
+- Naming: Mirror target type with `Tests` suffix (e.g., `NetworkClientTests`). UI tests live in `NoteChatUITests`.
 - Coverage: Aim ≥80% for core services (`NetworkClient`, `KeychainService`). Use the provided `.xctestplan` for full-suite runs.
 
 ## Commit & Pull Request Guidelines
@@ -50,7 +50,7 @@ Update flow per session:
 - Tool routing (use in this order):
   - `XcodeBuildMCP`: primary for build/test/run, simulators, logs. Prefer:
     - List sims: `list_sims` → pick available iOS version.
-    - Build: `build_sim` or `build_macos` with `scheme=MyChat`.
+    - Build: `build_sim` or `build_macos` with `scheme=NoteChat`.
     - Run on sim: `build_run_sim` (set `simulatorName='iPhone 16'` or discover via `list_sims`).
     - Logs: `start_sim_log_cap` / `stop_sim_log_cap`; screenshots via `screenshot` when debugging UI.
   - `Context7` (docs retrieval): resolve library IDs, then fetch focused docs. Examples:
@@ -100,11 +100,11 @@ To keep the human in the loop at all times, follow these rules in every session:
 
 ## MCP Tooling & Routing
 - XcodeBuildMCP: Primary for build/test/run/simulators/logs.
-  - Discover: `discover_projs` → `list_schemes` (use `MyChat`) → `list_sims`.
+  - Discover: `discover_projs` → `list_schemes` (use `NoteChat`) → `list_sims`.
   - Build/Run: `build_sim` / `build_run_sim` with explicit simulator (e.g., `iPhone 16`).
   - Logs/UI: `start_sim_log_cap` → `stop_sim_log_cap`; `screenshot`, `tap`, `gesture`, `type_text` for UI automation.
 - Xcode Diagnostics MCP: Fast visibility into errors/warnings from the latest build logs.
-  - List projects: `xcode-diagnostics.get_xcode_projects()` → pick the MyChat entry.
+  - List projects: `xcode-diagnostics.get_xcode_projects()` → pick the NoteChat entry.
   - Fetch diagnostics: `xcode-diagnostics.get_project_diagnostics({ project_dir_name: "<DerivedDataName>", include_warnings: true })`.
   - Use when: builds produce errors/warnings; after CI runs; before PR to ensure zero critical issues.
   - Act on output: prioritize errors, address deprecations, and eliminate main-thread blockers; re-run `build_sim` to confirm.
@@ -124,7 +124,7 @@ To keep the human in the loop at all times, follow these rules in every session:
 3. Code: Small focused edits; avoid blocking the main thread.
 4. Build: `build_sim` → fix warnings before proceeding.
 5. Run & Observe: `build_run_sim` → attach logs → `stop_sim_log_cap`.
-6. Test: `xcodebuild test -project MyChat.xcodeproj -scheme MyChat -destination 'platform=iOS Simulator,name=iPhone 16'` (or use `MyChat.xctestplan`); include UI tests where UI changed.
+6. Test: `xcodebuild test -project NoteChat.xcodeproj -scheme NoteChat -destination 'platform=iOS Simulator,name=iPhone 16'` (or use `NoteChat.xctestplan`); include UI tests where UI changed.
 7. Accessibility: Verify Dynamic Type, dark mode, VoiceOver.
 8. Cleanup: Remove temp files/log captures.
 9. Report: Structured summary with artifacts and next steps.
@@ -146,11 +146,11 @@ To keep the human in the loop at all times, follow these rules in every session:
 ## Simulator Refresh (After Significant Changes)
 - Reuse existing simulator. Do not create new devices unless user asks.
 - Flow (assumes an already booted device from `list_sims`):
-  1) Build: `xcodebuildmcp.build_sim({ projectPath: "<proj>", scheme: "MyChat", simulatorId: "<BOOTED_UUID>" })`
-  2) Path: `get_sim_app_path({ projectPath: "<proj>", scheme: "MyChat", platform: 'iOS Simulator', simulatorId: '<BOOTED_UUID>' })`
+  1) Build: `xcodebuildmcp.build_sim({ projectPath: "<proj>", scheme: "NoteChat", simulatorId: "<BOOTED_UUID>" })`
+  2) Path: `get_sim_app_path({ projectPath: "<proj>", scheme: "NoteChat", platform: 'iOS Simulator', simulatorId: '<BOOTED_UUID>' })`
   3) Install: `install_app_sim({ simulatorUuid: '<BOOTED_UUID>', appPath: '<from step 2>' })`
-  4) Launch: `launch_app_sim({ simulatorUuid: '<BOOTED_UUID>', bundleId: 'com.yourcompany.MyChat' })`
-  5) Optional logs: `start_sim_log_cap({ simulatorUuid: '<BOOTED_UUID>', bundleId: 'com.yourcompany.MyChat', captureConsole: true })` → `stop_sim_log_cap(...)` and attach head/tail.
+  4) Launch: `launch_app_sim({ simulatorUuid: '<BOOTED_UUID>', bundleId: 'com.yourcompany.NoteChat' })`
+  5) Optional logs: `start_sim_log_cap({ simulatorUuid: '<BOOTED_UUID>', bundleId: 'com.yourcompany.NoteChat', captureConsole: true })` → `stop_sim_log_cap(...)` and attach head/tail.
 - Handle pitfalls proactively:
   - If "Requires newer iOS": pick the booted runtime or rebuild for that runtime version; don't spin up a new device.
   - If "Launching…" hangs: delete the app on the same device, restart that simulator, then reinstall/launch.
@@ -184,57 +184,57 @@ To keep the human in the loop at all times, follow these rules in every session:
 ## Codebase Map (Repo‑Specific)
 
 - App Entry
-  - `MyChat/MyChatApp.swift` — Configures SwiftData `ModelContainer` with a persistent store in Application Support and a one‑time recovery path if the SQLite store is corrupted.
+  - `NoteChat/NoteChatApp.swift` — Configures SwiftData `ModelContainer` with a persistent store in Application Support and a one‑time recovery path if the SQLite store is corrupted.
 
 - Data Models (SwiftData)
-  - `MyChat/Models.swift`
+  - `NoteChat/Models.swift`
     - `Chat { id, title, createdAt, messages[] }` (cascade delete to messages)
     - `Message { id, role(user|assistant), content, createdAt, chat }`
     - `AppSettings { defaultProvider, defaultModel, defaultSystemPrompt, defaultTemperature, defaultMaxTokens, <enabled models per provider>, interfaceTheme, interfaceFontStyle, interfaceTextSizeIndex, chatBubbleColorID, promptCachingEnabled, useWebCanvas }`
 
 - Views (SwiftUI)
-  - `MyChat/ContentView.swift` — Chat list (NavigationStack), creates initial chat on first launch.
-  - `MyChat/ChatView.swift` — Chat screen with suggestions, photo picker attachments, streaming responses, model menu in toolbar.
-  - `MyChat/AIResponseView.swift` — Segments assistant content into Markdown, Code, and Math blocks; uses Down-backed MarkdownRenderer and optional syntax highlighting.
-  - `MyChat/ChatUI.swift` — `SuggestionChips`, `InputBar` components.
-  - `MyChat/ChatStyles.swift` — Shared visual constants for chat; Markdown theming handled via Down output styling.
-  - `MyChat/MathWebView.swift` — KaTeX WebView fallback for math rendering.
-  - `MyChat/ChatCanvasView.swift` — WebCanvas feature for transcript rendering.
-  - `MyChat/SettingsView.swift` — Providers, default chat, and interface settings flows (nested screens).
+  - `NoteChat/ContentView.swift` — Chat list (NavigationStack), creates initial chat on first launch.
+  - `NoteChat/ChatView.swift` — Chat screen with suggestions, photo picker attachments, streaming responses, model menu in toolbar.
+  - `NoteChat/AIResponseView.swift` — Segments assistant content into Markdown, Code, and Math blocks; uses Down-backed MarkdownRenderer and optional syntax highlighting.
+  - `NoteChat/ChatUI.swift` — `SuggestionChips`, `InputBar` components.
+  - `NoteChat/ChatStyles.swift` — Shared visual constants for chat; Markdown theming handled via Down output styling.
+  - `NoteChat/MathWebView.swift` — KaTeX WebView fallback for math rendering.
+  - `NoteChat/ChatCanvasView.swift` — WebCanvas feature for transcript rendering.
+  - `NoteChat/SettingsView.swift` — Providers, default chat, and interface settings flows (nested screens).
 
 - Settings & Services
-  - `MyChat/SettingsStore.swift` — ObservableObject bridging SwiftData `AppSettings` with Keychain; primes from `Env/DevSecrets.env` in Debug via `EnvLoader`.
-  - `MyChat/EnvLoader.swift` — Loads `DevSecrets.env` from bundle (Debug) to ease local development.
-  - `MyChat/KeychainService.swift` — Save/read/delete API keys securely.
-  - `MyChat/SystemPrompt.swift` — Master system prompt rules for the assistant.
+  - `NoteChat/SettingsStore.swift` — ObservableObject bridging SwiftData `AppSettings` with Keychain; primes from `Env/DevSecrets.env` in Debug via `EnvLoader`.
+  - `NoteChat/EnvLoader.swift` — Loads `DevSecrets.env` from bundle (Debug) to ease local development.
+  - `NoteChat/KeychainService.swift` — Save/read/delete API keys securely.
+  - `NoteChat/SystemPrompt.swift` — Master system prompt rules for the assistant.
 
 - Providers & Networking
-  - `MyChat/Providers/Core/AIProvider.swift` — Chat provider protocols, including advanced + streaming interfaces.
-  - `MyChat/Providers/Core/ProviderAPIs.swift` — Key verification and model listing for OpenAI/Anthropic/Google/XAI.
-  - `MyChat/Providers/Core/ProviderCapabilities.swift` — Model capabilities configuration.
-  - `MyChat/Providers/Core/StreamingSSE.swift` — Server-sent events streaming support.
-  - `MyChat/Providers/OpenAI/OpenAIProvider.swift` — Implements OpenAI API with streaming.
-  - `MyChat/Providers/Anthropic/AnthropicProvider.swift` — Anthropic Claude implementation.
-  - `MyChat/Providers/Google/GoogleProvider.swift` — Google Gemini implementation.
-  - `MyChat/Providers/XAI/XAIProvider.swift` — X.AI Grok implementation.
-  - `MyChat/OpenAIImageProvider.swift` — Image generation via OpenAI.
-  - `MyChat/NetworkClient.swift` — Shared URLSession with sane timeouts; `get`/`postJSON` helpers.
+  - `NoteChat/Providers/Core/AIProvider.swift` — Chat provider protocols, including advanced + streaming interfaces.
+  - `NoteChat/Providers/Core/ProviderAPIs.swift` — Key verification and model listing for OpenAI/Anthropic/Google/XAI.
+  - `NoteChat/Providers/Core/ProviderCapabilities.swift` — Model capabilities configuration.
+  - `NoteChat/Providers/Core/StreamingSSE.swift` — Server-sent events streaming support.
+  - `NoteChat/Providers/OpenAI/OpenAIProvider.swift` — Implements OpenAI API with streaming.
+  - `NoteChat/Providers/Anthropic/AnthropicProvider.swift` — Anthropic Claude implementation.
+  - `NoteChat/Providers/Google/GoogleProvider.swift` — Google Gemini implementation.
+  - `NoteChat/Providers/XAI/XAIProvider.swift` — X.AI Grok implementation.
+  - `NoteChat/OpenAIImageProvider.swift` — Image generation via OpenAI.
+  - `NoteChat/NetworkClient.swift` — Shared URLSession with sane timeouts; `get`/`postJSON` helpers.
 
 - UI Components & Helpers
-  - `MyChat/Icons.swift` — SF Symbol icon helpers.
-  - `MyChat/ThemeTokens.swift` — Theme system with color palettes.
-  - `MyChat/FlowLayout.swift` — Custom layout for flowing content.
-  - `MyChat/ToolCallBubble.swift` — Tool call display component.
-  - `MyChat/ModelCapabilities.swift` — Model-specific capabilities and limits.
+  - `NoteChat/Icons.swift` — SF Symbol icon helpers.
+  - `NoteChat/ThemeTokens.swift` — Theme system with color palettes.
+  - `NoteChat/FlowLayout.swift` — Custom layout for flowing content.
+  - `NoteChat/ToolCallBubble.swift` — Tool call display component.
+  - `NoteChat/ModelCapabilities.swift` — Model-specific capabilities and limits.
 
 - Assets & Config
-  - `MyChat/Assets.xcassets/` — App icons and colors.
-  - `MyChat/Info.plist` — App metadata and capabilities.
+  - `NoteChat/Assets.xcassets/` — App icons and colors.
+  - `NoteChat/Info.plist` — App metadata and capabilities.
 
 - Tests (TO BE CREATED)
-  - `MyChatTests/*` — Unit test target scaffold.
-  - `MyChatUITests/*` — UI test target scaffold.
-  - `MyChat.xctestplan` — Test plan for coordinated runs.
+  - `NoteChatTests/*` — Unit test target scaffold.
+  - `NoteChatUITests/*` — UI test target scaffold.
+  - `NoteChat.xctestplan` — Test plan for coordinated runs.
 
 ## Build & Dependencies Snapshot
 
@@ -243,15 +243,15 @@ To keep the human in the loop at all times, follow these rules in every session:
 - Do not add packages via terminal (`swift package`, `xcodebuild -resolvePackageDependencies`) or by hand‑editing `project.pbxproj`/`Package.resolved`.
 - Pin versions using Xcode’s “Dependency Rule” controls; prefer “Up to Next Major Version” unless the task specifies otherwise. For Down we currently track branch `master`.
 - Troubleshooting only through Xcode: use `File → Packages → Reset Package Caches`, then `Resolve Package Versions`. Never delete `DerivedData` or caches from scripts without confirmation.
-- After adding a package, explicitly add the required product to the `MyChat` target under `Frameworks, Libraries, and Embedded Content`.
+- After adding a package, explicitly add the required product to the `NoteChat` target under `Frameworks, Libraries, and Embedded Content`.
 
-- Schemes: `MyChat` (primary)
+- Schemes: `NoteChat` (primary)
 - SPM Dependencies (present):
   - **Down** (branch master): Markdown parsing and rendering (replaced MarkdownUI)
   - **HighlighterSwift** (product: Highlighter) 1.1.7: Code syntax highlighting (optional)
   - **SwiftMath** 1.7.3: Mathematical formula rendering with native LaTeX support
   - **PhosphorSwift** 2.1.0: Icon set
-- Quick build check: `xcodebuild -project MyChat.xcodeproj -scheme MyChat -destination 'generic/platform=iOS Simulator' build`
+- Quick build check: `xcodebuild -project NoteChat.xcodeproj -scheme NoteChat -destination 'generic/platform=iOS Simulator' build`
 
 ## Key Flows
 
@@ -269,17 +269,17 @@ To keep the human in the loop at all times, follow these rules in every session:
 - Rendering
   - Markdown (Down → AttributedString with tinted links and inline-code styling), code highlighting (Highlightr/Highlighter when available, monospaced fallback), math via SwiftMath with automatic KaTeX fallback.
 
-## Migration Notes (from ChatApp to MyChat)
+## Migration Notes (from ChatApp to NoteChat)
 
 - **Critical**: Replace MarkdownUI with Down package in AIResponseView.swift
 - **Dependencies**: Add Down via SPM, optionally add Highlightr and SwiftMath
-- **Bundle ID**: Update to use MyChat identifiers
+- **Bundle ID**: Update to use NoteChat identifiers
 - See `porting.md` for complete migration checklist
 
 ## Troubleshooting Notes
 
 - Provider streaming errors are surfaced with friendly messages (401/403/404/429/5xx).
-- If chat persistence breaks, `MyChatApp` attempts a one‑time SQLite store cleanup and re‑init.
+- If chat persistence breaks, `NoteChatApp` attempts a one‑time SQLite store cleanup and re‑init.
 - If math doesn't render, ensure optional math packages are installed or WebView fallback is working.
 - No API keys? In Debug, add values to `Env/.env` (copied to bundle as `DevSecrets.env`) to prime Keychain on first run.
 
@@ -293,10 +293,10 @@ To keep the human in the loop at all times, follow these rules in every session:
 - [x] Build project successfully on simulator
 - [ ] Test basic chat functionality with API keys
 - [ ] Add UI polish for code themes (optional)
-- [ ] Create test targets (MyChatTests, MyChatUITests)
-- [ ] Create MyChat.xctestplan
+- [ ] Create test targets (NoteChatTests, NoteChatUITests)
+- [ ] Create NoteChat.xctestplan
 
 ## Decision Log
 
-- 2025-09-08: Migrated from ChatApp to MyChat, pending Down markdown integration
+- 2025-09-08: Migrated from ChatApp to NoteChat, pending Down markdown integration
 - Package change: MarkdownUI → Down for markdown rendering

@@ -1,7 +1,7 @@
 import XCTest
 @testable import NoteChat
 
-final class MyChatTests: XCTestCase {
+final class NoteChatTests: XCTestCase {
     func testExample() {
         XCTAssertTrue(true)
     }

@@ -1,6 +1,6 @@
 //
-//  MyChatApp.swift
-//  MyChat
+//  NoteChatApp.swift
+//  NoteChat
 //
 //  Created by Kosta Milovanovic on 9/8/25.
 //
@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct MyChatApp: App {
+struct NoteChatApp: App {
     // Create the SwiftData container for our models, with safe recovery on failure
     let container: ModelContainer = {
         let schema = Schema([Chat.self, Message.self, AppSettings.self])
@@ -21,7 +21,7 @@ struct MyChatApp: App {
             let baseDir: URL
             if let asURL = appSupport {
                 // Ensure the subdirectory for our bundle exists
-                let bundleID = Bundle.main.bundleIdentifier ?? "MyChat"
+                let bundleID = Bundle.main.bundleIdentifier ?? "NoteChat"
                 let dir = asURL.appendingPathComponent(bundleID, isDirectory: true)
                 if !fm.fileExists(atPath: dir.path) {
                     try? fm.createDirectory(at: dir, withIntermediateDirectories: true)

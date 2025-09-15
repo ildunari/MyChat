@@ -36,7 +36,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		0A0484882E6F833800670BBE /* MyChat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0A0484882E6F833800670BBE /* NoteChat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NoteChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		16A29328F62006CAE4E535F9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		2793EC5F11618EE4BBE42D2B /* MyChatTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MyChatTests.swift; sourceTree = "<group>"; };
 		AE1A6FCCDA930B4FB0A8B50C /* MyChatTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyChatTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -47,7 +47,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		0A0484E62E6FA48D00670BBE /* Exceptions for "MyChat" folder in "MyChat" target */ = {
+		0A0484E62E6FA48D00670BBE /* Exceptions for "NoteChat" folder in "NoteChat" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -60,9 +60,9 @@
 		0A04848A2E6F833800670BBE /* MyChat */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				0A0484E62E6FA48D00670BBE /* Exceptions for "MyChat" folder in "MyChat" target */,
+				0A0484E62E6FA48D00670BBE /* Exceptions for "NoteChat" folder in "NoteChat" target */,
 			);
-			path = MyChat;
+			path = NoteChat;
 			sourceTree = "<group>";
 		};
 		0A0484FE2E6FB87B00670BBE /* UIPlayground */ = {
@@ -132,7 +132,7 @@
 				2793EC5F11618EE4BBE42D2B /* MyChatTests.swift */,
 				F6C0B9CA3675C8D14DDB87A3 /* Info.plist */,
 			);
-			path = MyChatTests;
+			path = NoteChatTests;
 			sourceTree = "<group>";
 		};
 		F6644796AB1060B22C3F0AD6 /* MyChatUITests */ = {
@@ -141,7 +141,7 @@
 				EBBF3A65AF88B6B6858C48F9 /* MyChatUITests.swift */,
 				D293B726E6C8B732C4B49CA5 /* Info.plist */,
 			);
-			path = MyChatUITests;
+			path = NoteChatUITests;
 			sourceTree = "<group>";
 		};
 		FBECCDE4F5BD53B128B90026 /* Frameworks */ = {
@@ -163,9 +163,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		0A0484872E6F833800670BBE /* MyChat */ = {
+		0A0484872E6F833800670BBE /* NoteChat */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 0A0484932E6F833A00670BBE /* Build configuration list for PBXNativeTarget "MyChat" */;
+			buildConfigurationList = 0A0484932E6F833A00670BBE /* Build configuration list for PBXNativeTarget "NoteChat" */;
 			buildPhases = (
 				0A0484842E6F833800670BBE /* Sources */,
 				0A0484852E6F833800670BBE /* Frameworks */,
@@ -177,22 +177,22 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				0A04848A2E6F833800670BBE /* MyChat */,
+				0A04848A2E6F833800670BBE /* NoteChat */,
 			);
-			name = MyChat;
+			name = NoteChat;
 			packageProductDependencies = (
 				0A0484972E6F9A0400670BBE /* Down */,
 				0A04849A2E6F9A5A00670BBE /* Highlighter */,
 				0A04849D2E6F9A9700670BBE /* SwiftMath */,
 				0A0484E82E6FAC4900670BBE /* PhosphorSwift */,
 			);
-			productName = MyChat;
-			productReference = 0A0484882E6F833800670BBE /* MyChat.app */;
+			productName = NoteChat;
+			productReference = 0A0484882E6F833800670BBE /* NoteChat.app */;
 			productType = "com.apple.product-type.application";
 		};
-		FE58F7433D74E0574A2393A7 /* MyChatTests */ = {
+		FE58F7433D74E0574A2393A7 /* NoteChatTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = FEBEA7BF6309E7857C288100 /* Build configuration list for PBXNativeTarget "MyChatTests" */;
+			buildConfigurationList = FEBEA7BF6309E7857C288100 /* Build configuration list for PBXNativeTarget "NoteChatTests" */;
 			buildPhases = (
 				E9EF0D2D1ED07064B9C0EB64 /* Sources */,
 				EDC0E5D4D5BC2F72A4D7EF34 /* Frameworks */,
@@ -203,17 +203,17 @@
 			dependencies = (
 				17C2F7E62DD6021645A3BC2D /* PBXTargetDependency */,
 			);
-			name = MyChatTests;
+			name = NoteChatTests;
 			packageProductDependencies = (
 				B0D0D0CF2F00000100000001 /* Down */,
 			);
-			productName = MyChatTests;
-			productReference = AE1A6FCCDA930B4FB0A8B50C /* MyChatTests.xctest */;
+			productName = NoteChatTests;
+			productReference = AE1A6FCCDA930B4FB0A8B50C /* NoteChatTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		FF4E70207F8FAEDC268AEA9E /* MyChatUITests */ = {
+		FF4E70207F8FAEDC268AEA9E /* NoteChatUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 32FE80C943908FC2E516B8F2 /* Build configuration list for PBXNativeTarget "MyChatUITests" */;
+			buildConfigurationList = 32FE80C943908FC2E516B8F2 /* Build configuration list for PBXNativeTarget "NoteChatUITests" */;
 			buildPhases = (
 				9A80D20D14747B159FD23764 /* Sources */,
 				CB075BECCABD658158CA69F8 /* Frameworks */,
@@ -224,9 +224,9 @@
 			dependencies = (
 				2B3A79F810B660926B6AB119 /* PBXTargetDependency */,
 			);
-			name = MyChatUITests;
-			productName = MyChatUITests;
-			productReference = E4773D774129CCD5AD4B7857 /* MyChatUITests.xctest */;
+			name = NoteChatUITests;
+			productName = NoteChatUITests;
+			productReference = E4773D774129CCD5AD4B7857 /* NoteChatUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -244,7 +244,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 0A0484832E6F833800670BBE /* Build configuration list for PBXProject "MyChat" */;
+			buildConfigurationList = 0A0484832E6F833800670BBE /* Build configuration list for PBXProject "NoteChat" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -264,9 +264,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				0A0484872E6F833800670BBE /* MyChat */,
-				FE58F7433D74E0574A2393A7 /* MyChatTests */,
-				FF4E70207F8FAEDC268AEA9E /* MyChatUITests */,
+				0A0484872E6F833800670BBE /* NoteChat */,
+				FE58F7433D74E0574A2393A7 /* NoteChatTests */,
+				FF4E70207F8FAEDC268AEA9E /* NoteChatUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -304,7 +304,7 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/MyChat/Env/.env",
+				"$(SRCROOT)/NoteChat/Env/.env",
 			);
 			name = "Copy DevSecrets.env (Debug only)";
 			outputFileListPaths = (
@@ -314,7 +314,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\nif [ \"$CONFIGURATION\" = \"Debug\" ]; then\n  SRC=\"$SRCROOT/MyChat/Env/.env\"\n  DST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/DevSecrets.env\"\n  if [ -f \"$SRC\" ]; then\n    mkdir -p \"$(dirname \"$DST\")\"\n    cp -f \"$SRC\" \"$DST\"\n    echo \"Copied DevSecrets.env into app bundle\"\n  else\n    echo \"No MyChat/Env/.env present; skipping DevSecrets.env copy\"\n  fi\nfi\n";
+			shellScript = "set -e\nif [ \"$CONFIGURATION\" = \"Debug\" ]; then\n  SRC=\"$SRCROOT/NoteChat/Env/.env\"\n  DST=\"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/DevSecrets.env\"\n  if [ -f \"$SRC\" ]; then\n    mkdir -p \"$(dirname \"$DST\")\"\n    cp -f \"$SRC\" \"$DST\"\n    echo \"Copied DevSecrets.env into app bundle\"\n  else\n    echo \"No NoteChat/Env/.env present; skipping DevSecrets.env copy\"\n  fi\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

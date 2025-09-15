@@ -38,11 +38,11 @@
 /* Begin PBXFileReference section */
 		0A0484882E6F833800670BBE /* NoteChat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NoteChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		16A29328F62006CAE4E535F9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
-		2793EC5F11618EE4BBE42D2B /* MyChatTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MyChatTests.swift; sourceTree = "<group>"; };
-		AE1A6FCCDA930B4FB0A8B50C /* MyChatTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyChatTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		2793EC5F11618EE4BBE42D2B /* MyChatTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NoteChatTests.swift; sourceTree = "<group>"; };
+		AE1A6FCCDA930B4FB0A8B50C /* NoteChatTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NoteChatTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D293B726E6C8B732C4B49CA5 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		E4773D774129CCD5AD4B7857 /* MyChatUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyChatUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		EBBF3A65AF88B6B6858C48F9 /* MyChatUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MyChatUITests.swift; sourceTree = "<group>"; };
+		E4773D774129CCD5AD4B7857 /* NoteChatUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NoteChatUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		EBBF3A65AF88B6B6858C48F9 /* MyChatUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NoteChatUITests.swift; sourceTree = "<group>"; };
 		F6C0B9CA3675C8D14DDB87A3 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -330,7 +330,7 @@ F6644796AB1060B22C3F0AD6 /* NoteChatUITests */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5F5127CFC55751AF308A724C /* MyChatUITests.swift in Sources */,
+				5F5127CFC55751AF308A724C /* NoteChatUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -338,7 +338,7 @@ F6644796AB1060B22C3F0AD6 /* NoteChatUITests */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3FE10B95D19D1CDE80ADCFAB /* MyChatTests.swift in Sources */,
+				3FE10B95D19D1CDE80ADCFAB /* NoteChatTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

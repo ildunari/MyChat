@@ -18,67 +18,82 @@ struct ContentView: View {
     @State private var renamingChat: Chat? = nil
     @State private var newChatTitle: String = ""
     @State private var navNewChat: Chat? = nil
+    @State private var navBarHeight: CGFloat = 0
     
     var body: some View {
         NavigationStack {
-            GeometryReader { proxy in
-                let cap = max(220, proxy.size.height * 0.33)
-                ScrollView {
-                    VStack(spacing: 16) {
-                        ForEach(sectionOrder, id: \.self) { kind in
-                            let offsetY = dragOffsets[kind] ?? 0
-                            SectionContainer(
-                                title: kind == .chats ? "Chat History" : "Agents",
-                                count: kind == .chats ? chats.count : 0,
-                                isExpanded: kind == .chats ? $chatHistoryExpanded : $agentsExpanded,
-                                maxHeight: cap,
-                                draggedOffset: offsetY,
-                                onDragChanged: { value in
-                                    let dy = value.translation.height
-                                    dragOffsets[kind] = dy
-                                    let threshold: CGFloat = 40
-                                    if dy < -threshold, let idx = sectionOrder.firstIndex(of: kind), idx > 0 {
-                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
-                                            sectionOrder.swapAt(idx, idx-1)
-                                            Haptics.selection()
+            ZStack {
+                T.bg.ignoresSafeArea()
+                GeometryReader { proxy in
+                    let cap = max(220, proxy.size.height * 0.33)
+                    let topPadding = proxy.safeAreaInsets.top + navBarHeight + 24
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            ForEach(sectionOrder, id: \.self) { kind in
+                                let offsetY = dragOffsets[kind] ?? 0
+                                SectionContainer(
+                                    title: kind == .chats ? "Chat History" : "Agents",
+                                    count: kind == .chats ? chats.count : 0,
+                                    isExpanded: kind == .chats ? $chatHistoryExpanded : $agentsExpanded,
+                                    maxHeight: cap,
+                                    draggedOffset: offsetY,
+                                    onDragChanged: { value in
+                                        let dy = value.translation.height
+                                        dragOffsets[kind] = dy
+                                        let threshold: CGFloat = 40
+                                        if dy < -threshold, let idx = sectionOrder.firstIndex(of: kind), idx > 0 {
+                                            withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
+                                                sectionOrder.swapAt(idx, idx-1)
+                                                Haptics.selection()
+                                            }
+                                            dragOffsets[kind] = 0
+                                        } else if dy > threshold, let idx = sectionOrder.firstIndex(of: kind), idx < sectionOrder.count-1 {
+                                            withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
+                                                sectionOrder.swapAt(idx, idx+1)
+                                                Haptics.selection()
+                                            }
+                                            dragOffsets[kind] = 0
                                         }
-                                        dragOffsets[kind] = 0
-                                    } else if dy > threshold, let idx = sectionOrder.firstIndex(of: kind), idx < sectionOrder.count-1 {
+                                    },
+                                    onDragEnded: { _ in
                                         withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
-                                            sectionOrder.swapAt(idx, idx+1)
-                                            Haptics.selection()
+                                            dragOffsets[kind] = 0
                                         }
-                                        dragOffsets[kind] = 0
                                     }
-                                },
-                                onDragEnded: { _ in
-                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) {
-                                        dragOffsets[kind] = 0
+                                ) {
+                                    if kind == .chats {
+                                        ChatHistoryGrid(maxHeight: cap)
+                                    } else {
+                                        AgentsPlaceholder()
                                     }
                                 }
-                            ) {
-                                if kind == .chats {
-                                    ChatHistoryGrid(maxHeight: cap)
-                                } else {
-                                    AgentsPlaceholder()
-                                }
+                                .offset(y: offsetY)
                             }
-                            .offset(y: offsetY)
+                            Spacer(minLength: 24)
                         }
-                        Spacer(minLength: 24)
+                        .padding(.horizontal, 16)
+                        .padding(.top, topPadding)
+                        .padding(.bottom, 24)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                    .padding(.bottom, 24)
+                }
+            }
+            .overlay(alignment: .top) {
+                GeometryReader { overlayProxy in
+                    GlassNavigationBar(title: "Home", trailing: {
+                        ComposeButton { createAndNavigate() }
+                    })
+                    .padding(.horizontal, 20)
+                    .padding(.top, overlayProxy.safeAreaInsets.top + 8)
+                    .padding(.bottom, 4)
+                    .background(
+                        GeometryReader { navGeo in
+                            Color.clear.preference(key: NavBarHeightPreferenceKey.self, value: navGeo.size.height)
+                        }
+                    )
                 }
             }
         }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                ComposeButton { createAndNavigate() }
-                    .padding(.trailing, 2)
-            }
-        }
+        .toolbar(.hidden, for: .navigationBar)
         .navigationDestination(item: $navNewChat) { chat in
             ChatView(chat: chat)
         }
@@ -105,6 +120,7 @@ struct ContentView: View {
         .onChange(of: sectionOrder) { _, _ in saveOrderToStore() }
         .onChange(of: chatHistoryExpanded) { _, newVal in store.homeChatsExpanded = newVal; store.save() }
         .onChange(of: agentsExpanded) { _, newVal in store.homeAgentsExpanded = newVal; store.save() }
+        .onPreferenceChange(NavBarHeightPreferenceKey.self) { navBarHeight = $0 }
     }
     
     // MARK: - Helper Views
@@ -167,7 +183,6 @@ struct ContentView: View {
                 AppIcon.plus(16).foregroundStyle(.white)
             }
             .frame(width: 34, height: 34)
-            .shadow(color: T.shadow, radius: 4, x: 0, y: 2)
         }
         .accessibilityLabel("Compose New Chat")
         .buttonStyle(.plain)
@@ -304,6 +319,13 @@ private enum Haptics {
     static func selection() {
         let gen = UISelectionFeedbackGenerator()
         gen.prepare(); gen.selectionChanged()
+    }
+}
+
+private struct NavBarHeightPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }
 

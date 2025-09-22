@@ -9,6 +9,7 @@ struct ChatView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var settingsQuery: [AppSettings]
     @Environment(\.tokens) private var T
+    @Environment(\.dismiss) private var dismiss
 
     let chat: Chat
     var onNewChat: (() -> Void)? = nil
@@ -71,12 +72,19 @@ struct ChatView: View {
                 }
             )
         }
-        // Thinking overlay just under the model name in the toolbar area
-        .safeAreaInset(edge: .top, spacing: 0) {
-            if isSending {
-                ThinkingOverlay()
-                    .padding(.top, 6)
+        // Floating Liquid Glass navigation bar + thinking indicator
+        .safeAreaInset(edge: .top, spacing: 12) {
+            VStack(spacing: 10) {
+                floatingNavBar
+                if isSending {
+                    ThinkingOverlay()
+                        .padding(.top, 2)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
             }
+            .padding(.horizontal, 20)
+            .padding(.top, 6)
+            .padding(.bottom, 4)
         }
         .background(T.bg.ignoresSafeArea())
         .tint(T.accent)
@@ -99,10 +107,7 @@ struct ChatView: View {
                 attachments = accum.map { (data: $0.0, mime: $0.1) }
             }
         }
-        .toolbar { toolbarContent }
-        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
         .onAppear {
             if isDefaultTitle, let first = sortedMessages.first {
                 updateChatTitle(from: first.content)
@@ -197,15 +202,27 @@ struct ChatView: View {
                                            onEdit: { onEdit(message) })
                             }
                         }
-                if let partial = streamingText, !partial.isEmpty {
-                    StreamingRow(partial: partial, aiDisplayName: aiDisplayName, aiModel: aiModel)
-                }
+                        if let partial = streamingText, !partial.isEmpty {
+                            StreamingRow(partial: partial, aiDisplayName: aiDisplayName, aiModel: aiModel)
+                                .id("streaming-row")
+                        }
                     }
                 }
                 .padding(.bottom, 72)
                 .onChange(of: messages.count) { _, _ in
                     if let last = messages.last {
                         withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
+                    }
+                }
+                .onChange(of: streamingText) { _, newValue in
+                    guard let partial = newValue, !partial.isEmpty else { return }
+                    withAnimation { proxy.scrollTo("streaming-row", anchor: .bottom) }
+                }
+                .onChange(of: isSending) { _, sending in
+                    if sending == false {
+                        if let last = messages.last {
+                            withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
+                        }
                     }
                 }
             }
@@ -321,34 +338,93 @@ struct ChatView: View {
         }
     }
 
-    @ToolbarContentBuilder
-    private var toolbarContent: some ToolbarContent {
-        // Center model display with quick menu
-        ToolbarItem(placement: .principal) {
-            Menu {
-                // Quick models (up to 3)
-                Section("Quick Models") {
-                    ForEach(quickModels(), id: \.self) { m in
-                        Button(action: { setDefaultModel(m) }) {
-                            HStack { Text(m); if m == (settingsQuery.first?.defaultModel ?? "") { AppIcon.checkCircle(true, size: 14) } }
-                        }
-                    }
-                }
-                Button("Other models…") { showFullModelPicker = true }
-                Divider()
-                Button("Chat Settings…") { showChatSettings = true }
-            } label: {
-                HStack(spacing: 4) {
-                    Text(currentModelDisplay()).font(.headline)
-                    AppIcon.chevronDown(10).rotationEffect(.degrees(-90))
-                }
-                .contentShape(Rectangle())
-            }
+    private var chatDisplayTitle: String {
+        let trimmed = chat.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty { return trimmed }
+        if let firstUser = sortedMessages.first(where: { $0.role == "user" && !$0.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
+            return String(firstUser.content.prefix(32)) + (firstUser.content.count > 32 ? "…" : "")
         }
-        // Top-right new chat button
-        ToolbarItem(placement: .topBarTrailing) {
-            Button(action: { onNewChat?() }) { AppIcon.plus(18) }
-                .accessibilityLabel("New Chat")
+        return "New Chat"
+    }
+
+    @ViewBuilder
+    private var floatingNavBar: some View {
+        GlassBar {
+            HStack(alignment: .center, spacing: 12) {
+                if shouldShowBackButton {
+                    Button(action: { dismiss() }) {
+                        AppIcon.chevronDown(16)
+                            .rotationEffect(.degrees(90))
+                            .foregroundStyle(T.text)
+                            .frame(width: 40, height: 40)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(T.surfaceElevated.opacity(0.7))
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Back")
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(chatDisplayTitle)
+                        .font(.headline)
+                        .foregroundStyle(T.text)
+                        .lineLimit(1)
+
+                    Menu {
+                        Section("Quick Models") {
+                            ForEach(quickModels(), id: \.self) { m in
+                                Button(action: { setDefaultModel(m) }) {
+                                    HStack {
+                                        Text(m)
+                                        if m == (settingsQuery.first?.defaultModel ?? "") {
+                                            AppIcon.checkCircle(true, size: 14)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Button("Other models…") { showFullModelPicker = true }
+                        Button("Provider defaults…") { showModelEditor = true }
+                        Divider()
+                        Button("Chat Settings…") { showChatSettings = true }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Text(currentModelDisplay())
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(T.text)
+                                .lineLimit(1)
+                            AppIcon.chevronDown(10)
+                                .rotationEffect(.degrees(-90))
+                                .foregroundStyle(T.textSecondary)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(T.surfaceElevated.opacity(0.75))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .stroke(T.borderSoft.opacity(0.6))
+                                )
+                        )
+                    }
+                    .menuStyle(.borderlessButton)
+                }
+
+                Spacer(minLength: 12)
+
+                if canCreateChat {
+                    Button(action: { onNewChat?() }) {
+                        AppIcon.plus(18)
+                            .foregroundStyle(T.accentOn)
+                            .frame(width: 44, height: 44)
+                            .background(Circle().fill(T.accent))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("New Chat")
+                }
+            }
         }
     }
 
@@ -356,6 +432,10 @@ struct ChatView: View {
         let s = settingsQuery.first
         return s?.defaultModel.isEmpty == false ? (s?.defaultModel ?? "Model") : "Model"
     }
+
+    private var canCreateChat: Bool { onNewChat != nil }
+
+    private var shouldShowBackButton: Bool { onNewChat == nil }
 
     private func availableModelsForCurrentProvider() -> [String] {
         let s = settingsQuery.first
@@ -583,16 +663,13 @@ struct ChatView: View {
             }
 
             // Apply per-model overrides from ModelCapabilitiesStore
-            var caps = ModelCapabilitiesStore.get(provider: providerID, model: model) // effective (user over default)
-            // If per-model caching isn't set, honor global AppSettings toggle as a soft default
-            if caps?.enablePromptCaching == nil {
-                let globalCaching = (settingsQuery.first?.promptCachingEnabled ?? false)
-                if globalCaching {
-                    var updated = caps ?? .fallback(id: model)
-                    updated.enablePromptCaching = true
-                    ModelCapabilitiesStore.putUser(provider: providerID, model: model, info: updated)
-                    caps = updated
-                }
+            var caps = ModelCapabilitiesStore.get(provider: providerID, model: model)
+            let wantsPromptCaching = settingsQuery.first?.promptCachingEnabled ?? false
+            if caps?.enablePromptCaching == nil, wantsPromptCaching {
+                var updated = caps ?? .fallback(id: model)
+                updated.enablePromptCaching = true
+                ModelCapabilitiesStore.putUser(provider: providerID, model: model, info: updated)
+                caps = updated
             }
             let tempEff = caps?.preferredTemperature ?? settings.defaultTemperature
             let topPEff = caps?.preferredTopP
@@ -794,6 +871,21 @@ struct ChatView: View {
 
 // MARK: - PhotosPicker helpers
 private func loadImageData(from item: PhotosPickerItem) async throws -> (data: Data, mime: String) {
+    func downscaledJPEGData(from image: UIImage, maxDimension: CGFloat = 2048, quality: CGFloat = 0.85) -> Data? {
+        let targetSize: CGSize
+        if max(image.size.width, image.size.height) <= maxDimension {
+            targetSize = image.size
+        } else {
+            let scale = maxDimension / max(image.size.width, image.size.height)
+            targetSize = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+        }
+        let renderer = UIGraphicsImageRenderer(size: targetSize)
+        let scaled = renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: targetSize))
+        }
+        return scaled.jpegData(compressionQuality: quality)
+    }
+
     if let type = item.supportedContentTypes.first {
         if type.conforms(to: .jpeg) {
             guard let data = try await item.loadTransferable(type: Data.self) else { throw NSError(domain: "Photos", code: -1) }
@@ -803,10 +895,16 @@ private func loadImageData(from item: PhotosPickerItem) async throws -> (data: D
             return (data, "image/png")
         } else if type.conforms(to: .heic) || type.conforms(to: .heif) {
             guard let data = try await item.loadTransferable(type: Data.self) else { throw NSError(domain: "Photos", code: -1) }
-            return (data, "image/heic")
+            if let image = UIImage(data: data), let jpeg = downscaledJPEGData(from: image) {
+                return (jpeg, "image/jpeg")
+            }
         }
     }
-    // Fallback: try as raw Data and mark as JPEG
-    if let data = try await item.loadTransferable(type: Data.self) { return (data, "image/jpeg") }
+    if let rawData = try await item.loadTransferable(type: Data.self) {
+        if let image = UIImage(data: rawData), let jpeg = image.jpegData(compressionQuality: 0.85) {
+            return (jpeg, "image/jpeg")
+        }
+        return (rawData, "image/jpeg")
+    }
     throw NSError(domain: "Photos", code: -2, userInfo: [NSLocalizedDescriptionKey: "Could not load image data"]) 
 }

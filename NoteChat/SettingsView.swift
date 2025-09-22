@@ -11,9 +11,7 @@ struct SettingsView: View {
         @Bindable var store = store
         NavigationStack {
             ZStack {
-                Rectangle()
-                    .fill(.ultraThinMaterial)
-                    .ignoresSafeArea()
+                T.bg.ignoresSafeArea()
                 List {
                 Section {
                     NavigationLink {
@@ -87,6 +85,14 @@ struct SettingsView: View {
                     Slider(value: $store.liquidGlassIntensity, in: 0...1, step: 0.01)
                         .onChange(of: store.liquidGlassIntensity) { _, _ in store.save() }
 
+                    Toggle(isOn: $store.enableNotes) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Enable Notes (beta)")
+                            Text("Experimental Markdown notes module").font(.footnote).foregroundStyle(.secondary)
+                        }
+                    }
+                    .onChange(of: store.enableNotes) { _, _ in store.save() }
+
                     Toggle(isOn: $store.showThinkingOverlay) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Show Thinking Overlay")
@@ -133,24 +139,31 @@ struct SettingsView: View {
                 }
                 .scrollContentBackground(.hidden)
                 .listStyle(.insetGrouped)
-                .background(.clear)
+                .background(T.bg)
                 .listRowBackground(
-                    RoundedRectangle(cornerRadius: 12).fill(.thinMaterial)
+                    RoundedRectangle(cornerRadius: 12).fill(T.surface)
                 )
+                .contentMargins(.top, 88)
             }
-            .navigationTitle("Settings")
-            .toolbar {
-                // Only show Save button if there are unsaved changes
-                if store.hasUnsavedChanges {
-                    ToolbarItem(placement: .confirmationAction) { 
-                        Button("Save") { 
-                            store.save()
-                        }
-                        .fontWeight(.semibold)
+            .dockBottomInset()
+            .safeAreaInset(edge: .top, spacing: 12) {
+                GlassNavigationBar(title: "Settings") {
+                    if store.hasUnsavedChanges {
+                        Button("Save") { store.save() }
+                            .font(.subheadline.weight(.semibold))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(T.accent)
+                            )
+                            .foregroundStyle(T.accentOn)
                     }
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
             }
-            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
 }
@@ -178,51 +191,79 @@ private extension SettingsView {
 // MARK: - Personalization
 private struct PersonalizationSettingsView: View {
     @Environment(SettingsStore.self) private var store
+    @Environment(\.tokens) private var T
     var body: some View {
         @Bindable var store = store
-        Form {
-            Section("Identity") {
-                TextField("First Name", text: $store.userFirstName)
-                    .onChange(of: store.userFirstName) { _, _ in store.save() }
-                TextField("Last Name", text: $store.userLastName)
-                    .onChange(of: store.userLastName) { _, _ in store.save() }
-                TextField("Username", text: $store.userUsername)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .onChange(of: store.userUsername) { _, _ in store.save() }
+        ZStack {
+            T.bg.ignoresSafeArea()
+            Form {
+                Section("Identity") {
+                    TextField("First Name", text: $store.userFirstName)
+                        .onChange(of: store.userFirstName) { _, _ in store.save() }
+                    TextField("Last Name", text: $store.userLastName)
+                        .onChange(of: store.userLastName) { _, _ in store.save() }
+                    TextField("Username", text: $store.userUsername)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .onChange(of: store.userUsername) { _, _ in store.save() }
+                }
+                Section("Assistant") {
+                    TextField("AI Name (assistant)", text: $store.aiName)
+                        .onChange(of: store.aiName) { _, _ in store.save() }
+                }
+                Section("Personal Info") {
+                    TextEditor(text: $store.personalInfo)
+                        .frame(minHeight: 120)
+                        .onChange(of: store.personalInfo) { _, _ in store.save() }
+                }
             }
-            Section("Assistant") {
-                TextField("AI Name (assistant)", text: $store.aiName)
-                    .onChange(of: store.aiName) { _, _ in store.save() }
-            }
-            Section("Personal Info") {
-                TextEditor(text: $store.personalInfo)
-                    .frame(minHeight: 120)
-            }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .contentMargins(.top, 88)
         }
-        .navigationTitle("Personalization")
+        .dockBottomInset()
+        .safeAreaInset(edge: .top, spacing: 12) {
+            GlassNavigationBar(title: "Personalization", showBack: true)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+        }
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
 
 private struct ProvidersSettingsView: View {
     @Environment(SettingsStore.self) private var store
+    @Environment(\.tokens) private var T
 
     var body: some View {
-        List {
-            ProviderRow(title: ProviderID.openai.displayName, iconView: AnyView(AppIcon.providerOpenAI(16))) {
-                ProviderDetailView(provider: .openai)
+        ZStack {
+            T.bg.ignoresSafeArea()
+            List {
+                ProviderRow(title: ProviderID.openai.displayName, iconView: AnyView(AppIcon.providerOpenAI(16))) {
+                    ProviderDetailView(provider: .openai)
+                }
+                ProviderRow(title: ProviderID.anthropic.displayName, iconView: AnyView(AppIcon.providerAnthropic(16))) {
+                    ProviderDetailView(provider: .anthropic)
+                }
+                ProviderRow(title: ProviderID.google.displayName, iconView: AnyView(AppIcon.providerGoogle(16))) {
+                    ProviderDetailView(provider: .google)
+                }
+                ProviderRow(title: ProviderID.xai.displayName, iconView: AnyView(AppIcon.providerXAI(16))) {
+                    ProviderDetailView(provider: .xai)
+                }
             }
-            ProviderRow(title: ProviderID.anthropic.displayName, iconView: AnyView(AppIcon.providerAnthropic(16))) {
-                ProviderDetailView(provider: .anthropic)
-            }
-            ProviderRow(title: ProviderID.google.displayName, iconView: AnyView(AppIcon.providerGoogle(16))) {
-                ProviderDetailView(provider: .google)
-            }
-            ProviderRow(title: ProviderID.xai.displayName, iconView: AnyView(AppIcon.providerXAI(16))) {
-                ProviderDetailView(provider: .xai)
-            }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .listRowBackground(RoundedRectangle(cornerRadius: 12).fill(T.surface))
+            .contentMargins(.top, 88)
         }
-        .navigationTitle("Providers")
+        .dockBottomInset()
+        .safeAreaInset(edge: .top, spacing: 12) {
+            GlassNavigationBar(title: "Providers", showBack: true)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+        }
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
 
@@ -245,6 +286,7 @@ private struct ProviderRow<Destination: View>: View {
 private struct ProviderDetailView: View {
     let provider: ProviderID
     @Environment(SettingsStore.self) private var store
+    @Environment(\.tokens) private var T
     @State private var apiKey: String = ""
     @State private var available: [String] = []
     @State private var verifying = false
@@ -254,54 +296,59 @@ private struct ProviderDetailView: View {
     @State private var activeModelForEdit: SelectedModel? = nil
 
     var body: some View {
-        Form {
-            Section(header: Text(provider.displayName)) {
-                SecureField("API Key", text: $apiKey)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .onChange(of: apiKey) { _, _ in 
-                        writeAPIKey(apiKey)
-                    }
-                VerificationBar(verifying: verifying, verified: verified)
-                HStack {
-                    Button {
-                        Task { await verify() }
-                    } label: {
-                        HStack(spacing: 6) {
-                            AppIcon.refresh(14)
-                            Text("Verify")
+        ZStack {
+            T.bg.ignoresSafeArea()
+            Form {
+                Section(header: Text(provider.displayName)) {
+                    SecureField("API Key", text: $apiKey)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .onChange(of: apiKey) { _, _ in 
+                            writeAPIKey(apiKey)
                         }
-                    }
-                    .disabled(apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-
-                    Button {
-                        Task { await reloadModels() }
-                    } label: {
-                        HStack(spacing: 6) {
-                            AppIcon.refreshModels(14)
-                            Text("Refresh Models")
+                    VerificationBar(verifying: verifying, verified: verified)
+                    HStack {
+                        Button {
+                            Task { await verify() }
+                        } label: {
+                            HStack(spacing: 6) {
+                                AppIcon.refresh(14)
+                                Text("Verify")
+                            }
                         }
-                    }
-                    .disabled(apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || loadingModels)
-                }
-            }
+                        .disabled(apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
-            Section("Select Models (shown in picker)") {
-                if loadingModels {
-                    HStack { ProgressView(); Text("Loading…") }
-                } else if available.isEmpty {
-                    Text("No models. Verify API key and refresh.")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(available, id: \.self) { m in
-                        ModelRowWithInfo(title: m,
-                                         isOn: bindingForModel(m),
-                                         onInfo: { activeModelForEdit = SelectedModel(id: m) })
+                        Button {
+                            Task { await reloadModels() }
+                        } label: {
+                            HStack(spacing: 6) {
+                                AppIcon.refreshModels(14)
+                                Text("Refresh Models")
+                            }
+                        }
+                        .disabled(apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || loadingModels)
                     }
                 }
+
+                Section("Select Models (shown in picker)") {
+                    if loadingModels {
+                        HStack { ProgressView(); Text("Loading…") }
+                    } else if available.isEmpty {
+                        Text("No models. Verify API key and refresh.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(available, id: \.self) { m in
+                            ModelRowWithInfo(title: m,
+                                             isOn: bindingForModel(m),
+                                             onInfo: { activeModelForEdit = SelectedModel(id: m) })
+                        }
+                    }
+                }
             }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .contentMargins(.top, 88)
         }
-        .navigationTitle(provider.displayName)
         .sheet(item: $activeModelForEdit) { selected in
             ModelSettingsView(providerID: provider.rawValue, modelID: selected.id)
         }
@@ -309,6 +356,13 @@ private struct ProviderDetailView: View {
             apiKey = readAPIKey()
             available = enabledModelsAll()
         }
+        .dockBottomInset()
+        .safeAreaInset(edge: .top, spacing: 12) {
+            GlassNavigationBar(title: provider.displayName, showBack: true)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+        }
+        .toolbar(.hidden, for: .navigationBar)
     }
 
     private func bindingForModel(_ m: String) -> Binding<Bool> {
@@ -480,39 +534,52 @@ private struct VerificationBar: View {
 
 private struct DefaultChatSettingsView: View {
     @Environment(SettingsStore.self) private var store
+    @Environment(\.tokens) private var T
     @State private var tempLocal: Double = 1.0
     @State private var tokensLocal: Double = 1024
 
     var body: some View {
         @Bindable var store = store
-        Form {
-            Section("System Prompt") {
-                TextEditor(text: $store.systemPrompt)
-                    .frame(minHeight: 120)
-            }
-            Section("Sampling") {
-                VStack(alignment: .leading) {
-                    HStack { Text("Temperature"); Spacer(); Text(String(format: "%.2f", store.temperature)).foregroundStyle(.secondary) }
-                    Slider(value: $store.temperature, in: 0...maxTemperature, step: 0.05)
+        ZStack {
+            T.bg.ignoresSafeArea()
+            Form {
+                Section("System Prompt") {
+                    TextEditor(text: $store.systemPrompt)
+                        .frame(minHeight: 120)
                 }
-                VStack(alignment: .leading) {
-                    HStack { Text("Max Tokens"); Spacer(); Text("\(store.maxTokens)").foregroundStyle(.secondary) }
-                    Slider(value: Binding(get: { Double(store.maxTokens) }, set: { 
-                        store.maxTokens = Int($0)
-                    }), in: 64...maxTokens, step: 32)
-                }
-                if supportsPromptCaching {
-                    Toggle(isOn: $store.promptCachingEnabled) {
-                        HStack(spacing: 6) {
-                            AppIcon.lightning(14)
-                            Text("Enable prompt caching (if supported)")
-                        }
+                Section("Sampling") {
+                    VStack(alignment: .leading) {
+                        HStack { Text("Temperature"); Spacer(); Text(String(format: "%.2f", store.temperature)).foregroundStyle(.secondary) }
+                        Slider(value: $store.temperature, in: 0...maxTemperature, step: 0.05)
                     }
-                    .onChange(of: store.promptCachingEnabled) { _, _ in store.save() }
+                    VStack(alignment: .leading) {
+                        HStack { Text("Max Tokens"); Spacer(); Text("\(store.maxTokens)").foregroundStyle(.secondary) }
+                        Slider(value: Binding(get: { Double(store.maxTokens) }, set: { 
+                            store.maxTokens = Int($0)
+                        }), in: 64...maxTokens, step: 32)
+                    }
+                    if supportsPromptCaching {
+                        Toggle(isOn: $store.promptCachingEnabled) {
+                            HStack(spacing: 6) {
+                                AppIcon.lightning(14)
+                                Text("Enable prompt caching (if supported)")
+                            }
+                        }
+                        .onChange(of: store.promptCachingEnabled) { _, _ in store.save() }
+                    }
                 }
             }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .contentMargins(.top, 88)
         }
-        .navigationTitle("Default Chat")
+        .dockBottomInset()
+        .safeAreaInset(edge: .top, spacing: 12) {
+            GlassNavigationBar(title: "Default Chat", showBack: true)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+        }
+        .toolbar(.hidden, for: .navigationBar)
     }
 
     // Dynamic limits derived from Provider→Model capability cache
@@ -562,7 +629,9 @@ struct ModelSettingsView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
+            ZStack {
+                T.bg.ignoresSafeArea()
+                Form {
                 Section {
                     Button("Restore Default") { restoreDefault() }
                         .buttonStyle(.plain)
@@ -634,20 +703,30 @@ struct ModelSettingsView: View {
                         Text(defText).font(.footnote).foregroundStyle(.secondary)
                     }
                 }
+                }
+                .listStyle(.insetGrouped)
+                .scrollContentBackground(.hidden)
+                .contentMargins(.top, 96)
             }
             .navigationTitle("Model Settings")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button { attemptDismiss() } label: { AppIcon.close(16) }
-                }
-                ToolbarItem(placement: .confirmationAction) {
+            .safeAreaInset(edge: .top, spacing: 12) {
+                GlassNavigationBar(title: "Model Settings", showBack: true, onBack: { attemptDismiss() }) {
                     Button("Save") { saveAndDismiss() }
+                        .font(.subheadline.weight(.semibold))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(T.accent))
+                        .foregroundStyle(T.accentOn)
                 }
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
             }
+            .toolbar(.hidden, for: .navigationBar)
             .confirmationDialog("Discard changes?", isPresented: $showingDiscard, titleVisibility: .visible) {
                 Button("Discard Changes", role: .destructive) { dismiss() }
                 Button("Cancel", role: .cancel) { }
             }
+            .dockBottomInset()
             .onAppear { load() }
         }
     }
@@ -737,7 +816,7 @@ struct ModelSettingsView: View {
 
 private struct InterfaceSettingsView: View {
     @Environment(SettingsStore.self) private var store
-    @State private var sizeIndex: Double = 2
+    @Environment(\.tokens) private var T
 
     private let sizeLabels = ["XS", "S", "M", "L", "XL"]
     // already has colorScheme above; do not redeclare
@@ -788,136 +867,139 @@ private struct InterfaceSettingsView: View {
 
     var body: some View {
         @Bindable var store = store
-        Form {
-            Section("Theme") {
-                Picker("Color Scheme", selection: $store.interfaceTheme) {
-                    Text("System").tag("system")
-                    Text("Light").tag("light")
-                    Text("Dark").tag("dark")
-                }
-                .pickerStyle(.segmented)
-                .onChange(of: store.interfaceTheme) { _, _ in store.save() }
-                Text("Choose whether the app follows system appearance or forces light/dark.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section("Font") {
-                // Fancy two-column card grid for font choices
-                let options: [(id: String, label: String)] = [
-                    ("system", "System"), ("serif", "Serif"), ("rounded", "Rounded"), ("mono", "Monospaced")
-                ]
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                    ForEach(options, id: \.id) { opt in
-                        let titleF = cardTitleFont(for: opt.id)
-                        let bodyF = cardBodyFont(for: opt.id)
-                        let bg = cardBackground(for: opt.id)
-                        FontOptionCard(
-                            label: opt.label,
-                            titleFont: titleF,
-                            bodyFont: bodyF,
-                            background: bg,
-                            selected: store.interfaceFontStyle == opt.id,
-                            onSelect: { 
-                                store.interfaceFontStyle = opt.id
-                                store.save()
-                            }
-                        )
-                        .fontDesign(.default) // ensure preview cards show their own design, not the global selection
-                        .accessibilityLabel("\(opt.label) font")
-                        .accessibilityAddTraits(store.interfaceFontStyle == opt.id ? .isSelected : [])
+        ZStack {
+            T.bg.ignoresSafeArea()
+            Form {
+                Section("Theme") {
+                    Picker("Color Scheme", selection: $store.interfaceTheme) {
+                        Text("System").tag("system")
+                        Text("Light").tag("light")
+                        Text("Dark").tag("dark")
                     }
+                    .pickerStyle(.segmented)
+                    .onChange(of: store.interfaceTheme) { _, _ in store.save() }
+                    Text("Choose whether the app follows system appearance or forces light/dark.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+
+                    // Live theme preview strip
+                    ThemePreviewStrip(style: themeStyleForPreview(), size: .regular)
                 }
 
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack { Text("Text Size"); Spacer(); Text(sizeLabels[Int(store.interfaceTextSizeIndex)]) }
-                    Slider(value: Binding(get: { Double(store.interfaceTextSizeIndex) }, set: { 
-                        store.interfaceTextSizeIndex = Int($0.rounded())
-                        store.save()
-                    }), in: 0...4, step: 1)
-                    // Previews under the slider positions
-                    HStack(spacing: 12) {
-                        ForEach(0..<5) { i in
-                            VStack {
-                                Text("Aa")
-                                    .font(fontForIndex(i))
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 6)
-                            }
-                            .frame(height: 44)
-                            .frame(maxWidth: .infinity)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(i == store.interfaceTextSizeIndex ? Color.accentColor.opacity(0.15) : Color.secondary.opacity(0.12))
+                Section("Font") {
+                    let options: [(id: String, label: String)] = [
+                        ("system", "System"), ("serif", "Serif"), ("rounded", "Rounded"), ("mono", "Monospaced")
+                    ]
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 150, maximum: 220), spacing: 12)], spacing: 12) {
+                        ForEach(options, id: \.id) { opt in
+                            let cardDesign = design(for: opt.id)
+                            let bg = cardBackground(for: opt.id)
+                            FontOptionCard(
+                                label: opt.label,
+                                design: cardDesign,
+                                background: bg,
+                                selected: store.interfaceFontStyle == opt.id,
+                                onSelect: { 
+                                    store.interfaceFontStyle = opt.id
+                                    store.save()
+                                }
                             )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .stroke(i == store.interfaceTextSizeIndex ? Color.accentColor : Color.clear, lineWidth: 1)
-                            )
-                            .onTapGesture { 
-                                store.interfaceTextSizeIndex = i
-                                store.save()
+                            .accessibilityLabel("\(opt.label) font")
+                            .accessibilityAddTraits(store.interfaceFontStyle == opt.id ? .isSelected : [])
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack { Text("Text Size"); Spacer(); Text(sizeLabels[Int(store.interfaceTextSizeIndex)]) }
+                        Slider(value: Binding(get: { Double(store.interfaceTextSizeIndex) }, set: { 
+                            store.interfaceTextSizeIndex = Int($0.rounded())
+                            store.save()
+                        }), in: 0...4, step: 1)
+                        HStack(spacing: 12) {
+                            ForEach(0..<5) { i in
+                                VStack {
+                                    Text("Aa")
+                                        .font(fontForIndex(i))
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 6)
+                                }
+                                .frame(height: 44)
+                                .frame(maxWidth: .infinity)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .fill(i == store.interfaceTextSizeIndex ? Color.accentColor.opacity(0.15) : Color.secondary.opacity(0.12))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .stroke(i == store.interfaceTextSizeIndex ? Color.accentColor : Color.clear, lineWidth: 1)
+                                )
+                                .onTapGesture { 
+                                    store.interfaceTextSizeIndex = i
+                                    store.save()
+                                }
                             }
                         }
                     }
                 }
-            }
 
-            Section("Theme Palette") {
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                    ForEach(paletteOptions, id: \.style) { opt in
-                        PaletteOptionCard(
-                            style: opt.style,
-                            label: opt.label,
-                            selected: store.chatBubbleColorID.lowercased() == opt.style.rawValue.lowercased(),
-                            onSelect: {
-                                store.chatBubbleColorID = opt.style.rawValue
-                                store.save()
-                            }
-                        )
-                        .accessibilityLabel("\(opt.label) palette")
-                        .accessibilityAddTraits(store.chatBubbleColorID.lowercased() == opt.style.rawValue.lowercased() ? .isSelected : [])
+                Section("Theme Palette") {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 150, maximum: 220), spacing: 12)], spacing: 12) {
+                        ForEach(paletteOptions, id: \.style) { opt in
+                            PaletteOptionCard(
+                                style: opt.style,
+                                label: opt.label,
+                                selected: store.chatBubbleColorID.lowercased() == opt.style.rawValue.lowercased(),
+                                onSelect: {
+                                    store.chatBubbleColorID = opt.style.rawValue
+                                    store.save()
+                                }
+                            )
+                            .accessibilityLabel("\(opt.label) palette")
+                            .accessibilityAddTraits(store.chatBubbleColorID.lowercased() == opt.style.rawValue.lowercased() ? .isSelected : [])
+                        }
                     }
+                    Text("Soft, distinct palettes (with dark-mode variants). ‘Sand’ matches a Claude-like pastel.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
-                Text("Soft, distinct palettes (with dark-mode variants). ‘Sand’ matches a Claude-like pastel.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .navigationTitle("Appearance")
-        .toolbar {
-            ToolbarItem(placement: .bottomBar) {
-                Button("Restore Defaults") {
-                    store.interfaceTheme = "system"
-                    store.interfaceFontStyle = "rounded"
-                    store.interfaceTextSizeIndex = 2
-                    store.chatBubbleColorID = "coolSlate"
-                    store.save()
+                Section {
+                    Button("Restore Defaults") {
+                        store.interfaceTheme = "system"
+                        store.interfaceFontStyle = "rounded"
+                        store.interfaceTextSizeIndex = 2
+                        store.chatBubbleColorID = "coolSlate"
+                        store.save()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .buttonStyle(.bordered)
+                    .tint(.accentColor)
+                    .font(.body.weight(.semibold))
+                } footer: {
+                    Text("Reset appearance options to NoteChat’s recommended defaults.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
-                .buttonStyle(.bordered)
             }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .contentMargins(.top, 88)
         }
-        .onAppear {
-            sizeIndex = Double(store.interfaceTextSizeIndex)
+        .dockBottomInset()
+        .safeAreaInset(edge: .top, spacing: 12) {
+            GlassNavigationBar(title: "Appearance", showBack: true)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
         }
+        .toolbar(.hidden, for: .navigationBar)
     }
 
     // MARK: - Helpers (Fonts & Backgrounds)
-    private func cardTitleFont(for id: String) -> Font {
+    private func design(for id: String) -> Font.Design {
         switch id {
-        case "serif": return .system(size: 22, weight: .semibold, design: .serif)
-        case "rounded": return .system(size: 22, weight: .semibold, design: .rounded)
-        case "mono": return .system(size: 22, weight: .semibold, design: .monospaced)
-        default: return .system(size: 22, weight: .semibold, design: .default)
-        }
-    }
-
-    private func cardBodyFont(for id: String) -> Font {
-        switch id {
-        case "serif": return .system(size: 14, weight: .regular, design: .serif)
-        case "rounded": return .system(size: 14, weight: .regular, design: .rounded)
-        case "mono": return .system(size: 14, weight: .regular, design: .monospaced)
-        default: return .system(size: 14, weight: .regular, design: .default)
+        case "serif": return .serif
+        case "rounded": return .rounded
+        case "mono": return .monospaced
+        default: return .default
         }
     }
 
@@ -979,8 +1061,7 @@ private struct PaletteOptionCard: View {
 // Split out to keep the parent body simple for the compiler
 private struct FontOptionCard: View {
     let label: String
-    let titleFont: Font
-    let bodyFont: Font
+    let design: Font.Design
     let background: Color
     let selected: Bool
     let onSelect: () -> Void
@@ -992,15 +1073,16 @@ private struct FontOptionCard: View {
                     .fill(background)
                 VStack(alignment: .center, spacing: 6) {
                     Text(label)
-                        .font(titleFont)
-                        .fontWeight(.semibold)
+                        .font(.system(size: 22, weight: .semibold))
+                        .fontDesign(design)
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                         .multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity)
                     Text(sample)
-                        .font(bodyFont)
+                        .font(.system(size: 14, weight: .regular))
+                        .fontDesign(design)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
@@ -1025,7 +1107,7 @@ private struct FontOptionCard: View {
         )
     }
 
-    private var sample: String { "Aa • Readable preview" }
+    private var sample: String { "Aa · The quick brown fox" }
 }
 
 #Preview {
@@ -1040,5 +1122,67 @@ private struct FontOptionCard: View {
         )
     } catch {
         return AnyView(Text("Preview unavailable: \(String(describing: error))"))
+    }
+}
+
+// MARK: - Theme Preview Strip
+private struct ThemePreviewStrip: View {
+    enum Size { case compact, regular }
+    let style: AppThemeStyle
+    var size: Size = .compact
+    @Environment(\.colorScheme) private var scheme
+
+    var body: some View {
+        let t = ThemeFactory.make(style: style, colorScheme: scheme)
+        ZStack {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(t.surface)
+                .shadow(color: t.shadow.opacity(0.3), radius: 8, y: 6)
+            VStack(alignment: .leading, spacing: 8) {
+                Capsule()
+                    .fill(LinearGradient(colors: [t.accent, t.accentSoft], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .frame(height: 14)
+                HStack(spacing: 8) {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(t.bubbleUser)
+                        .frame(width: bubbleWidth, height: 26)
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(t.bubbleAssistant)
+                        .frame(width: bubbleWidth * 0.85, height: 26)
+                }
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(t.surfaceElevated)
+                    .frame(height: 20)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .stroke(t.borderSoft, lineWidth: 1)
+                    )
+                Spacer(minLength: 0)
+            }
+            .padding(16)
+        }
+        .frame(width: cardWidth, height: cardHeight)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Theme preview")
+        .accessibilityValue("Accent, background, and bubble colors for the selected palette")
+    }
+
+    private var cardWidth: CGFloat { size == .compact ? 180 : 220 }
+    private var cardHeight: CGFloat { size == .compact ? 100 : 126 }
+    private var bubbleWidth: CGFloat { size == .compact ? 80 : 100 }
+}
+
+private extension InterfaceSettingsView {
+    func themeStyleForPreview() -> AppThemeStyle {
+        switch store.chatBubbleColorID.lowercased() {
+        case "terracotta": return .terracotta
+        case "slate", "coolslate": return .coolSlate
+        case "sand", "sun", "sunset": return .sand
+        case "lavender", "purple": return .lavender
+        case "contrast", "highcontrast", "hc": return .highContrast
+        case "ocean", "teal", "aqua": return .ocean
+        case "forest", "mint", "green": return .forest
+        default: return .coolSlate
+        }
     }
 }

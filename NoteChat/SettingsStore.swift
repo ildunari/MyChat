@@ -6,6 +6,7 @@ import Observation
 @MainActor
 @Observable
 final class SettingsStore {
+    static private(set) var shared: SettingsStore?
     var defaultProvider: String
     var defaultModel: String
     var openAIAPIKey: String {
@@ -49,6 +50,7 @@ final class SettingsStore {
     var liquidGlassIntensity: Double // 0...1
     var showThinkingOverlay: Bool
     var showReasoningSnippets: Bool
+    var usePhosphorIcons: Bool
     var defaultHistoryLimit: Int // -1 = all, otherwise last N messages
     // Home layout prefs
     var homeSectionOrder: [String]
@@ -144,6 +146,7 @@ final class SettingsStore {
         self.homeAgentsExpanded = settings.homeAgentsExpanded
         self.showThinkingOverlay = settings.showThinkingOverlay
         self.showReasoningSnippets = settings.showReasoningSnippets
+        self.usePhosphorIcons = settings.usePhosphorIcons
 
         // Personalization
         self.userFirstName = settings.userFirstName
@@ -151,6 +154,8 @@ final class SettingsStore {
         self.userUsername = settings.userUsername
         self.aiName = settings.aiDisplayName
         self.personalInfo = settings.personalInfo
+
+        SettingsStore.shared = self
     }
 
     func save() {
@@ -173,6 +178,7 @@ final class SettingsStore {
         settings.liquidGlassIntensity = liquidGlassIntensity
         settings.showThinkingOverlay = showThinkingOverlay
         settings.showReasoningSnippets = showReasoningSnippets
+        settings.usePhosphorIcons = usePhosphorIcons
         settings.defaultHistoryLimit = defaultHistoryLimit
         settings.homeSectionOrder = homeSectionOrder
         settings.homeChatsExpanded = homeChatsExpanded
@@ -193,7 +199,7 @@ final class SettingsStore {
         hasUnsavedChanges = false
     }
 
-    func apiKey(for provider: String) -> String? {
+func apiKey(for provider: String) -> String? {
         switch provider {
         case "openai":
             return (try? KeychainService.read(key: OPENAI_KEY_KEYCHAIN)) ?? nil
@@ -216,3 +222,22 @@ final class SettingsStore {
         }
     }
 }
+
+#if DEBUG
+extension SettingsStore {
+    /// Lightweight factory for SwiftUI previews and tests.
+    static func preview(context: ModelContext? = nil) -> SettingsStore {
+        if let context {
+            return SettingsStore(context: context)
+        }
+
+        let container = try! ModelContainer(
+            for: Chat.self,
+            Message.self,
+            AppSettings.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )
+        return SettingsStore(context: container.mainContext)
+    }
+}
+#endif

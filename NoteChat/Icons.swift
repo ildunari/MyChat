@@ -4,35 +4,60 @@ import PhosphorSwift
 #endif
 
 enum AppIcon {
+    @MainActor private static var usePhosphor: Bool {
+        SettingsStore.shared?.usePhosphorIcons == true
+    }
+
+    @ViewBuilder
+    private static func sf(_ name: String, size: CGFloat, weight: Font.Weight = .regular) -> some View {
+        Image(systemName: name).font(.system(size: size, weight: weight))
+    }
+
     // Always use bold weight by default
     @ViewBuilder static func gear(_ size: CGFloat = 18) -> some View {
-        #if canImport(PhosphorSwift)
-        Ph.gear.fill.frame(width: size, height: size)
-        #else
-        Image(systemName: "gearshape.fill").font(.system(size: size, weight: .heavy))
-        #endif
+        if usePhosphor {
+            #if canImport(PhosphorSwift)
+            Ph.gear.fill.frame(width: size, height: size)
+            #else
+            sf("gearshape.fill", size: size, weight: .heavy)
+            #endif
+        } else {
+            sf("gearshape.fill", size: size, weight: .heavy)
+        }
     }
     @ViewBuilder static func grabber(_ size: CGFloat = 16) -> some View {
-        #if canImport(PhosphorSwift)
-        Ph.dotsSixVertical.bold.frame(width: size, height: size)
-        #else
-        Image(systemName: "line.3.horizontal").font(.system(size: size, weight: .bold))
-            .rotationEffect(.degrees(90))
-        #endif
+        let fallback = sf("line.3.horizontal", size: size, weight: .bold).rotationEffect(.degrees(90))
+        if usePhosphor {
+            #if canImport(PhosphorSwift)
+            Ph.dotsSixVertical.bold.frame(width: size, height: size)
+            #else
+            fallback
+            #endif
+        } else {
+            fallback
+        }
     }
     @ViewBuilder static func home(_ size: CGFloat = 18) -> some View {
-        #if canImport(PhosphorSwift)
-        Ph.house.fill.frame(width: size, height: size)
-        #else
-        Image(systemName: "house.fill").font(.system(size: size, weight: .bold))
-        #endif
+        if usePhosphor {
+            #if canImport(PhosphorSwift)
+            Ph.house.fill.frame(width: size, height: size)
+            #else
+            sf("house.fill", size: size, weight: .bold)
+            #endif
+        } else {
+            sf("house.fill", size: size, weight: .bold)
+        }
     }
     @ViewBuilder static func chat(_ size: CGFloat = 18) -> some View {
-        #if canImport(PhosphorSwift)
-        Ph.chatCircleDots.fill.frame(width: size, height: size)
-        #else
-        Image(systemName: "message.fill").font(.system(size: size, weight: .bold))
-        #endif
+        if usePhosphor {
+            #if canImport(PhosphorSwift)
+            Ph.chatCircleDots.fill.frame(width: size, height: size)
+            #else
+            sf("message.fill", size: size, weight: .bold)
+            #endif
+        } else {
+            sf("message.fill", size: size, weight: .bold)
+        }
     }
     @ViewBuilder static func note(_ size: CGFloat = 18) -> some View {
         #if canImport(PhosphorSwift)

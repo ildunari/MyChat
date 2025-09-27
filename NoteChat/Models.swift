@@ -73,6 +73,7 @@ final class AppSettings: Identifiable {
     var liquidGlassIntensity: Double
     // UI affordances
     var showThinkingOverlay: Bool
+    var usePhosphorIcons: Bool
     var showReasoningSnippets: Bool
 
     // Home layout preferences
@@ -118,7 +119,8 @@ final class AppSettings: Identifiable {
         personalInfo: String = "",
         defaultHistoryLimit: Int = -1,
         showThinkingOverlay: Bool = true,
-        showReasoningSnippets: Bool = true
+        showReasoningSnippets: Bool = true,
+        usePhosphorIcons: Bool = false
     ) {
         self.id = id
         self.defaultProvider = defaultProvider
@@ -140,6 +142,7 @@ final class AppSettings: Identifiable {
         self.liquidGlassIntensity = min(1, max(0, liquidGlassIntensity))
         self.showThinkingOverlay = showThinkingOverlay
         self.showReasoningSnippets = showReasoningSnippets
+        self.usePhosphorIcons = usePhosphorIcons
         self.homeSectionOrder = homeSectionOrder
         self.homeChatsExpanded = homeChatsExpanded
         self.homeAgentsExpanded = homeAgentsExpanded

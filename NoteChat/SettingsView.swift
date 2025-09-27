@@ -85,13 +85,13 @@ struct SettingsView: View {
                     Slider(value: $store.liquidGlassIntensity, in: 0...1, step: 0.01)
                         .onChange(of: store.liquidGlassIntensity) { _, _ in store.save() }
 
-                    Toggle(isOn: $store.enableNotes) {
+                    Toggle(isOn: $store.usePhosphorIcons) {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Enable Notes (beta)")
-                            Text("Experimental Markdown notes module").font(.footnote).foregroundStyle(.secondary)
+                            Text("Phosphor Icon Pack")
+                            Text("Enable the bundled Phosphor icons (larger build)").font(.footnote).foregroundStyle(.secondary)
                         }
                     }
-                    .onChange(of: store.enableNotes) { _, _ in store.save() }
+                    .onChange(of: store.usePhosphorIcons) { _, _ in store.save() }
 
                     Toggle(isOn: $store.showThinkingOverlay) {
                         VStack(alignment: .leading, spacing: 2) {
@@ -144,10 +144,11 @@ struct SettingsView: View {
                     RoundedRectangle(cornerRadius: 12).fill(T.surface)
                 )
                 .contentMargins(.top, 88)
+                .padding(.bottom, DockMetrics.height + 24)
             }
-            .dockBottomInset()
+            
             .safeAreaInset(edge: .top, spacing: 12) {
-                GlassNavigationBar(title: "Settings") {
+                GlassNavigationBar(title: "Settings", trailing: {
                     if store.hasUnsavedChanges {
                         Button("Save") { store.save() }
                             .font(.subheadline.weight(.semibold))
@@ -159,7 +160,7 @@ struct SettingsView: View {
                             )
                             .foregroundStyle(T.accentOn)
                     }
-                }
+                })
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
             }
@@ -221,7 +222,7 @@ private struct PersonalizationSettingsView: View {
             .scrollContentBackground(.hidden)
             .contentMargins(.top, 88)
         }
-        .dockBottomInset()
+        
         .safeAreaInset(edge: .top, spacing: 12) {
             GlassNavigationBar(title: "Personalization", showBack: true)
                 .padding(.horizontal, 20)
@@ -257,7 +258,7 @@ private struct ProvidersSettingsView: View {
             .listRowBackground(RoundedRectangle(cornerRadius: 12).fill(T.surface))
             .contentMargins(.top, 88)
         }
-        .dockBottomInset()
+        
         .safeAreaInset(edge: .top, spacing: 12) {
             GlassNavigationBar(title: "Providers", showBack: true)
                 .padding(.horizontal, 20)
@@ -356,7 +357,7 @@ private struct ProviderDetailView: View {
             apiKey = readAPIKey()
             available = enabledModelsAll()
         }
-        .dockBottomInset()
+        
         .safeAreaInset(edge: .top, spacing: 12) {
             GlassNavigationBar(title: provider.displayName, showBack: true)
                 .padding(.horizontal, 20)
@@ -573,7 +574,7 @@ private struct DefaultChatSettingsView: View {
             .scrollContentBackground(.hidden)
             .contentMargins(.top, 88)
         }
-        .dockBottomInset()
+        
         .safeAreaInset(edge: .top, spacing: 12) {
             GlassNavigationBar(title: "Default Chat", showBack: true)
                 .padding(.horizontal, 20)
@@ -726,7 +727,7 @@ struct ModelSettingsView: View {
                 Button("Discard Changes", role: .destructive) { dismiss() }
                 Button("Cancel", role: .cancel) { }
             }
-            .dockBottomInset()
+            
             .onAppear { load() }
         }
     }
@@ -984,7 +985,7 @@ private struct InterfaceSettingsView: View {
             .scrollContentBackground(.hidden)
             .contentMargins(.top, 88)
         }
-        .dockBottomInset()
+        
         .safeAreaInset(edge: .top, spacing: 12) {
             GlassNavigationBar(title: "Appearance", showBack: true)
                 .padding(.horizontal, 20)

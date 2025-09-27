@@ -667,8 +667,8 @@ F6644796AB1060B22C3F0AD6 /* NoteChatUITests */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/johnxnguyen/Down";
 			requirement = {
-				branch = master;
-				kind = branch;
+				kind = revision;
+				revision = e754ab1c80920dd51a8e08290c912ac1c2ac8b58;
 			};
 		};
 		0A0484992E6F9A5A00670BBE /* XCRemoteSwiftPackageReference "HighlighterSwift" */ = {

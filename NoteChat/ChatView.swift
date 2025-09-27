@@ -65,6 +65,7 @@ struct ChatView: View {
                          onPlus: { showPhotoPicker = true })
                     .padding(.top, 6) // Reduced padding above input bar
             }
+            .padding(.bottom, DockMetrics.height + 12)
             .background(
                 VStack(spacing: 0) {
                     Divider().overlay(T.borderSoft).frame(height: 1)

@@ -112,6 +112,10 @@ To keep the human in the loop at all times, follow these rules in every session:
 - context7 (Library docs): Resolve library IDs, fetch focused docs for Down/Highlightr/SwiftMath or any new SPM packages.
 - Desktop Commander: Fallback for local file ops and process control when native editing isn't enough. Keep edits minimal and diffable.
 - GitHub MCP: Use for repository intel (branches, files, issues, PRs) and to validate remotes/auth. Push via standard `git` CLI; MCP ensures auth context.
+- Qdrant Memory (qdrant-NoteChat): Project-scoped vector storage for patterns, decisions, and solutions.
+  - Store: `qdrant-store` important fixes, patterns, architecture decisions with file:line references.
+  - Retrieve: `qdrant-find` before refactoring, debugging similar issues, or implementing related features.
+  - Auto-use: Store after complex implementations; retrieve before major changes.
 
 ## Zero‑Hallucination Verification
 - Apple APIs: Verify with `sosumi.searchAppleDocumentation` before implementing or changing platform APIs.

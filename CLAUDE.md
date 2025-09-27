@@ -124,6 +124,39 @@ This is a SwiftUI-based iOS chat application with AI provider integration, built
 - **Key Tools**: `get_xcode_projects`, `get_project_diagnostics`
 - **Act on**: Prioritize errors, address deprecations, eliminate main-thread blockers
 
+#### Qdrant Memory (Project Context Storage - Docker-based)
+- **When**: Store important decisions, architecture patterns, bug solutions, API patterns
+- **Key Tools**: `qdrant-store`, `qdrant-find`
+- **Setup**: Uses Docker container for multi-agent parallel access
+  - Container: `qdrant-notechat` running on port 6333
+  - Storage: `.qdrant-docker/` directory (persistent volume)
+  - Collection: "NoteChat" (shared across all agents)
+- **Docker Management**:
+  ```bash
+  # Start/restart container
+  docker start qdrant-notechat
+  
+  # Check status
+  docker ps | grep qdrant
+  
+  # View logs
+  docker logs qdrant-notechat
+  
+  # Stop container (data persists)
+  docker stop qdrant-notechat
+  ```
+- **Auto-store**: After implementing complex features, fixing critical bugs, or discovering important patterns
+- **Auto-retrieve**: Before major refactors, when implementing similar features, or debugging related issues
+- **Multi-agent Support**: All agents can read/write simultaneously to the same collection
+- **Examples to store**:
+  - "SwiftData cascade delete pattern for Chat->Messages implemented in Chat.swift:45"
+  - "NetworkClient timeout issue fixed by using URLSession.shared.data(from:) with timeoutInterval"
+  - "Settings save button logic: only shows for API keys and system changes, not UI preferences"
+- **Examples to retrieve**:
+  - Before refactoring: `qdrant-find "SwiftData relationships"`
+  - When debugging: `qdrant-find "timeout network error"`
+  - When adding features: `qdrant-find "settings save button logic"`
+
 ## Documentation Discipline (Zero-Hallucination Policy)
 
 ### Apple APIs

@@ -36,3 +36,9 @@ build/
 *.ipa
 *.dSYM
 MyChat/Env/.env
+
+# Qdrant local database
+.qdrant/
+
+# Qdrant Docker storage (multi-agent support)
+.qdrant-docker/

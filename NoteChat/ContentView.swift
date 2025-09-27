@@ -415,7 +415,11 @@ struct ChatCard: View {
     
     var body: some View {
         NavigationLink(destination: ChatView(chat: chat)) {
-            VStack(alignment: .leading, spacing: 12) {
+            LiquidGlassPanel(cornerRadius: T.radiusLarge,
+                             padding: EdgeInsets(top: 18, leading: 18, bottom: 18, trailing: 18),
+                             shadowRadius: scheme == .dark ? 8 : 12,
+                             shadowOpacity: 0.22) {
+                VStack(alignment: .leading, spacing: 12) {
                 // Title
                 Text(chat.title)
                     .font(.headline)
@@ -430,18 +434,17 @@ struct ChatCard: View {
                         contentTypeIcon(for: type)
                             .foregroundStyle(T.accent)
                             .frame(width: 28, height: 28)
-                            .background(T.accentSoft)
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .background(T.accentSoft, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
-                    Spacer()
+                    Spacer(minLength: 4)
                 }
-                .padding(8)
+                .padding(10)
                 .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(T.surfaceElevated)
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(T.surface.opacity(0.65))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .stroke(T.borderSoft, lineWidth: 1)
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(T.borderSoft.opacity(0.8), lineWidth: 0.8)
                         )
                 )
                 
@@ -452,15 +455,9 @@ struct ChatCard: View {
                     Spacer()
                 }
             }
-            .padding(16)
+            }
             .frame(height: fixedHeight ?? 140)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: T.radiusLarge, style: .continuous)
-                    .fill(LinearGradient(colors: [T.surface, T.surfaceElevated], startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .overlay(RoundedRectangle(cornerRadius: T.radiusLarge, style: .continuous).stroke(T.borderSoft, lineWidth: 1))
-                    .shadow(color: T.shadow.opacity(0.25), radius: (scheme == .dark ? 4 : 6), x: 0, y: 3)
-            )
         }
         .buttonStyle(PlainButtonStyle())
         .contextMenu {
@@ -567,23 +564,28 @@ struct EmptyStateView: View {
     let container = try! ModelContainer(for: Chat.self, Message.self, AppSettings.self, configurations: 
         ModelConfiguration(isStoredInMemoryOnly: true)
     )
-    
+
     // Add sample data
     let sampleChat1 = Chat(title: "SwiftUI Best Practices", createdAt: Date().addingTimeInterval(-3600))
     let sampleChat2 = Chat(title: "Machine Learning Discussion", createdAt: Date().addingTimeInterval(-7200))
-    
+
     container.mainContext.insert(sampleChat1)
     container.mainContext.insert(sampleChat2)
-    
+
     // Add sample messages
     let msg1 = Message(role: "user", content: "How do I implement a custom SwiftUI view?", chat: sampleChat1)
     let msg2 = Message(role: "assistant", content: "Here's how to create a custom SwiftUI view with proper state management...", chat: sampleChat1)
-    
+
     container.mainContext.insert(msg1)
     container.mainContext.insert(msg2)
-    
+
+    let store = SettingsStore.preview(context: container.mainContext)
+    store.homeChatsExpanded = true
+    store.homeAgentsExpanded = false
+
     return ContentView()
         .modelContainer(container)
+        .environment(store)
         .environment(\.tokens, ThemeFactory.make(style: .terracotta, colorScheme: .light))
 }
 
@@ -591,8 +593,13 @@ struct EmptyStateView: View {
     let container = try! ModelContainer(for: Chat.self, Message.self, AppSettings.self, configurations: 
         ModelConfiguration(isStoredInMemoryOnly: true)
     )
-    
+
+    let store = SettingsStore.preview(context: container.mainContext)
+    store.homeChatsExpanded = false
+    store.homeAgentsExpanded = true
+
     return ContentView()
         .modelContainer(container)
+        .environment(store)
         .environment(\.tokens, ThemeFactory.make(style: .coolSlate, colorScheme: .dark))
 }

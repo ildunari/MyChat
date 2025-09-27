@@ -404,24 +404,22 @@ struct ChatCard: View {
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
                 
-                // Action panel with content-type icons (max 4)
                 HStack(spacing: 10) {
                     ForEach(contentTypes.prefix(4), id: \.self) { type in
                         contentTypeIcon(for: type)
                             .foregroundStyle(T.accent)
                             .frame(width: 28, height: 28)
-                            .background(T.accentSoft)
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .background(T.accentSoft, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
                     Spacer()
                 }
-                .padding(8)
+                .padding(10)
                 .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(T.surfaceElevated)
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(T.surface.opacity(0.65))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .stroke(T.borderSoft, lineWidth: 1)
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(T.borderSoft.opacity(0.8), lineWidth: 0.8)
                         )
                 )
                 

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import SwiftData
 
 enum MainTab: Int, CaseIterable { case chat, notes, home, media, settings }
@@ -18,32 +19,128 @@ struct RootView: View {
                     .allowsHitTesting(false)
                     .opacity(reduceTransparency ? 0 : store.liquidGlassIntensity)
             }
+
             TabView(selection: $tab) {
                 ContentView()
                     .tag(MainTab.home)
-                    .tabItem { Label("Home", systemImage: "house") }
 
                 ChatRootView()
                     .tag(MainTab.chat)
-                    .tabItem { Label("Chat", systemImage: "bubble.left.and.text.bubble") }
 
                 NotesPlaceholderView()
                     .tag(MainTab.notes)
-                    .tabItem { Label("Notes", systemImage: "note.text") }
 
                 MediaPlaceholderView()
                     .tag(MainTab.media)
-                    .tabItem { Label("Media", systemImage: "photo.on.rectangle") }
 
                 SettingsView()
                     .tag(MainTab.settings)
-                    .tabItem { Label("Settings", systemImage: "gearshape") }
             }
-            .toolbarBackground(.ultraThinMaterial, for: .tabBar)
+            .toolbar(.hidden, for: .tabBar)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                DockTabBar(selected: $tab, highlightNS: highlightNS)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 12)
+                    .frame(maxWidth: .infinity)
+            }
         }
         .background(T.bg.opacity(0.4).ignoresSafeArea())
     }
 }
+
+private struct DockTabBar: View {
+    @Environment(\.tokens) private var T
+    @Environment(\.colorScheme) private var scheme
+    @Binding var selected: MainTab
+    var highlightNS: Namespace.ID
+
+    private let items: [MainTab] = [.home, .chat, .notes, .media, .settings]
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(items, id: \.self) { item in
+                dockButton(for: item)
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 12)
+        .frame(height: DockMetrics.height)
+        .background(
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 30, style: .continuous)
+                        .stroke(T.borderSoft.opacity(scheme == .dark ? 0.32 : 0.55), lineWidth: 0.8)
+                )
+        )
+        .shadow(color: T.shadow.opacity(0.25), radius: 20, y: 16)
+    }
+
+    @ViewBuilder
+    private func icon(for tab: MainTab) -> some View {
+        switch tab {
+        case .home: AppIcon.home(20)
+        case .chat: AppIcon.chat(20)
+        case .notes: AppIcon.note(20)
+        case .media: AppIcon.image(20)
+        case .settings: AppIcon.gear(20)
+        }
+    }
+
+    private func title(for tab: MainTab) -> String {
+        switch tab {
+        case .home: return "Home"
+        case .chat: return "Chat"
+        case .notes: return "Notes"
+        case .media: return "Media"
+        case .settings: return "Settings"
+        }
+    }
+
+    @ViewBuilder
+    private func dockButton(for item: MainTab) -> some View {
+        let isSelected = selected == item
+
+        Button {
+            guard !isSelected else { return }
+            withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
+                selected = item
+            }
+            Haptics.selection()
+        } label: {
+            ZStack {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(T.accent)
+                        .matchedGeometryEffect(id: "dock_selection", in: highlightNS)
+                        .frame(height: 56)
+                        .shadow(color: T.shadow.opacity(0.25), radius: 14, y: 8)
+                }
+                VStack(spacing: 6) {
+                    icon(for: item)
+                        .foregroundStyle(isSelected ? T.accentOn : T.textSecondary)
+                        .frame(height: 20)
+                    Text(title(for: item))
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(isSelected ? T.accentOn : T.textSecondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                }
+                .padding(.horizontal, 12)
+                .frame(height: 56)
+                .frame(maxWidth: .infinity)
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
+        .accessibilityLabel(title(for: item))
+        .accessibilityValue(isSelected ? Text("Selected") : Text(""))
+        .accessibilityHint(Text("Switch to the \(title(for: item)) tab"))
+    }
+}
+
+enum DockMetrics { static let height: CGFloat = 84 }
 
 // MARK: - Chat Root with left drawer
 
@@ -59,7 +156,6 @@ private struct ChatRootView: View {
         GeometryReader { geo in
             let maxWidth = geo.size.width * 0.66
             ZStack(alignment: .leading) {
-                // Chat content behind
                 if let chat = current ?? chats.first {
                     NavigationStack {
                         ChatView(chat: chat, onNewChat: {
@@ -75,19 +171,17 @@ private struct ChatRootView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
 
-                // Drawer panel
                 drawer
                     .frame(width: maxWidth)
                     .offset(x: -maxWidth + maxWidth * max(0, drawerX))
                     .shadow(color: T.shadow.opacity(0.3), radius: 12, x: 8, y: 0)
 
-                // Scrim
                 if drawerX > 0.01 {
                     Color.black.opacity(0.25 * drawerX)
                         .ignoresSafeArea()
                         .onTapGesture { withAnimation(.spring()) { drawerX = -1 } }
                 }
-                if drawerX <= -0.98 { // edge affordance when closed
+                if drawerX <= -0.98 {
                     HStack(spacing: 0) {
                         VStack {
                             Spacer()
@@ -105,7 +199,7 @@ private struct ChatRootView: View {
             .gesture(
                 DragGesture(minimumDistance: 8)
                     .onChanged { v in
-                        if v.startLocation.x < 16 || drawerX > 0 { // edge or already open
+                        if v.startLocation.x < 16 || drawerX > 0 {
                             let maxW = maxWidth
                             drawerX = max(-1, min(0, -1 + v.translation.width / maxW))
                         }
@@ -121,7 +215,6 @@ private struct ChatRootView: View {
                     if let first = chats.first {
                         current = first
                     } else {
-                        // Auto-create a fresh chat when none exist
                         let newChat = Chat(title: "New Chat")
                         modelContext.insert(newChat)
                         try? modelContext.save()
@@ -133,49 +226,74 @@ private struct ChatRootView: View {
     }
 
     private var drawer: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Text("History").font(.headline).foregroundStyle(T.text)
-                Spacer()
-                Button(role: .destructive, action: { showClearAll.toggle() }) {
-                    HStack(spacing: 6) { AppIcon.trash(14); Text("Clear All") }
-                }
-                .buttonStyle(.bordered)
-                .tint(Color.red)
-                Button(action: { withAnimation(.spring()) { drawerX = -1 } }) { AppIcon.close(14) }
-                    .buttonStyle(.plain)
-            }
-            .padding(12)
-            .background(T.surfaceElevated)
-            .overlay(Rectangle().fill(T.borderSoft).frame(height: 1), alignment: .bottom)
+        LiquidGlassPanel(cornerRadius: 26,
+                         padding: EdgeInsets(top: 16, leading: 16, bottom: 20, trailing: 16),
+                         shadowRadius: 14,
+                         shadowOpacity: 0.18) {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 12) {
+                    Text("History")
+                        .font(.headline)
+                        .foregroundStyle(T.text)
 
-            ScrollView {
-                LazyVStack(spacing: 10) {
-                    ForEach(chats) { c in
-                        Button(action: { current = c; withAnimation(.spring()) { drawerX = -1 } }) {
-                            HStack {
-                                AppIcon.text(16).foregroundStyle(T.accent)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(c.title.isEmpty ? "New Chat" : c.title).foregroundStyle(T.text)
-                                        .lineLimit(1)
-                                    Text(relative(c.createdAt)).font(.caption).foregroundStyle(T.textSecondary)
-                                }
-                                Spacer()
-                            }
-                            .padding(10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(T.surface)
-                            )
+                    Spacer()
+
+                    Button(role: .destructive, action: { showClearAll.toggle() }) {
+                        HStack(spacing: 6) {
+                            AppIcon.trash(14)
+                            Text("Clear All")
                         }
-                        .buttonStyle(.plain)
                     }
+                    .buttonStyle(.bordered)
+                    .tint(.red)
+
+                    Button(action: { withAnimation(.spring()) { drawerX = -1 } }) {
+                        AppIcon.close(14)
+                            .foregroundStyle(T.textSecondary)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Close history drawer")
                 }
-                .padding(12)
+
+                Divider()
+                    .overlay(T.borderSoft.opacity(0.7))
+
+                ScrollView {
+                    LazyVStack(spacing: 10) {
+                        ForEach(chats) { c in
+                            Button(action: { current = c; withAnimation(.spring()) { drawerX = -1 } }) {
+                                HStack(alignment: .center, spacing: 12) {
+                                    AppIcon.text(16)
+                                        .foregroundStyle(T.accent)
+                                        .frame(width: 28, height: 28)
+                                        .background(T.accentSoft, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(c.title.isEmpty ? "New Chat" : c.title)
+                                            .foregroundStyle(T.text)
+                                            .lineLimit(1)
+                                        Text(relative(c.createdAt))
+                                            .font(.caption)
+                                            .foregroundStyle(T.textSecondary)
+                                    }
+
+                                    Spacer(minLength: 8)
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(T.surface.opacity(0.75))
+                                )
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                }
             }
         }
-        .background(T.surface)
-        .overlay(RoundedRectangle(cornerRadius: 0).stroke(T.borderSoft, lineWidth: 1))
+        .frame(maxHeight: .infinity, alignment: .top)
         .confirmationDialog("Clear all chats?", isPresented: $showClearAll, titleVisibility: .visible) {
             Button("Delete All Chats", role: .destructive) {
                 for c in chats { modelContext.delete(c) }
@@ -225,7 +343,7 @@ private struct MediaPlaceholderView: View {
     }
 }
 
-// MARK: - Haptics helper (local)
+// MARK: - Haptics helper
 private enum Haptics {
     static func selection() {
         let gen = UISelectionFeedbackGenerator()

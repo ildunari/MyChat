@@ -226,64 +226,100 @@ private struct ChatRootView: View {
     }
 
     private var drawer: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Text("History").font(.headline).foregroundStyle(T.text)
-                Spacer()
-                Button(role: .destructive, action: { showClearAll.toggle() }) {
-                    HStack(spacing: 6) { AppIcon.trash(14); Text("Clear All") }
-                }
-                .buttonStyle(.bordered)
-                .tint(Color.red)
-                Button(action: { withAnimation(.spring()) { drawerX = -1 } }) { AppIcon.close(14) }
-                    .buttonStyle(.plain)
-            }
-            .padding(12)
-            .background(T.surfaceElevated)
-            .overlay(Rectangle().fill(T.borderSoft).frame(height: 1), alignment: .bottom)
+        LiquidGlassPanel(cornerRadius: 26,
+                         padding: EdgeInsets(top: 16, leading: 16, bottom: 20, trailing: 16),
+                         shadowRadius: 14,
+                         shadowOpacity: 0.18) {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 12) {
+                    Text("History")
+                        .font(.headline)
+                        .foregroundStyle(T.text)
 
-            // Search
-            HStack {
-                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                TextField("Search chats", text: $search)
-                    .textFieldStyle(.plain)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(T.surface)
+                    Spacer()
 
-            ScrollView {
-                LazyVStack(spacing: 10) {
-                    ForEach(filteredAndSortedChats) { c in
-                        Button(action: { current = c; withAnimation(.spring()) { drawerX = -1 } }) {
-                            HStack {
-                                if c.isPinned { Image(systemName: "pin.fill").foregroundStyle(T.accent) } else { AppIcon.text(16).foregroundStyle(T.accent) }
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(c.title.isEmpty ? "New Chat" : c.title).foregroundStyle(T.text)
-                                        .lineLimit(1)
-                                    Text(relative(c.createdAt)).font(.caption).foregroundStyle(T.textSecondary)
-                                }
-                                Spacer()
-                            }
-                            .padding(10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(T.surface)
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .contextMenu {
-                            Button(c.isPinned ? "Unpin" : "Pin") { c.isPinned.toggle(); try? modelContext.save() }
-                            Divider()
-                            Button("Delete", role: .destructive) { modelContext.delete(c); try? modelContext.save(); if current?.id == c.id { current = chats.first } }
+                    Button(role: .destructive, action: { showClearAll.toggle() }) {
+                        HStack(spacing: 6) {
+                            AppIcon.trash(14)
+                            Text("Clear All")
                         }
                     }
+                    .buttonStyle(.bordered)
+                    .tint(.red)
+
+                    Button(action: { withAnimation(.spring()) { drawerX = -1 } }) {
+                        AppIcon.close(14)
+                            .foregroundStyle(T.textSecondary)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Close history drawer")
                 }
-                .padding(12)
+
+                Divider()
+                    .overlay(T.borderSoft.opacity(0.7))
+
+                // Search
+                LiquidGlassPanel(cornerRadius: 18,
+                                 padding: EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12),
+                                 shadowRadius: 0,
+                                 shadowOpacity: 0) {
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundStyle(T.textSecondary)
+                        TextField("Search chats", text: $search)
+                            .textFieldStyle(.plain)
+                    }
+                }
+
+                ScrollView {
+                    LazyVStack(spacing: 10) {
+                        ForEach(filteredAndSortedChats) { c in
+                            Button(action: { current = c; withAnimation(.spring()) { drawerX = -1 } }) {
+                                HStack(alignment: .center, spacing: 12) {
+                                    if c.isPinned {
+                                        Image(systemName: "pin.fill")
+                                            .foregroundStyle(T.accent)
+                                    } else {
+                                        AppIcon.text(16)
+                                            .foregroundStyle(T.accent)
+                                    }
+                                    .frame(width: 28, height: 28)
+                                    .background(T.accentSoft, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(c.title.isEmpty ? "New Chat" : c.title)
+                                            .foregroundStyle(T.text)
+                                            .lineLimit(1)
+                                        Text(relative(c.createdAt))
+                                            .font(.caption)
+                                            .foregroundStyle(T.textSecondary)
+                                    }
+
+                                    Spacer(minLength: 8)
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(T.surface.opacity(0.75))
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .contextMenu {
+                                Button(c.isPinned ? "Unpin" : "Pin") { c.isPinned.toggle(); try? modelContext.save() }
+                                Divider()
+                                Button("Delete", role: .destructive) {
+                                    modelContext.delete(c)
+                                    try? modelContext.save()
+                                    if current?.id == c.id { current = chats.first }
+                                }
+                            }
+                        }
+                    }
+                    .padding(.vertical, 8)
+                }
             }
         }
-        .background(T.surface)
-        .overlay(RoundedRectangle(cornerRadius: 0).stroke(T.borderSoft, lineWidth: 1))
         .confirmationDialog("Clear all chats?", isPresented: $showClearAll, titleVisibility: .visible) {
             Button("Delete All Chats", role: .destructive) {
                 for c in chats { modelContext.delete(c) }

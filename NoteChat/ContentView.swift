@@ -19,7 +19,6 @@ struct ContentView: View {
     @State private var newChatTitle: String = ""
     @State private var navNewChat: Chat? = nil
     @State private var navBarHeight: CGFloat = 0
-    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -77,21 +76,6 @@ struct ContentView: View {
                     }
                 }
             }
-            .overlay(alignment: .top) {
-                GeometryReader { overlayProxy in
-                    GlassNavigationBar(title: "Home", trailing: {
-                        ComposeButton { createAndNavigate() }
-                    })
-                    .padding(.horizontal, 20)
-                    .padding(.top, overlayProxy.safeAreaInsets.top + 8)
-                    .padding(.bottom, 4)
-                    .background(
-                        GeometryReader { navGeo in
-                            Color.clear.preference(key: NavBarHeightPreferenceKey.self, value: navGeo.size.height)
-                        }
-                    )
-                }
-            }
         }
         .toolbar(.hidden, for: .navigationBar)
         .navigationDestination(item: $navNewChat) { chat in
@@ -116,7 +100,22 @@ struct ContentView: View {
             }
         }
         .background(T.bg.ignoresSafeArea())
-        .onAppear { loadOrderFromStore() }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            GlassNavigationBar(title: "Home", trailing: {
+                ComposeButton { createAndNavigate() }
+            })
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+            .padding(.bottom, 4)
+            .background(
+                GeometryReader { navGeo in
+                    Color.clear.preference(key: NavBarHeightPreferenceKey.self, value: navGeo.size.height)
+                }
+            )
+        }
+        .onAppear {
+            loadOrderFromStore()
+        }
         .onChange(of: sectionOrder) { _, _ in saveOrderToStore() }
         .onChange(of: chatHistoryExpanded) { _, newVal in store.homeChatsExpanded = newVal; store.save() }
         .onChange(of: agentsExpanded) { _, newVal in store.homeAgentsExpanded = newVal; store.save() }

@@ -45,6 +45,7 @@ struct LiquidGlassPanel<Content: View>: View {
                             in: .rect(cornerRadius: cornerRadius)
                         )
                 }
+                .fixedSize(horizontal: false, vertical: true)
             } else {
                 content
                     .padding(padding)
@@ -65,5 +66,4 @@ struct LiquidGlassPanel<Content: View>: View {
             )
     }
 }
-
 

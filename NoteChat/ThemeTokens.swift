@@ -19,6 +19,7 @@ struct ThemeTokens {
 
     let accent: Color
     let accentSoft: Color
+    let accentOn: Color
 
     let bubbleUser: Color
     let bubbleAssistant: Color
@@ -75,6 +76,7 @@ struct ThemeFactory {
             codeBg: isDark ? Color.white.opacity(0.06) : Color.black.opacity(0.03),
             accent: p.accent,
             accentSoft: p.accentSoft,
+            accentOn: (isDark ? Color.white.opacity(0.92) : Color.black.opacity(0.92)),
             bubbleUser: isDark ? Color.white.opacity(0.08) : Color.black.opacity(0.035),
             bubbleAssistant: isDark ? Color.white.opacity(0.05) : Color.black.opacity(0.02),
             bubbleTool: isDark ? Color.white.opacity(0.07) : p.accentSoft,

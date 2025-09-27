@@ -12,6 +12,10 @@ struct RootView: View {
     @State private var tab: MainTab = .home
     @Namespace private var highlightNS
 
+    init() {
+        UITabBar.appearance().isHidden = true
+    }
+
     var body: some View {
         ZStack {
             if store.useLiquidGlass {

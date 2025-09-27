@@ -349,70 +349,47 @@ struct ChatView: View {
 
     @ViewBuilder
     private var floatingNavBar: some View {
-        GlassBar {
-            HStack(alignment: .center, spacing: 12) {
-                if shouldShowBackButton {
-                    Button(action: { dismiss() }) {
-                        AppIcon.chevronDown(16)
-                            .rotationEffect(.degrees(90))
-                            .foregroundStyle(T.text)
-                            .frame(width: 40, height: 40)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(T.surfaceElevated.opacity(0.7))
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Back")
-                }
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(chatDisplayTitle)
-                        .font(.headline)
-                        .foregroundStyle(T.text)
-                        .lineLimit(1)
-
-                    Menu {
-                        Section("Quick Models") {
-                            ForEach(quickModels(), id: \.self) { m in
-                                Button(action: { setDefaultModel(m) }) {
-                                    HStack {
-                                        Text(m)
-                                        if m == (settingsQuery.first?.defaultModel ?? "") {
-                                            AppIcon.checkCircle(true, size: 14)
-                                        }
+        GlassNavigationBar(title: chatDisplayTitle, showBack: shouldShowBackButton) {
+            HStack(spacing: 12) {
+                Menu {
+                    Section("Quick Models") {
+                        ForEach(quickModels(), id: \.self) { m in
+                            Button(action: { setDefaultModel(m) }) {
+                                HStack {
+                                    Text(m)
+                                    if m == (settingsQuery.first?.defaultModel ?? "") {
+                                        AppIcon.checkCircle(true, size: 14)
                                     }
                                 }
                             }
                         }
-                        Button("Other models…") { showFullModelPicker = true }
-                        Button("Provider defaults…") { showModelEditor = true }
-                        Divider()
-                        Button("Chat Settings…") { showChatSettings = true }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Text(currentModelDisplay())
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(T.text)
-                                .lineLimit(1)
-                            AppIcon.chevronDown(10)
-                                .rotationEffect(.degrees(-90))
-                                .foregroundStyle(T.textSecondary)
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(T.surfaceElevated.opacity(0.75))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .stroke(T.borderSoft.opacity(0.6))
-                                )
-                        )
                     }
-                    .menuStyle(.borderlessButton)
+                    Button("Other models…") { showFullModelPicker = true }
+                    Button("Provider defaults…") { showModelEditor = true }
+                    Divider()
+                    Button("Chat Settings…") { showChatSettings = true }
+                } label: {
+                    HStack(spacing: 6) {
+                        Text(currentModelDisplay())
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(T.text)
+                            .lineLimit(1)
+                        AppIcon.chevronDown(10)
+                            .rotationEffect(.degrees(-90))
+                            .foregroundStyle(T.textSecondary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(T.surfaceElevated.opacity(0.75))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .stroke(T.borderSoft.opacity(0.6))
+                            )
+                    )
                 }
-
-                Spacer(minLength: 12)
+                .menuStyle(.borderlessButton)
 
                 if canCreateChat {
                     Button(action: { onNewChat?() }) {

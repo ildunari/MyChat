@@ -250,53 +250,13 @@ To keep the human in the loop at all times, follow these rules in every session:
   - **Down** (branch master): Markdown parsing and rendering (replaced MarkdownUI)
   - **HighlighterSwift** (product: Highlighter) 1.1.7: Code syntax highlighting (optional)
   - **SwiftMath** 1.7.3: Mathematical formula rendering with native LaTeX support
-  - **PhosphorSwift** 2.1.0: Icon set
+  - **PhosphorSwift** 2.1.0: Icon set (optional)
+    - Default builds should rely on SF Symbol fallbacks (`SettingsStore.usePhosphorIcons = false`)
+    - When adding new Phosphor glyphs, flip the `Phosphor Icon Pack` toggle in Settings, verify the icon, then document it below
+    - Keep this bullet updated with newly enabled Phosphor identifiers so future builds opt-in intentionally
 - Quick build check: `xcodebuild -project NoteChat.xcodeproj -scheme NoteChat -destination 'generic/platform=iOS Simulator' build`
 
 ## Key Flows
 
 - Chat Send
-  1) User types in `InputBar` → `ChatView.send()` inserts a user `Message`.
-  2) Settings resolved from `SettingsStore` → provider constructed (OpenAI/Anthropic/Google/XAI).
-  3) Messages mapped to `AIMessage` (text + optional image parts via `PhotosPicker`).
-  4) Streaming path updates `streamingText`; final reply is inserted as assistant `Message`.
-  5) Title autoupdates from first user message if default.
-
-- Settings
-  - `SettingsView` edits `SettingsStore` fields; on save, writes SwiftData + Keychain.
-  - Providers screen verifies API keys and lists models via `ProviderAPIs`.
-
-- Rendering
-  - Markdown (Down → AttributedString with tinted links and inline-code styling), code highlighting (Highlightr/Highlighter when available, monospaced fallback), math via SwiftMath with automatic KaTeX fallback.
-
-## Migration Notes (from ChatApp to NoteChat)
-
-- **Critical**: Replace MarkdownUI with Down package in AIResponseView.swift
-- **Dependencies**: Add Down via SPM, optionally add Highlightr and SwiftMath
-- **Bundle ID**: Update to use NoteChat identifiers
-- See `porting.md` for complete migration checklist
-
-## Troubleshooting Notes
-
-- Provider streaming errors are surfaced with friendly messages (401/403/404/429/5xx).
-- If chat persistence breaks, `NoteChatApp` attempts a one‑time SQLite store cleanup and re‑init.
-- If math doesn't render, ensure optional math packages are installed or WebView fallback is working.
-- No API keys? In Debug, add values to `Env/.env` (copied to bundle as `DevSecrets.env`) to prime Keychain on first run.
-
-## Immediate TODOs (from porting.md)
-
-- [x] Add Down package dependency via SPM
-- [x] Update AIResponseView.swift to use Down instead of MarkdownUI
-- [x] Update ChatStyles.swift (MarkdownUI theme removed)
-- [x] Add Highlighter adapter path (Highlightr/Highlighter)
-- [x] Migrated to SwiftMath as primary math renderer with KaTeX fallback
-- [x] Build project successfully on simulator
-- [ ] Test basic chat functionality with API keys
-- [ ] Add UI polish for code themes (optional)
-- [ ] Create test targets (NoteChatTests, NoteChatUITests)
-- [ ] Create NoteChat.xctestplan
-
-## Decision Log
-
-- 2025-09-08: Migrated from ChatApp to NoteChat, pending Down markdown integration
-- Package change: MarkdownUI → Down for markdown rendering
+  1) User types in `InputBar` → `

@@ -263,6 +263,9 @@ Use **context7** to pull current documentation:
 - **Down**: Markdown rendering (replacing MarkdownUI from old project)
 - **Highlightr**: Syntax highlighting for code blocks (optional)
 - **SwiftMath**: Mathematical formula rendering with native LaTeX support
+- **PhosphorSwift** 2.1.0: Icon set (guarded; enable icons via Settings → Interface when needed)
+  - Keep `usePhosphorIcons` disabled during development to avoid compiling unused glyphs
+  - Add new Phosphor symbols incrementally and document them here as they ship
 
 ### System Frameworks
 - SwiftUI, SwiftData, Foundation, PhotosUI for core functionality

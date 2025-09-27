@@ -38,11 +38,11 @@
 /* Begin PBXFileReference section */
 		0A0484882E6F833800670BBE /* NoteChat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NoteChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		16A29328F62006CAE4E535F9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
-		2793EC5F11618EE4BBE42D2B /* MyChatTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NoteChatTests.swift; sourceTree = "<group>"; };
+		2793EC5F11618EE4BBE42D2B /* NoteChatTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NoteChatTests.swift; sourceTree = "<group>"; };
 		AE1A6FCCDA930B4FB0A8B50C /* NoteChatTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NoteChatTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D293B726E6C8B732C4B49CA5 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E4773D774129CCD5AD4B7857 /* NoteChatUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NoteChatUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		EBBF3A65AF88B6B6858C48F9 /* MyChatUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NoteChatUITests.swift; sourceTree = "<group>"; };
+		EBBF3A65AF88B6B6858C48F9 /* NoteChatUITests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NoteChatUITests.swift; sourceTree = "<group>"; };
 		F6C0B9CA3675C8D14DDB87A3 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -52,12 +52,12 @@
 			membershipExceptions = (
 				Info.plist,
 			);
-            target = 0A0484872E6F833800670BBE /* NoteChat */;
+			target = 0A0484872E6F833800670BBE /* NoteChat */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-        0A04848A2E6F833800670BBE /* NoteChat */ = {
+		0A04848A2E6F833800670BBE /* NoteChat */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				0A0484E62E6FA48D00670BBE /* Exceptions for "NoteChat" folder in "NoteChat" target */,
@@ -108,37 +108,37 @@
 			isa = PBXGroup;
 			children = (
 				0A0484FE2E6FB87B00670BBE /* UIPlayground */,
-                0A04848A2E6F833800670BBE /* NoteChat */,
-                0A0484892E6F833800670BBE /* Products */,
-                A5749B06259ADC0499980D73 /* NoteChatTests */,
+				0A04848A2E6F833800670BBE /* NoteChat */,
+				0A0484892E6F833800670BBE /* Products */,
+				A5749B06259ADC0499980D73 /* NoteChatTests */,
 				FBECCDE4F5BD53B128B90026 /* Frameworks */,
-                F6644796AB1060B22C3F0AD6 /* NoteChatUITests */,
+				F6644796AB1060B22C3F0AD6 /* NoteChatUITests */,
 			);
 			sourceTree = "<group>";
 		};
 		0A0484892E6F833800670BBE /* Products */ = {
 			isa = PBXGroup;
 			children = (
-                0A0484882E6F833800670BBE /* NoteChat.app */,
-                AE1A6FCCDA930B4FB0A8B50C /* NoteChatTests.xctest */,
-                E4773D774129CCD5AD4B7857 /* NoteChatUITests.xctest */,
+				0A0484882E6F833800670BBE /* NoteChat.app */,
+				AE1A6FCCDA930B4FB0A8B50C /* NoteChatTests.xctest */,
+				E4773D774129CCD5AD4B7857 /* NoteChatUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-A5749B06259ADC0499980D73 /* NoteChatTests */ = {
+		A5749B06259ADC0499980D73 /* NoteChatTests */ = {
 			isa = PBXGroup;
 			children = (
-                    2793EC5F11618EE4BBE42D2B /* NoteChatTests.swift */,
+				2793EC5F11618EE4BBE42D2B /* NoteChatTests.swift */,
 				F6C0B9CA3675C8D14DDB87A3 /* Info.plist */,
 			);
 			path = NoteChatTests;
 			sourceTree = "<group>";
 		};
-F6644796AB1060B22C3F0AD6 /* NoteChatUITests */ = {
+		F6644796AB1060B22C3F0AD6 /* NoteChatUITests */ = {
 			isa = PBXGroup;
 			children = (
-                    EBBF3A65AF88B6B6858C48F9 /* NoteChatUITests.swift */,
+				EBBF3A65AF88B6B6858C48F9 /* NoteChatUITests.swift */,
 				D293B726E6C8B732C4B49CA5 /* Info.plist */,
 			);
 			path = NoteChatUITests;
@@ -505,10 +505,11 @@ F6644796AB1060B22C3F0AD6 /* NoteChatUITests */ = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = SV9Z2RG2A6;
+				DISPLAY_NAME_SUFFIX = " (Dev)";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "NoteChat$(DISPLAY_NAME_SUFFIX)";
-				INFOPLIST_KEY_CFBundleName = "NoteChat";
+				INFOPLIST_KEY_CFBundleDisplayName = "NoteChat (Dev)";
+				INFOPLIST_KEY_CFBundleName = NoteChat;
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Allow saving generated images to your photo library.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Allow selecting images to include in AI prompts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -522,8 +523,7 @@ F6644796AB1060B22C3F0AD6 /* NoteChatUITests */ = {
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				DISPLAY_NAME_SUFFIX = " (Dev)";
-				PRODUCT_BUNDLE_IDENTIFIER = personal.NoteChat;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ildunari.NoteChat-Dev";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -543,10 +543,11 @@ F6644796AB1060B22C3F0AD6 /* NoteChatUITests */ = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = SV9Z2RG2A6;
+				DISPLAY_NAME_SUFFIX = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "NoteChat$(DISPLAY_NAME_SUFFIX)";
-				INFOPLIST_KEY_CFBundleName = "NoteChat";
+				INFOPLIST_KEY_CFBundleDisplayName = "NoteChat (Dev)";
+				INFOPLIST_KEY_CFBundleName = NoteChat;
 				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "Allow saving generated images to your photo library.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Allow selecting images to include in AI prompts.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -560,8 +561,7 @@ F6644796AB1060B22C3F0AD6 /* NoteChatUITests */ = {
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				DISPLAY_NAME_SUFFIX = "";
-				PRODUCT_BUNDLE_IDENTIFIER = personal.NoteChat;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ildunari.NoteChat-Dev";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;

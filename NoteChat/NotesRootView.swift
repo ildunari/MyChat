@@ -61,7 +61,7 @@ struct NotesRootView: View {
                 workspace.select(note: note)
             }
         }
-        .onChange(of: workspace.notes.count) { _ in
+        .onChange(of: workspace.notes.count) { _, _ in
             if let selected = selection, workspace.notes.contains(where: { $0.id == selected }) == false {
                 selection = workspace.notes.first?.id
             }
@@ -172,7 +172,7 @@ private struct NotesListPanel: View {
             if calendar.isDateInToday(note.updatedAt) { return "Today" }
             if calendar.isDateInYesterday(note.updatedAt) { return "Yesterday" }
             let components = calendar.dateComponents([.year, .month], from: note.updatedAt)
-            if let month = components.month, let year = components.year {
+            if components.month != nil, components.year != nil {
                 let formatter = DateFormatter()
                 formatter.locale = Locale.current
                 formatter.setLocalizedDateFormatFromTemplate("MMMM yyyy")
@@ -325,10 +325,10 @@ private struct NoteDetailView: View {
                              saveStatusText = "Saved \(Date().formatted(date: .omitted, time: .shortened))"
                          })
         }
-        .onChange(of: editorState.text) { newValue in
+        .onChange(of: editorState.text) { _, newValue in
             scheduleContentSave(newValue)
         }
-        .onChange(of: titleDraft) { newValue in
+        .onChange(of: titleDraft) { _, newValue in
             scheduleTitleSave(newValue)
         }
     }
@@ -557,7 +557,7 @@ private struct NotesAIPanel: View {
                                     .id(idx)
                             }
                         }
-                        .onChange(of: session.messages.count) { _ in
+                        .onChange(of: session.messages.count) { _, _ in
                             withAnimation { proxy.scrollTo(session.messages.count - 1, anchor: .bottom) }
                             let latest = session.currentNote.content
                             editorState.text = latest

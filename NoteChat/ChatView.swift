@@ -10,6 +10,7 @@ struct ChatView: View {
     @Query private var settingsQuery: [AppSettings]
     @Environment(\.tokens) private var T
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var dockController: DockController
 
     let chat: Chat
     var onNewChat: (() -> Void)? = nil
@@ -40,7 +41,8 @@ struct ChatView: View {
                                  aiModel: currentModel,
                                  onRetry: { msg in Task { await retryResponse(msg) } },
                                  onCopy: { copyResponse($0) },
-                                 onEdit: { editMessage($0) })
+                                 onEdit: { editMessage($0) },
+                                 onScroll: handleScrollChange)
             }
             if let error = errorMessage {
                 Text(error)
@@ -51,11 +53,6 @@ struct ChatView: View {
         // Pins bottom controls and prevents overlap
         .safeAreaInset(edge: .bottom, spacing: 0) {
             VStack(spacing: 0) {
-                if showSuggestions {
-                    SuggestionChips(suggestions: defaultSuggestions)
-                        .padding(.bottom, 16) // Add padding between suggestions and input bar
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
                 InputBar(text: $inputText,
                          onSend: { currentSendTask = Task { await send() } },
                          isStreaming: streamingText != nil,
@@ -63,15 +60,9 @@ struct ChatView: View {
                          onMic: nil,
                          onLive: nil,
                          onPlus: { showPhotoPicker = true })
-                    .padding(.top, 6) // Reduced padding above input bar
+                    .padding(.top, 6)
             }
-            .padding(.bottom, DockMetrics.height + 12)
-            .background(
-                VStack(spacing: 0) {
-                    Divider().overlay(T.borderSoft).frame(height: 1)
-                    Rectangle().fill(T.surface).ignoresSafeArea()
-                }
-            )
+            .safeAreaPadding(.bottom, dockController.currentHeight + 12)
         }
         // Floating Liquid Glass navigation bar + thinking indicator
         .safeAreaInset(edge: .top, spacing: 12) {
@@ -114,6 +105,15 @@ struct ChatView: View {
                 updateChatTitle(from: first.content)
             }
             showSuggestions = chat.messages.isEmpty
+            dockController.expand(animated: false)
+        }
+    }
+
+    private func handleScrollChange(_ offset: CGFloat) {
+        let distance = max(offset, 0)
+        dockController.nudge(withScrollOffset: distance)
+        if distance < 12 {
+            dockController.expand(animated: true)
         }
     }
 
@@ -187,9 +187,16 @@ struct ChatView: View {
         var onRetry: (Message) -> Void
         var onCopy: (Message) -> Void
         var onEdit: (Message) -> Void
+        var onScroll: (CGFloat) -> Void
         var body: some View {
             ScrollViewReader { proxy in
                 ScrollView {
+                    GeometryReader { geo in
+                        Color.clear
+                            .preference(key: ScrollOffsetPreferenceKey.self,
+                                        value: geo.frame(in: .named("chat.scroll")).minY)
+                    }
+                    .frame(height: 0)
                     LazyVStack(alignment: .leading, spacing: 12) {
                         ForEach(messages) { message in
                             if message.role == "assistant" {
@@ -208,8 +215,16 @@ struct ChatView: View {
                                 .id("streaming-row")
                         }
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
+                    .padding(.bottom, 32)
                 }
+                .coordinateSpace(name: "chat.scroll")
                 .padding(.bottom, 72)
+                .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+                    let offset = max(-value, 0)
+                    onScroll(offset)
+                }
                 .onChange(of: messages.count) { _, _ in
                     if let last = messages.last {
                         withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
@@ -226,6 +241,13 @@ struct ChatView: View {
                         }
                     }
                 }
+            }
+        }
+
+        private struct ScrollOffsetPreferenceKey: PreferenceKey {
+            static var defaultValue: CGFloat = 0
+            static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+                value = nextValue()
             }
         }
     }

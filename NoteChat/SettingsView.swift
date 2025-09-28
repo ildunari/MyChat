@@ -6,6 +6,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(SettingsStore.self) private var store
     @Environment(\.tokens) private var T
+    @EnvironmentObject private var dockController: DockController
 
     var body: some View {
         @Bindable var store = store
@@ -144,7 +145,7 @@ struct SettingsView: View {
                     RoundedRectangle(cornerRadius: 12).fill(T.surface)
                 )
                 .contentMargins(.top, 88)
-                .padding(.bottom, DockMetrics.height + 24)
+                .safeAreaPadding(.bottom, dockController.currentHeight + 24)
             }
             
             .safeAreaInset(edge: .top, spacing: 12) {
@@ -193,6 +194,7 @@ private extension SettingsView {
 private struct PersonalizationSettingsView: View {
     @Environment(SettingsStore.self) private var store
     @Environment(\.tokens) private var T
+    @Environment(\.dismiss) private var dismiss
     var body: some View {
         @Bindable var store = store
         ZStack {
@@ -224,7 +226,7 @@ private struct PersonalizationSettingsView: View {
         }
         
         .safeAreaInset(edge: .top, spacing: 12) {
-            GlassNavigationBar(title: "Personalization", showBack: true)
+            GlassNavigationBar(title: "Personalization", showBack: true, onBack: { dismiss() })
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
         }
@@ -235,6 +237,7 @@ private struct PersonalizationSettingsView: View {
 private struct ProvidersSettingsView: View {
     @Environment(SettingsStore.self) private var store
     @Environment(\.tokens) private var T
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         ZStack {
@@ -260,7 +263,7 @@ private struct ProvidersSettingsView: View {
         }
         
         .safeAreaInset(edge: .top, spacing: 12) {
-            GlassNavigationBar(title: "Providers", showBack: true)
+            GlassNavigationBar(title: "Providers", showBack: true, onBack: { dismiss() })
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
         }
@@ -288,6 +291,7 @@ private struct ProviderDetailView: View {
     let provider: ProviderID
     @Environment(SettingsStore.self) private var store
     @Environment(\.tokens) private var T
+    @Environment(\.dismiss) private var dismiss
     @State private var apiKey: String = ""
     @State private var available: [String] = []
     @State private var verifying = false
@@ -359,7 +363,7 @@ private struct ProviderDetailView: View {
         }
         
         .safeAreaInset(edge: .top, spacing: 12) {
-            GlassNavigationBar(title: provider.displayName, showBack: true)
+            GlassNavigationBar(title: provider.displayName, showBack: true, onBack: { dismiss() })
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
         }
@@ -536,6 +540,7 @@ private struct VerificationBar: View {
 private struct DefaultChatSettingsView: View {
     @Environment(SettingsStore.self) private var store
     @Environment(\.tokens) private var T
+    @Environment(\.dismiss) private var dismiss
     @State private var tempLocal: Double = 1.0
     @State private var tokensLocal: Double = 1024
 
@@ -576,7 +581,7 @@ private struct DefaultChatSettingsView: View {
         }
         
         .safeAreaInset(edge: .top, spacing: 12) {
-            GlassNavigationBar(title: "Default Chat", showBack: true)
+            GlassNavigationBar(title: "Default Chat", showBack: true, onBack: { dismiss() })
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
         }
@@ -818,6 +823,7 @@ struct ModelSettingsView: View {
 private struct InterfaceSettingsView: View {
     @Environment(SettingsStore.self) private var store
     @Environment(\.tokens) private var T
+    @Environment(\.dismiss) private var dismiss
 
     private let sizeLabels = ["XS", "S", "M", "L", "XL"]
     // already has colorScheme above; do not redeclare
@@ -910,12 +916,16 @@ private struct InterfaceSettingsView: View {
                         }
                     }
 
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack { Text("Text Size"); Spacer(); Text(sizeLabels[Int(store.interfaceTextSizeIndex)]) }
-                        Slider(value: Binding(get: { Double(store.interfaceTextSizeIndex) }, set: { 
-                            store.interfaceTextSizeIndex = Int($0.rounded())
-                            store.save()
-                        }), in: 0...4, step: 1)
+                   VStack(alignment: .leading, spacing: 8) {
+                       HStack { Text("Text Size"); Spacer(); Text(sizeLabels[Int(store.interfaceTextSizeIndex)]) }
+                        let textSizeBinding = Binding<Double>(
+                            get: { Double(store.interfaceTextSizeIndex) },
+                            set: { newValue in
+                                store.interfaceTextSizeIndex = Int(newValue.rounded())
+                                store.save()
+                            }
+                        )
+                        Slider(value: textSizeBinding, in: 0...4, step: 1)
                         HStack(spacing: 12) {
                             ForEach(0..<5) { i in
                                 VStack {
@@ -987,7 +997,7 @@ private struct InterfaceSettingsView: View {
         }
         
         .safeAreaInset(edge: .top, spacing: 12) {
-            GlassNavigationBar(title: "Appearance", showBack: true)
+            GlassNavigationBar(title: "Appearance", showBack: true, onBack: { dismiss() })
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
         }

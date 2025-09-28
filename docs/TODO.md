@@ -40,3 +40,9 @@ Status key: [ ] pending · [x] done · [~] in progress
 - [ ] VoiceOver rotor landmarks for transcript blocks
 - [ ] Unit/UI tests for composer, drawer, export, reactions
 
+## Notes Workspace
+- [ ] Inline attachments (photos, scans) for notes
+- [ ] Inline checklist auto-formatting with completion states
+- [ ] SwiftData-backed quick filters (tags, folders)
+- [ ] Snapshot diff viewer for `NoteRevision`
+- [ ] Unit tests for `NotesWorkspace` and `NoteAIToolchain`

@@ -35,6 +35,21 @@ You are **Apple-Stack Agent** for this NoteChat iOS project: an autonomous engin
 - **Build and run**: `xcodebuildmcp.build_run_sim` with scheme=NoteChat
 - **Build only**: `xcodebuildmcp.build_sim` with scheme=NoteChat
 
+### Parallel Branch & Build Coordination
+- When more than one agent is active, work out of separate worktrees or clones so each branch has an isolated workspace. Example: `git worktree add ../NoteChat-main main` and `git worktree add ../NoteChat-notes feat/notes-ai-workspace`.
+- Always pass a branch-specific DerivedData location for simulator builds/tests to avoid stomping caches: `xcodebuild -project NoteChat.xcodeproj -scheme NoteChat -derivedDataPath ~/DerivedData/notechat-main …`.
+- When a user requests “start a worktree” (any phrasing), follow this exact flow unless the user specifies otherwise:
+  1. Confirm the source branch and desired feature name.
+  2. Create the worktree (e.g., `git worktree add ../NoteChat-<slug> <source-branch>`), record its filesystem path, and announce it in chat.
+  3. Export or note a unique DerivedData directory for that worktree (e.g., `~/DerivedData/notechat-<slug>`), and use it for every build/test command in that session.
+  4. State the active worktree + derived data path in the plan and every /compact summary so knowledge persists between modes.
+  5. Never mutate `main` (or the source branch) while inside a feature worktree unless the user explicitly authorizes it.
+- Call out in your progress updates which branch/DerivedData path you are using and when an `xcodebuild` or `build_run_sim` invocation starts, so other agents can defer their builds if needed.
+- Reuse an existing simulator when possible; if a teammate is already running the iPhone 16 simulator, coordinate so only one long-running build or UI test session is active at a time.
+- After finishing a parallel build, note which tests were executed (or explicitly skipped) so the next agent knows whether to re-run them on their branch.
+- When wrapping up a feature branch, proactively offer next steps (e.g., “1) run full UI tests, 2) squash & merge into main, 3) explore small UI polish”) and be ready to execute the option the user picks.
+- If the user invokes `/compact`, begin the compact response by restating the active worktree/branch and derived-data path, then summarize; do not start new code changes in that message.
+
 #### Testing (XcodeBuildMCP + Test Plan)
 - **Run all tests**: `xcodebuildmcp.test_sim` with scheme=NoteChat
 - **UI tests**: Include XCUITest automation in NoteChatUITests/

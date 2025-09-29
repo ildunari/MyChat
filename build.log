@@ -1,0 +1,130 @@
+Command line invocation:
+    /Applications/Xcode-beta.app/Contents/Developer/usr/bin/xcodebuild -project NoteChat.xcodeproj -scheme NoteChat -destination "platform=iOS Simulator,name=iPhone 16" build
+
+Resolve Package Graph
+
+
+Resolved source packages:
+  Highlighter: https://github.com/smittytone/HighlighterSwift @ 1.1.7
+  PhosphorSwift: https://github.com/phosphor-icons/swift @ 2.1.0
+  SwiftMath: https://github.com/mgriebling/SwiftMath @ 1.7.3
+  Down: https://github.com/johnxnguyen/Down @ e754ab1
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (14 targets)
+    Target 'NoteChat' in project 'NoteChat'
+        ➜ Explicit dependency on target 'Highlighter' in project 'Highlighter'
+        ➜ Explicit dependency on target 'PhosphorSwift' in project 'PhosphorSwift'
+        ➜ Explicit dependency on target 'Down' in project 'Down'
+        ➜ Explicit dependency on target 'SwiftMath' in project 'SwiftMath'
+    Target 'SwiftMath' in project 'SwiftMath'
+        ➜ Explicit dependency on target 'SwiftMath' in project 'SwiftMath'
+        ➜ Explicit dependency on target 'SwiftMath_SwiftMath' in project 'SwiftMath'
+    Target 'SwiftMath' in project 'SwiftMath'
+        ➜ Explicit dependency on target 'SwiftMath_SwiftMath' in project 'SwiftMath'
+    Target 'SwiftMath_SwiftMath' in project 'SwiftMath' (no dependencies)
+    Target 'Down' in project 'Down'
+        ➜ Explicit dependency on target 'Down' in project 'Down'
+        ➜ Explicit dependency on target 'Down_Down' in project 'Down'
+        ➜ Explicit dependency on target 'libcmark' in project 'Down'
+    Target 'Down' in project 'Down'
+        ➜ Explicit dependency on target 'Down_Down' in project 'Down'
+        ➜ Explicit dependency on target 'libcmark' in project 'Down'
+    Target 'libcmark' in project 'Down' (no dependencies)
+    Target 'Down_Down' in project 'Down' (no dependencies)
+    Target 'PhosphorSwift' in project 'PhosphorSwift'
+        ➜ Explicit dependency on target 'PhosphorSwift' in project 'PhosphorSwift'
+        ➜ Explicit dependency on target 'PhosphorSwift_PhosphorSwift' in project 'PhosphorSwift'
+    Target 'PhosphorSwift' in project 'PhosphorSwift'
+        ➜ Explicit dependency on target 'PhosphorSwift_PhosphorSwift' in project 'PhosphorSwift'
+    Target 'PhosphorSwift_PhosphorSwift' in project 'PhosphorSwift' (no dependencies)
+    Target 'Highlighter' in project 'Highlighter'
+        ➜ Explicit dependency on target 'Highlighter' in project 'Highlighter'
+        ➜ Explicit dependency on target 'Highlighter_Highlighter' in project 'Highlighter'
+    Target 'Highlighter' in project 'Highlighter'
+        ➜ Explicit dependency on target 'Highlighter_Highlighter' in project 'Highlighter'
+    Target 'Highlighter_Highlighter' in project 'Highlighter' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode-beta.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode-beta.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /Users/kosta/Documents/ProjectsXcode/NoteChat/NoteChat/Assets.xcassets
+
+ExecuteExternalTool /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: 5da494bf4a3d88d3aab3a4066457b3c2
+Build description path: /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/XCBuildData/5da494bf4a3d88d3aab3a4066457b3c2.xcbuilddata
+ClangStatCache /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk /Users/kosta/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.0-23A5324a-fc862078e33f881139a9d2f83bd1a9d0.sdkstatcache
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat/NoteChat.xcodeproj
+    /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk -o /Users/kosta/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.0-23A5324a-fc862078e33f881139a9d2f83bd1a9d0.sdkstatcache
+
+CompileAssetCatalogVariant thinned /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Products/Debug-iphonesimulator/PhosphorSwift_PhosphorSwift.bundle /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/SourcePackages/checkouts/swift/Sources/PhosphorSwift/Resources/Assets.xcassets (in target 'PhosphorSwift_PhosphorSwift' from project 'PhosphorSwift')
+    cd /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/SourcePackages/checkouts/swift
+    /Applications/Xcode-beta.app/Contents/Developer/usr/bin/actool /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/SourcePackages/checkouts/swift/Sources/PhosphorSwift/Resources/Assets.xcassets --compile /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/PhosphorSwift.build/Debug-iphonesimulator/PhosphorSwift_PhosphorSwift.build/assetcatalog_output/thinned --output-format human-readable-text --notices --warnings --export-dependency-info /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/PhosphorSwift.build/Debug-iphonesimulator/PhosphorSwift_PhosphorSwift.build/assetcatalog_dependencies_thinned --output-partial-info-plist /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/PhosphorSwift.build/Debug-iphonesimulator/PhosphorSwift_PhosphorSwift.build/assetcatalog_generated_info.plist_thinned --compress-pngs --enable-on-demand-resources NO --filter-for-thinning-device-configuration iPhone17,3 --filter-for-device-os-version 26.0 --development-region en --target-device iphone --target-device ipad --minimum-deployment-target 13.0 --platform iphonesimulator
+
+ProcessInfoPlistFile /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Products/Debug-iphonesimulator/SwiftMath_SwiftMath.bundle/Info.plist /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/SwiftMath.build/Debug-iphonesimulator/SwiftMath_SwiftMath.build/empty-SwiftMath_SwiftMath.plist (in target 'SwiftMath_SwiftMath' from project 'SwiftMath')
+    cd /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/SourcePackages/checkouts/SwiftMath
+    builtin-infoPlistUtility /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/SwiftMath.build/Debug-iphonesimulator/SwiftMath_SwiftMath.build/empty-SwiftMath_SwiftMath.plist -producttype com.apple.product-type.bundle -expandbuildsettings -format binary -platform iphonesimulator -o /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Products/Debug-iphonesimulator/SwiftMath_SwiftMath.bundle/Info.plist
+
+ProcessProductPackaging "" /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat.app-Simulated.xcent (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat
+    
+    Entitlements:
+    
+    {
+    "application-identifier" = "SV9Z2RG2A6.com.ildunari.NoteChat-Dev";
+}
+    
+    builtin-productPackagingUtility -entitlements -format xml -o /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat.app-Simulated.xcent
+
+ProcessInfoPlistFile /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Products/Debug-iphonesimulator/Down_Down.bundle/Info.plist /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/Down.build/Debug-iphonesimulator/Down_Down.build/empty-Down_Down.plist (in target 'Down_Down' from project 'Down')
+    cd /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/SourcePackages/checkouts/Down
+    builtin-infoPlistUtility /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/Down.build/Debug-iphonesimulator/Down_Down.build/empty-Down_Down.plist -producttype com.apple.product-type.bundle -expandbuildsettings -format binary -platform iphonesimulator -o /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Products/Debug-iphonesimulator/Down_Down.bundle/Info.plist
+
+ProcessInfoPlistFile /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Products/Debug-iphonesimulator/Highlighter_Highlighter.bundle/Info.plist /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/Highlighter.build/Debug-iphonesimulator/Highlighter_Highlighter.build/empty-Highlighter_Highlighter.plist (in target 'Highlighter_Highlighter' from project 'Highlighter')
+    cd /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/SourcePackages/checkouts/HighlighterSwift
+    builtin-infoPlistUtility /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/Highlighter.build/Debug-iphonesimulator/Highlighter_Highlighter.build/empty-Highlighter_Highlighter.plist -producttype com.apple.product-type.bundle -expandbuildsettings -format binary -platform iphonesimulator -o /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Products/Debug-iphonesimulator/Highlighter_Highlighter.bundle/Info.plist
+
+ProcessProductPackagingDER /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat.app-Simulated.xcent /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat.app-Simulated.xcent.der (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat
+    /usr/bin/derq query -f xml -i /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat.app-Simulated.xcent -o /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat.app-Simulated.xcent.der --raw
+
+SwiftDriver NoteChat normal arm64 com.apple.xcode.tools.swift.compiler (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat
+    builtin-SwiftDriver -- /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name NoteChat -Onone -enforce-exclusivity\=checked @/Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64/NoteChat.SwiftFileList -DDEBUG -Xcc -fmodule-map-file\=/Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/GeneratedModuleMaps-iphonesimulator/libcmark.modulemap -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk -target arm64-apple-ios26.0-simulator -g -module-cache-path /Users/kosta/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Products/Debug-iphonesimulator -F /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Products/Debug-iphonesimulator -emit-localized-strings -emit-localized-strings-path /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64 -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/kosta/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.0-23A5324a-fc862078e33f881139a9d2f83bd1a9d0.sdkstatcache -output-file-map /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64/NoteChat-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/kosta/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/kosta/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64/NoteChat.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/kosta/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64/NoteChat_const_extract_protocols.json -Xcc -iquote -Xcc /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat-generated-files.hmap -Xcc -I/Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat-own-target-headers.hmap -Xcc -I/Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat-881a864bbb55040a7be77ded444bdadb-VFS-iphonesimulator/all-product-headers.yaml -Xcc -iquote -Xcc /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat-project-headers.hmap -Xcc -I/Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/SourcePackages/checkouts/Down/Sources/cmark -Xcc -I/Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/DerivedSources-normal/arm64 -Xcc -I/Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/DerivedSources/arm64 -Xcc -I/Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/kosta/Library/Developer/Xcode/DerivedData/NoteChat-hguccmxmyaqqiuepjikwacvaghae/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64/NoteChat-Swift.h -working-directory /Users/kosta/Documents/ProjectsXcode/NoteChat -experimental-emit-module-separately -disable-cmo
+/Users/kosta/Documents/ProjectsXcode/NoteChat/NoteChat/NotesWorkspace.swift:115:1: error: Declaration is only valid at file scope
+extension NotesWorkspace {
+^ (in target 'NoteChat' from project 'NoteChat')
+/Users/kosta/Documents/ProjectsXcode/NoteChat/NoteChat/NotesWorkspace.swift:185:9: error: Declaration is only valid at file scope
+private extension NotesWorkspace {
+        ^ (in target 'NoteChat' from project 'NoteChat')
+/Users/kosta/Documents/ProjectsXcode/NoteChat/NoteChat/NotesWorkspace.swift:204:9: error: Declaration is only valid at file scope
+private extension String {
+        ^ (in target 'NoteChat' from project 'NoteChat')
+/Users/kosta/Documents/ProjectsXcode/NoteChat/NoteChat/NotesWorkspace.swift:219:1: error: Expected '}' at end of extension
+
+^ (in target 'NoteChat' from project 'NoteChat')
+/Users/kosta/Documents/ProjectsXcode/NoteChat/NoteChat/NotesWorkspace.swift:76:26: note: To match this opening '{'
+extension NotesWorkspace {
+                         ^ (in target 'NoteChat' from project 'NoteChat')
+

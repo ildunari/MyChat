@@ -156,6 +156,21 @@ final class AppSettings: Identifiable {
 }
 
 @Model
+final class NoteFolder: Identifiable {
+    @Attribute(.unique) var id: UUID
+    var name: String
+    var colorHex: String?
+    @Relationship(deleteRule: .nullify, inverse: \Note.folder) var notes: [Note]
+
+    init(id: UUID = UUID(), name: String, colorHex: String? = nil, notes: [Note] = []) {
+        self.id = id
+        self.name = name
+        self.colorHex = colorHex
+        self.notes = notes
+    }
+}
+
+@Model
 final class Note: Identifiable {
     @Attribute(.unique) var id: UUID
     var title: String
@@ -166,6 +181,7 @@ final class Note: Identifiable {
     var tags: [String]
     var lastEditor: String
     var lastSummary: String
+    var folder: NoteFolder?
     @Relationship(deleteRule: .cascade, inverse: \NoteRevision.note) var revisions: [NoteRevision]
 
     init(
@@ -177,7 +193,8 @@ final class Note: Identifiable {
         isPinned: Bool = false,
         tags: [String] = [],
         lastEditor: String = "user",
-        lastSummary: String = ""
+        lastSummary: String = "",
+        folder: NoteFolder? = nil
     ) {
         self.id = id
         self.title = title
@@ -188,6 +205,7 @@ final class Note: Identifiable {
         self.tags = tags
         self.lastEditor = lastEditor
         self.lastSummary = lastSummary
+        self.folder = folder
         self.revisions = []
     }
 }
@@ -200,6 +218,7 @@ final class NoteRevision: Identifiable {
     var summary: String
     var appliedDiff: String
     var selectionRange: Range<Int>?
+    var contentSnapshot: String
     var note: Note?
 
     init(
@@ -209,6 +228,7 @@ final class NoteRevision: Identifiable {
         summary: String,
         appliedDiff: String,
         selectionRange: Range<Int>? = nil,
+        contentSnapshot: String,
         note: Note? = nil
     ) {
         self.id = id
@@ -217,6 +237,7 @@ final class NoteRevision: Identifiable {
         self.summary = summary
         self.appliedDiff = appliedDiff
         self.selectionRange = selectionRange
+        self.contentSnapshot = contentSnapshot
         self.note = note
     }
 }

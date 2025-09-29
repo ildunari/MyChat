@@ -20,6 +20,15 @@ struct ContentView: View {
     @State private var navNewChat: Chat? = nil
     @State private var navBarHeight: CGFloat = 0
     @State private var scrollOffset: CGFloat = 0
+    private var homeTitle: String {
+        let first = store.userFirstName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if first.isEmpty == false { return "Hi, \(first)" }
+        let username = store.userUsername.trimmingCharacters(in: .whitespacesAndNewlines)
+        if username.isEmpty == false { return "Welcome, \(username)" }
+        let last = store.userLastName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if last.isEmpty == false { return "Hi, \(last)" }
+        return "Home"
+    }
     var body: some View {
         NavigationStack {
             ZStack {
@@ -110,7 +119,7 @@ struct ContentView: View {
         }
         .background(T.bg.ignoresSafeArea())
         .safeAreaInset(edge: .top, spacing: 0) {
-            AnimatedGlassNavigationBar(title: "Home", scrollOffset: scrollOffset, trailing: {
+            AnimatedGlassNavigationBar(title: homeTitle, scrollOffset: scrollOffset, trailing: {
                 ComposeButton { createAndNavigate() }
             })
             .padding(.horizontal, 20)

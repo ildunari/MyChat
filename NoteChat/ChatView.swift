@@ -5,6 +5,8 @@ import SwiftData
 import UniformTypeIdentifiers
 import UIKit
 
+private let reasoningMessageRole = "assistant_reasoning"
+
 struct ChatView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var settingsQuery: [AppSettings]
@@ -25,6 +27,7 @@ struct ChatView: View {
     @State private var streamingText: String? = nil
     @State private var editingMessage: Message? = nil
     @State private var currentSendTask: Task<Void, Never>? = nil
+    @State private var debugOffset: CGFloat = 0
 
     var body: some View {
         VStack(spacing: 0) {
@@ -37,8 +40,11 @@ struct ChatView: View {
                 MessageListView(messages: sortedMessages,
                                  streamingText: streamingText,
                                  isSending: isSending,
-                                 aiDisplayName: providerDisplayName,
+                                 aiDisplayName: effectiveAIDisplayName,
                                  aiModel: currentModel,
+                                 userDisplayName: userDisplayName,
+                                 showReasoningSnippets: showReasoningSnippetsFlag,
+                                 bottomInset: dockController.currentHeight + 24,
                                  onRetry: { msg in Task { await retryResponse(msg) } },
                                  onCopy: { copyResponse($0) },
                                  onEdit: { editMessage($0) },
@@ -60,7 +66,7 @@ struct ChatView: View {
                          onMic: nil,
                          onLive: nil,
                          onPlus: { showPhotoPicker = true })
-                    .padding(.top, 6)
+                    .padding(.top, 2)
             }
             .safeAreaPadding(.bottom, dockController.currentHeight + 12)
         }
@@ -68,7 +74,7 @@ struct ChatView: View {
         .safeAreaInset(edge: .top, spacing: 12) {
             VStack(spacing: 10) {
                 floatingNavBar
-                if isSending {
+                if isSending && showThinkingOverlayFlag {
                     ThinkingOverlay()
                         .padding(.top, 2)
                         .transition(.move(edge: .top).combined(with: .opacity))
@@ -107,10 +113,18 @@ struct ChatView: View {
             showSuggestions = chat.messages.isEmpty
             dockController.expand(animated: false)
         }
+        .overlay(alignment: .topTrailing) {
+            Text(String(format: "offset %.1f", debugOffset))
+                .font(.caption2)
+                .padding(6)
+                .background(Color.black.opacity(0.3), in: Capsule())
+                .padding(12)
+        }
     }
 
     private func handleScrollChange(_ offset: CGFloat) {
         let distance = max(offset, 0)
+        debugOffset = distance
         dockController.nudge(withScrollOffset: distance)
         if distance < 12 {
             dockController.expand(animated: true)
@@ -136,6 +150,32 @@ struct ChatView: View {
         if let pref = settingsQuery.first?.interfaceTheme, pref == "light" { return .light }
         // Fall back to light; SwiftUI color scheme not available here without @Environment
         return .light
+    }
+
+    private var showThinkingOverlayFlag: Bool {
+        settingsQuery.first?.showThinkingOverlay ?? true
+    }
+
+    private var showReasoningSnippetsFlag: Bool {
+        settingsQuery.first?.showReasoningSnippets ?? true
+    }
+
+    private var effectiveAIDisplayName: String {
+        if let custom = settingsQuery.first?.aiDisplayName.trimmingCharacters(in: .whitespacesAndNewlines), custom.isEmpty == false {
+            return custom
+        }
+        return providerDisplayName
+    }
+
+    private var userDisplayName: String {
+        guard let settings = settingsQuery.first else { return "You" }
+        let first = settings.userFirstName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if first.isEmpty == false { return first }
+        let username = settings.userUsername.trimmingCharacters(in: .whitespacesAndNewlines)
+        if username.isEmpty == false { return username }
+        let last = settings.userLastName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if last.isEmpty == false { return last }
+        return "You"
     }
 
     private struct WebCanvasContainer: View {
@@ -184,6 +224,9 @@ struct ChatView: View {
         let isSending: Bool
         var aiDisplayName: String
         var aiModel: String
+        var userDisplayName: String
+        var showReasoningSnippets: Bool
+        var bottomInset: CGFloat
         var onRetry: (Message) -> Void
         var onCopy: (Message) -> Void
         var onEdit: (Message) -> Void
@@ -191,22 +234,37 @@ struct ChatView: View {
         var body: some View {
             ScrollViewReader { proxy in
                 ScrollView {
-                    GeometryReader { geo in
-                        Color.clear
-                            .preference(key: ScrollOffsetPreferenceKey.self,
-                                        value: geo.frame(in: .named("chat.scroll")).minY)
-                    }
-                    .frame(height: 0)
                     LazyVStack(alignment: .leading, spacing: 12) {
                         ForEach(messages) { message in
-                            if message.role == "assistant" {
+                            switch message.role {
+                            case "assistant":
                                 MessageRow(message: message,
                                            aiDisplayName: aiDisplayName,
                                            aiModel: aiModel,
+                                           userDisplayName: userDisplayName,
                                            onRetry: { onRetry(message) },
                                            onCopy: { onCopy(message) })
-                            } else {
+                            case "user":
                                 MessageRow(message: message,
+                                           aiDisplayName: aiDisplayName,
+                                           aiModel: aiModel,
+                                           userDisplayName: userDisplayName,
+                                           onEdit: { onEdit(message) })
+                            case reasoningMessageRole:
+                                if showReasoningSnippets {
+                                    let snippet = message.content.trimmingCharacters(in: .whitespacesAndNewlines)
+                                    if snippet.isEmpty == false {
+                                        ReasoningSnippetRow(text: snippet, aiDisplayName: aiDisplayName)
+                                            .id(message.id)
+                                    }
+                                }
+                            default:
+                                MessageRow(message: message,
+                                           aiDisplayName: aiDisplayName,
+                                           aiModel: aiModel,
+                                           userDisplayName: userDisplayName,
+                                           onRetry: { onRetry(message) },
+                                           onCopy: { onCopy(message) },
                                            onEdit: { onEdit(message) })
                             }
                         }
@@ -217,13 +275,19 @@ struct ChatView: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 12)
-                    .padding(.bottom, 32)
+                    .padding(.bottom, bottomInset)
+                    .background(
+                        GeometryReader { geo in
+                            Color.clear.preference(
+                                key: ScrollOffsetPreferenceKey.self,
+                                value: max(0, -geo.frame(in: .named("chat.scroll")).minY)
+                            )
+                        }
+                    )
                 }
                 .coordinateSpace(name: "chat.scroll")
-                .padding(.bottom, 72)
                 .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
-                    let offset = max(-value, 0)
-                    onScroll(offset)
+                    onScroll(value)
                 }
                 .onChange(of: messages.count) { _, _ in
                     if let last = messages.last {
@@ -284,36 +348,16 @@ struct ChatView: View {
         // For assistant header
         var aiDisplayName: String = "AI"
         var aiModel: String = ""
+        var userDisplayName: String = "You"
         @Environment(\.tokens) private var T
         var onRetry: (() -> Void)? = nil
         var onCopy: (() -> Void)? = nil
         var onEdit: (() -> Void)? = nil
         var body: some View {
             Group {
-                if message.role == "assistant" {
-                    // Full-bleed AI response (no bubble), with header
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(spacing: 6) {
-                            AppIcon.starsHeader(14)
-                                .foregroundStyle(T.textSecondary)
-                            Text("\(aiDisplayName) \(aiModel)")
-                                .font(.footnote)
-                                .foregroundStyle(T.textSecondary)
-                        }
-                        AIResponseView(content: message.content)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        HStack(spacing: 12) {
-                            Button("Retry") { onRetry?() }
-                            Button("Copy") { onCopy?() }
-                        }
-                        .font(.footnote)
-                        .padding(.top, 4)
-                    }
-                    .padding(.horizontal)
-                } else {
-                    // User message aligned to the right with tighter corner radius
+                if message.role == "user" {
                     VStack(alignment: .trailing, spacing: 4) {
-                        Text("You")
+                        Text(userDisplayName)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .trailing)
@@ -335,8 +379,59 @@ struct ChatView: View {
                             .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                     .padding(.horizontal)
+                } else {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 6) {
+                            AppIcon.starsHeader(14)
+                                .foregroundStyle(T.textSecondary)
+                            Text("\(aiDisplayName) \(aiModel)")
+                                .font(.footnote)
+                                .foregroundStyle(T.textSecondary)
+                        }
+                        AIResponseView(content: message.content)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        HStack(spacing: 12) {
+                            Button("Retry") { onRetry?() }
+                            Button("Copy") { onCopy?() }
+                        }
+                        .font(.footnote)
+                        .padding(.top, 4)
+                    }
+                    .padding(.horizontal)
                 }
             }
+        }
+    }
+
+    private struct ReasoningSnippetRow: View {
+        let text: String
+        let aiDisplayName: String
+        @Environment(\.tokens) private var T
+        var body: some View {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    AppIcon.starsHeader(14)
+                        .foregroundStyle(T.accent)
+                    Text("\(aiDisplayName) — Reasoning")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(T.textSecondary)
+                }
+                Text(text)
+                    .font(.callout)
+                    .foregroundStyle(T.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(T.surfaceElevated.opacity(0.78))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(T.borderSoft.opacity(0.8), lineWidth: 1)
+            )
+            .shadow(color: T.shadow.opacity(0.08), radius: 6, y: 3)
         }
     }
 
@@ -644,8 +739,10 @@ struct ChatView: View {
             if historyLimit > 0 && previous.count > historyLimit {
                 previous = Array(previous.suffix(historyLimit))
             }
-            aiMessages.append(contentsOf: previous.map { m in
-                AIMessage(role: m.role == "user" ? .user : .assistant, content: m.content)
+            aiMessages.append(contentsOf: previous.compactMap { m in
+                guard m.role != reasoningMessageRole else { return nil }
+                let role: AIMessage.Role = (m.role == "user") ? .user : .assistant
+                return AIMessage(role: role, content: m.content)
             })
 
             // Compose the current user message with optional image parts (preserve MIME) if not editing
@@ -714,8 +811,7 @@ struct ChatView: View {
 
             // Add assistant message
             streamingText = nil
-            let aiMsg = Message(role: "assistant", content: reply, chat: chat)
-            modelContext.insert(aiMsg)
+            insertAssistantReply(reply)
 
             // Update title if still default
             if isDefaultTitle {
@@ -728,8 +824,7 @@ struct ChatView: View {
             // User stopped streaming. Finalize partial text if any, without surfacing an error.
             if let partial = streamingText, !partial.isEmpty {
                 streamingText = nil
-                let aiMsg = Message(role: "assistant", content: partial, chat: chat)
-                modelContext.insert(aiMsg)
+                insertAssistantReply(partial)
                 try? modelContext.save()
             } else {
                 streamingText = nil
@@ -750,8 +845,7 @@ struct ChatView: View {
         // If there's partial streamed content, finalize it as a message for continuity.
         if let partial = streamingText, !partial.isEmpty {
             streamingText = nil
-            let aiMsg = Message(role: "assistant", content: partial, chat: chat)
-            modelContext.insert(aiMsg)
+            insertAssistantReply(partial)
             try? modelContext.save()
         } else {
             streamingText = nil
@@ -767,6 +861,78 @@ struct ChatView: View {
     }
     private var currentModel: String {
         settingsQuery.first?.defaultModel ?? ""
+    }
+
+    @MainActor
+    private func insertAssistantReply(_ rawText: String) {
+        let processed = extractReasoningSnippet(from: rawText)
+        if showReasoningSnippetsFlag, let snippet = processed.snippet {
+            let reasoningMsg = Message(role: reasoningMessageRole, content: snippet, chat: chat)
+            modelContext.insert(reasoningMsg)
+        }
+        let replyMessage = Message(role: "assistant", content: processed.body, chat: chat)
+        modelContext.insert(replyMessage)
+    }
+
+    private func extractReasoningSnippet(from rawText: String) -> (snippet: String?, body: String) {
+        let trimmed = rawText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.isEmpty == false else {
+            return (nil, rawText)
+        }
+
+        // Helpers to return once snippet located
+        func finalize(snippet: Substring, remainder: Substring) -> (String?, String) {
+            let snippetText = snippet.trimmingCharacters(in: .whitespacesAndNewlines)
+            let bodyText = remainder.trimmingCharacters(in: .whitespacesAndNewlines)
+            if bodyText.isEmpty {
+                return (nil, trimmed)
+            }
+            let clippedSnippet: String
+            if snippetText.count > 480 {
+                clippedSnippet = String(snippetText.prefix(480)).trimmingCharacters(in: .whitespacesAndNewlines)
+            } else {
+                clippedSnippet = snippetText
+            }
+            return (clippedSnippet.isEmpty ? nil : clippedSnippet, String(bodyText))
+        }
+
+        // Case 1: <reasoning> ... </reasoning>
+        if let open = trimmed.range(of: "<reasoning>", options: [.anchored, .caseInsensitive]),
+           let close = trimmed.range(of: "</reasoning>", options: [.caseInsensitive], range: open.upperBound..<trimmed.endIndex) {
+            let snippetRange = open.upperBound..<close.lowerBound
+            let remainder = trimmed[close.upperBound..<trimmed.endIndex]
+            return finalize(snippet: trimmed[snippetRange], remainder: remainder)
+        }
+
+        // Case 2: Reasoning:/Thought:/Thoughts: prefix
+        let labelPrefixes = ["Reasoning:", "Thought:", "Thoughts:"]
+        for label in labelPrefixes {
+            if let labelRange = trimmed.range(of: label, options: [.anchored, .caseInsensitive]) {
+                var afterLabel = trimmed[labelRange.upperBound..<trimmed.endIndex]
+                if afterLabel.first == " " { afterLabel = afterLabel.dropFirst() }
+                if let doubleBreak = afterLabel.range(of: "\n\n") {
+                    let snippet = afterLabel[..<doubleBreak.lowerBound]
+                    let remainder = afterLabel[doubleBreak.upperBound..<afterLabel.endIndex]
+                    return finalize(snippet: snippet, remainder: remainder)
+                } else {
+                    // No clear remainder; keep original text to avoid empty reply
+                    return (nil, trimmed)
+                }
+            }
+        }
+
+        // Case 3: ```reasoning fenced code block
+        if let fenceStart = trimmed.range(of: "```reasoning", options: [.anchored, .caseInsensitive]) {
+            var afterFence = trimmed[fenceStart.upperBound..<trimmed.endIndex]
+            if afterFence.first == "\n" { afterFence = afterFence.dropFirst() }
+            if let fenceEnd = afterFence.range(of: "```") {
+                let snippet = afterFence[..<fenceEnd.lowerBound]
+                let remainder = afterFence[fenceEnd.upperBound..<afterFence.endIndex]
+                return finalize(snippet: snippet, remainder: remainder)
+            }
+        }
+
+        return (nil, trimmed)
     }
 
     private func effectiveModel(for providerID: String) -> String {

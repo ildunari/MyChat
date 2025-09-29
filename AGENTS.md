@@ -15,6 +15,22 @@ This guide helps contributors work efficiently in this SwiftUI iOS project.
 - Run tests (CLI): `xcodebuild test -project NoteChat.xcodeproj -scheme NoteChat -destination 'platform=iOS Simulator,name=iPhone 16'`.
 - Run a specific test: `xcodebuild test -only-testing:NoteChatTests/YourTestName …` (adjust names). Use `xcrun simctl list devices` to pick an available simulator.
 
+## Parallel Branch & Build Strategy
+- **Separate worktrees or clones**: keep each branch in its own folder (`git worktree add ../NoteChat-main main`, `git worktree add ../NoteChat-notes feat/notes-ai-workspace`) so agents can work concurrently without constant checkouts.
+- **Unique DerivedData per branch**: pass `-derivedDataPath ~/DerivedData/notechat-<branch>` (or set Xcode's Derived Data location) before running builds/tests to prevent cache corruption.
+- **Announce long builds**: when you kick off `xcodebuild`/`build_run_sim`, mention the branch and derived data path in your update so teammates can pause other builds; call out when the run finishes.
+- **Simulator coordination**: reuse the existing iPhone 16 simulator; only one agent should hold it for UI tests at a time. If you must reset, note it in the hand-off.
+- **Record test coverage**: after completing your work, document which tests/smoke flows you executed (or skipped) so the next agent knows what remains.
+- **Cache recovery**: if you hit `disk I/O error` on the shared DerivedData, delete that branch's folder (e.g. `rm -rf ~/Library/Developer/Xcode/DerivedData/NoteChat-*`) and rebuild using your branch-specific path.
+- **Worktree requests**: when a lead says “start a worktree” (any wording), do the following by default:
+  1. Confirm which branch to base from and the feature name.
+  2. Create the worktree (`git worktree add ../NoteChat-<slug> <base>`) and announce the path so others can find it.
+  3. Set/record a unique DerivedData location for that worktree and reuse it for all builds/tests until the worktree is closed.
+  4. Log the active worktree and derived data path in plans, status updates, summaries, and compact responses so future steps inherit the context.
+  5. Avoid touching `main` (or the base branch) while inside the feature worktree unless explicitly instructed.
+- **Finish strong**: when wrapping a task, offer optional follow-ups (e.g., extra polish, merge + squash, regression run) and be ready to execute whichever option the lead picks.
+- **/compact etiquette**: every /compact reply should start with the current worktree/branch and derived data path; never introduce new code edits in that compressed message.
+
 ## Project Status & Docs
 - **Migration Notes**: `porting.md` (migration from ChatApp to NoteChat)
 - **Rolling TODO**: `docs/TODO.md` (checklist; keep fresh)

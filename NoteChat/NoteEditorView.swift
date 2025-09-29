@@ -25,22 +25,25 @@ struct NoteTextEditor: UIViewRepresentable {
 
     func makeUIView(context: Context) -> UITextView {
         let view = UITextView()
-        view.font = UIFont.preferredFont(forTextStyle: .body)
         view.backgroundColor = .clear
-        view.textColor = UIColor.label
         view.adjustsFontForContentSizeCategory = true
         view.isEditable = true
         view.isScrollEnabled = true
         view.keyboardDismissMode = .interactive
-        view.textContainerInset = UIEdgeInsets(top: 12, left: 0, bottom: 40, right: 0)
+        view.textContainerInset = .zero
+        view.textContainer.lineFragmentPadding = 0
         view.delegate = context.coordinator
         view.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
+        let baseAttributes = context.coordinator.baseAttributes
         if state.text.isEmpty {
             view.text = placeholder
             view.textColor = UIColor.secondaryLabel
         } else {
-            view.text = state.text
+            view.attributedText = MarkdownStyler.editorAttributedString(for: state.text, baseAttributes: baseAttributes)
+            view.textColor = UIColor.label
         }
+        view.typingAttributes = baseAttributes
         return view
     }
 
@@ -50,13 +53,12 @@ struct NoteTextEditor: UIViewRepresentable {
             if uiView.text != placeholder {
                 uiView.text = placeholder
                 uiView.textColor = UIColor.secondaryLabel
+                uiView.typingAttributes = context.coordinator.baseAttributes
             }
         } else {
-            if uiView.text != state.text {
-                uiView.text = state.text
-                uiView.textColor = UIColor.label
-            }
+            context.coordinator.applyMarkdownStyling(to: uiView, text: state.text)
         }
+
         if uiView.selectedRange != state.selectedRange {
             uiView.selectedRange = state.selectedRange
         }
@@ -69,6 +71,22 @@ struct NoteTextEditor: UIViewRepresentable {
         private let onTextChange: (String) -> Void
         private let onSelectionChange: (NSRange) -> Void
 
+        fileprivate var baseAttributes: [NSAttributedString.Key: Any] {
+            let paragraph = NSMutableParagraphStyle()
+            paragraph.lineSpacing = 6
+            paragraph.paragraphSpacing = 12
+            paragraph.hyphenationFactor = 0.3
+
+            let font = UIFontMetrics(forTextStyle: .body)
+                .scaledFont(for: UIFont.systemFont(ofSize: 18, weight: .regular))
+
+            return [
+                .font: font,
+                .paragraphStyle: paragraph,
+                .foregroundColor: UIColor.label
+            ]
+        }
+
         init(state: NoteEditorState, onTextChange: @escaping (String) -> Void, onSelectionChange: @escaping (NSRange) -> Void) {
             self.state = state
             self.onTextChange = onTextChange
@@ -79,6 +97,7 @@ struct NoteTextEditor: UIViewRepresentable {
             if textView.textColor == UIColor.secondaryLabel {
                 textView.text = ""
                 textView.textColor = UIColor.label
+                textView.typingAttributes = baseAttributes
             }
         }
 
@@ -87,12 +106,14 @@ struct NoteTextEditor: UIViewRepresentable {
             let newText = textView.text ?? ""
             state.text = newText
             onTextChange(newText)
+            applyMarkdownStyling(to: textView, text: newText)
         }
 
         func textViewDidChangeSelection(_ textView: UITextView) {
             guard isUpdatingFromState == false else { return }
-            state.selectedRange = textView.selectedRange
-            onSelectionChange(textView.selectedRange)
+            let selection = textView.selectedRange
+            state.selectedRange = selection
+            onSelectionChange(selection)
         }
 
         func textViewDidEndEditing(_ textView: UITextView) {
@@ -101,6 +122,16 @@ struct NoteTextEditor: UIViewRepresentable {
                 textView.text = ""
                 onTextChange("")
             }
+        }
+
+        func applyMarkdownStyling(to textView: UITextView, text: String) {
+            isUpdatingFromState = true
+            let selected = textView.selectedRange
+            let attributed = MarkdownStyler.editorAttributedString(for: text, baseAttributes: baseAttributes)
+            textView.attributedText = attributed
+            textView.selectedRange = selected
+            textView.typingAttributes = baseAttributes
+            isUpdatingFromState = false
         }
     }
 }

@@ -18,9 +18,23 @@ struct NotesRootView: View {
     @State private var searchText: String = ""
     @State private var selection: Note.ID?
     @State private var showInspector = false
+    @State private var multiSelection: Set<Note.ID> = []
+    @State private var editMode: EditMode = .inactive
+    @State private var folderFilter: NoteFolder?
+    @State private var tagFilter: String?
+    @State private var showCreateFolderSheet = false
+    @State private var newFolderName: String = ""
+    @State private var showAddTagSheet = false
+    @State private var newTagText: String = ""
 
     private var filteredNotes: [Note] {
-        let base = workspace.notes
+        var base = workspace.notes
+        if let folder = folderFilter {
+            base = base.filter { $0.folder?.id == folder.id }
+        }
+        if let tag = tagFilter {
+            base = base.filter { $0.tags.contains(where: { $0.caseInsensitiveCompare(tag) == .orderedSame }) }
+        }
         guard searchText.isEmpty == false else { return base }
         return base.filter { $0.title.localizedCaseInsensitiveContains(searchText) || $0.content.localizedCaseInsensitiveContains(searchText) }
     }
@@ -40,6 +54,8 @@ struct NotesRootView: View {
                         workspace.select(note: note)
                     }
                 }),
+                multiSelection: $multiSelection,
+                editMode: $editMode,
                 workspace: workspace,
                 searchText: $searchText
             )
@@ -54,6 +70,7 @@ struct NotesRootView: View {
                 NotesEmptyDetailView()
             }
         }
+        .environment(\.editMode, $editMode)
         .navigationSplitViewStyle(.balanced)
         .onAppear {
             if selection == nil, let note = workspace.selectedNote ?? workspace.notes.first {
@@ -66,17 +83,63 @@ struct NotesRootView: View {
                 selection = workspace.notes.first?.id
             }
         }
+        .onChange(of: editMode) { _, mode in
+            if mode != .active {
+                multiSelection.removeAll()
+            }
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if editMode == .active && !multiSelection.isEmpty {
+                multiSelectionBar
+            } else {
+                EmptyView()
+            }
+        }
         .sheet(isPresented: $showInspector) {
             if let id = selection, let note = workspace.notes.first(where: { $0.id == id }) {
-                NoteInspectorView(note: note)
+                NoteInspectorView(note: note, workspace: workspace)
             } else {
                 Text("Select a note to inspect")
                     .padding()
             }
         }
+        .sheet(isPresented: $showCreateFolderSheet, onDismiss: { newFolderName = "" }) {
+            newFolderSheet
+        }
+        .sheet(isPresented: $showAddTagSheet, onDismiss: { newTagText = "" }) {
+            addTagSheet
+        }
     }
 
+    @ToolbarContentBuilder
     private var listToolbar: some ToolbarContent {
+        ToolbarItemGroup(placement: .navigationBarLeading) {
+            Menu {
+                Button("All Folders") { folderFilter = nil }
+                ForEach(workspace.folders) { folder in
+                    Button(folder.name) { folderFilter = folder }
+                }
+                Divider()
+                Button("New Folder…") { showCreateFolderSheet = true }
+            } label: {
+                Label(folderFilter?.name ?? "Folders", systemImage: "folder")
+            }
+
+            Menu {
+                Button("All Tags") { tagFilter = nil }
+                if workspace.availableTags.isEmpty {
+                    Text("No tags yet")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(workspace.availableTags, id: \.self) { tag in
+                        Button(tag) { tagFilter = tag }
+                    }
+                }
+            } label: {
+                Label(tagFilter ?? "Tags", systemImage: "tag")
+            }
+        }
+
         ToolbarItemGroup(placement: .navigationBarTrailing) {
             Button(action: {
                 let note = workspace.createNote()
@@ -90,7 +153,142 @@ struct NotesRootView: View {
                 Label("Note Inspector", systemImage: "info.circle")
             }
             .accessibilityLabel("Show note inspector")
+
+            EditButton()
         }
+    }
+
+    private var multiSelectionBar: some View {
+        VStack(spacing: 12) {
+            Text("\(multiSelection.count) selected")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            HStack(spacing: 16) {
+                Button {
+                    showAddTagSheet = true
+                } label: {
+                    Label("Add Tag", systemImage: "tag.badge.plus")
+                }
+
+                Menu {
+                    Button("No Folder") { assignSelection(to: nil) }
+                    ForEach(workspace.folders) { folder in
+                        Button(folder.name) { assignSelection(to: folder) }
+                    }
+                    Divider()
+                    Button("New Folder…") { showCreateFolderSheet = true }
+                } label: {
+                    Label("Folder", systemImage: "folder.fill")
+                }
+
+                Button {
+                    workspace.togglePinned(notes: selectedNotes(), pinned: true)
+                    exitEditMode()
+                } label: {
+                    Label("Pin", systemImage: "pin")
+                }
+
+                Button {
+                    workspace.togglePinned(notes: selectedNotes(), pinned: false)
+                    exitEditMode()
+                } label: {
+                    Label("Unpin", systemImage: "pin.slash")
+                }
+
+                Button(role: .destructive) {
+                    deleteSelection()
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
+            .buttonStyle(.bordered)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 12)
+        .padding(.bottom, 20)
+        .background(.ultraThinMaterial)
+    }
+
+    private var newFolderSheet: some View {
+        NavigationStack {
+            Form {
+                Section("Folder Name") {
+                    TextField("Name", text: $newFolderName)
+                }
+            }
+            .navigationTitle("New Folder")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { showCreateFolderSheet = false }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Create") {
+                        let trimmed = newFolderName.trimmingCharacters(in: .whitespacesAndNewlines)
+                        guard trimmed.isEmpty == false else { return }
+                        let folder = workspace.createFolder(name: trimmed)
+                        assignSelection(to: folder)
+                        newFolderName = ""
+                        showCreateFolderSheet = false
+                    }
+                    .disabled(newFolderName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    private var addTagSheet: some View {
+        NavigationStack {
+            Form {
+                Section("Tag") {
+                    TextField("Tag", text: $newTagText)
+                }
+            }
+            .navigationTitle("Add Tag")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { showAddTagSheet = false }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Add") {
+                        let trimmed = newTagText.trimmingCharacters(in: .whitespacesAndNewlines)
+                        guard trimmed.isEmpty == false else { return }
+                        workspace.addTag(trimmed, to: selectedNotes())
+                        newTagText = ""
+                        exitEditMode()
+                        showAddTagSheet = false
+                    }
+                    .disabled(newTagText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    private func selectedNotes() -> [Note] {
+        workspace.notes.filter { multiSelection.contains($0.id) }
+    }
+
+    private func assignSelection(to folder: NoteFolder?) {
+        let notes = selectedNotes()
+        guard notes.isEmpty == false else { return }
+        workspace.assign(notes: notes, to: folder)
+        selection = notes.first?.id ?? selection
+        exitEditMode()
+    }
+
+    private func deleteSelection() {
+        let notes = selectedNotes()
+        guard notes.isEmpty == false else { return }
+        workspace.delete(notes: notes)
+        selection = workspace.notes.first?.id
+        exitEditMode()
+    }
+
+    private func exitEditMode() {
+        editMode = .inactive
+        multiSelection.removeAll()
     }
 }
 
@@ -98,6 +296,8 @@ private struct NotesListPanel: View {
     @Environment(\.tokens) private var T
     let notes: [Note]
     @Binding var selection: Note.ID?
+    @Binding var multiSelection: Set<Note.ID>
+    @Binding var editMode: EditMode
     var workspace: NotesWorkspace
     @Binding var searchText: String
     @State private var pinFilter: Bool = false
@@ -107,8 +307,26 @@ private struct NotesListPanel: View {
         return NotesListPanel.group(notes: filtered)
     }
 
+    private var listSelection: Binding<Set<Note.ID>> {
+        Binding {
+            if editMode == .active {
+                return multiSelection
+            } else if let selection {
+                return Set([selection])
+            } else {
+                return []
+            }
+        } set: { newValue in
+            if editMode == .active {
+                multiSelection = newValue
+            } else {
+                selection = newValue.first
+            }
+        }
+    }
+
     var body: some View {
-        List(selection: $selection) {
+        List(selection: listSelection) {
             if notes.isEmpty {
                 Section {
                     VStack(spacing: 12) {
@@ -125,13 +343,9 @@ private struct NotesListPanel: View {
                 ForEach(groupedNotes, id: \.title) { group in
                     Section(group.title) {
                         ForEach(group.items) { note in
-                            NotesListRow(note: note, selected: selection == note.id)
+                            NotesListRow(note: note,
+                                         selected: selection == note.id)
                                 .tag(note.id)
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    selection = note.id
-                                    workspace.select(note: note)
-                                }
                                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                     Button(role: .destructive) {
                                         workspace.delete(note: note)
@@ -139,12 +353,7 @@ private struct NotesListPanel: View {
                                         Label("Delete", systemImage: "trash")
                                     }
                                     Button(note.isPinned ? "Unpin" : "Pin") {
-                                        workspace.update(note: note,
-                                                         mutate: { $0.isPinned.toggle() },
-                                                         editor: "user",
-                                                         summary: note.isPinned ? "Unpinned" : "Pinned",
-                                                         diff: "pin_toggle",
-                                                         selection: nil)
+                                        workspace.togglePinned(notes: [note], pinned: !note.isPinned)
                                     }
                                 }
                         }
@@ -217,6 +426,19 @@ private struct NotesListRow: View {
                 .font(.subheadline)
                 .foregroundStyle(T.textSecondary)
                 .lineLimit(2)
+            HStack(spacing: 6) {
+                if let folder = note.folder {
+                    Label(folder.name, systemImage: "folder")
+                        .labelStyle(.iconOnly)
+                        .foregroundStyle(T.textSecondary.opacity(0.8))
+                        .help(folder.name)
+                }
+                if note.tags.isEmpty == false {
+                    Text(note.tags.joined(separator: ", "))
+                        .font(.caption2)
+                        .foregroundStyle(T.textSecondary)
+                }
+            }
         }
         .padding(.vertical, 8)
     }
@@ -288,9 +510,9 @@ private struct NoteDetailView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        ZStack(alignment: .bottom) {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 16) {
                     header
                     titleField
                     modePicker
@@ -302,17 +524,17 @@ private struct NoteDetailView: View {
                     }
                     editorStack
                 }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 28)
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+                .padding(.bottom, DockMetrics.expandedHeight + 120)
             }
-            Divider()
+
             NoteEditingToolbar(onChecklist: insertChecklist,
                                 onFormatting: toggleFormattingSuggestions,
                                 onAI: { showAIPanel = true },
                                 onSketch: startSketch)
-            .padding(.horizontal, 18)
-            .padding(.vertical, 10)
-            .background(.ultraThinMaterial)
+            .padding(.horizontal, 28)
+            .padding(.bottom, 28)
         }
         .background(T.surface.opacity(0.95).ignoresSafeArea())
         .toolbar { detailToolbar }
@@ -335,33 +557,19 @@ private struct NoteDetailView: View {
 
     private var header: some View {
         HStack(spacing: 12) {
-            Capsule()
-                .fill(T.surface.opacity(0.45))
-                .frame(width: 44, height: 44)
-                .overlay(Image(systemName: "person.crop.circle").font(.system(size: 20, weight: .medium)).foregroundStyle(T.textSecondary))
+            glassIconButton(systemName: "person.crop.circle")
 
-            Spacer()
+            Spacer(minLength: 12)
 
-            Button(action: shareNote) {
-                Image(systemName: "square.and.arrow.up")
-                    .font(.system(size: 18, weight: .medium))
-                    .padding(10)
-                    .background(T.surface.opacity(0.35), in: Capsule())
-            }
-
-            Button(action: { }) {
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 18, weight: .medium))
-                    .padding(10)
-                    .background(T.surface.opacity(0.35), in: Circle())
-            }
+            glassIconButton(systemName: "square.and.arrow.up", action: shareNote)
+            glassIconButton(systemName: "ellipsis", action: { })
         }
     }
 
     private var titleField: some View {
         VStack(alignment: .leading, spacing: 8) {
             TextField("Title", text: $titleDraft)
-                .font(.system(size: 32, weight: .semibold, design: .rounded))
+                .font(.system(size: 28, weight: .semibold, design: .rounded))
                 .foregroundStyle(T.text)
                 .focused($titleFocused)
                 .textInputAutocapitalization(.sentences)
@@ -369,7 +577,7 @@ private struct NoteDetailView: View {
                 .font(.footnote)
                 .foregroundStyle(T.textSecondary)
         }
-        .padding(.bottom, 12)
+        .padding(.bottom, 8)
     }
 
     private var modePicker: some View {
@@ -497,9 +705,10 @@ private struct NoteMarkdownPreview: View {
     @Environment(\.tokens) private var T
     let text: String
     var body: some View {
-        let attributed = renderMarkdownAttributed(text, linkColor: T.link, preferSystemStyling: true)
+        var attributed = renderMarkdownAttributed(text, linkColor: T.link, preferSystemStyling: true)
+        attributed = attributed.applyingParagraphStyle(lineSpacing: 6, paragraphSpacing: 12)
+
         return Text(attributed)
-            .font(.body)
             .foregroundStyle(T.text)
             .frame(maxWidth: .infinity, alignment: .leading)
             .textSelection(.enabled)
@@ -508,33 +717,57 @@ private struct NoteMarkdownPreview: View {
 }
 
 private struct NoteEditingToolbar: View {
+    @Environment(\.tokens) private var T
     var onChecklist: () -> Void
     var onFormatting: () -> Void
     var onAI: () -> Void
     var onSketch: () -> Void
 
     var body: some View {
-        HStack(spacing: 18) {
-            Button(action: onChecklist) {
-                Image(systemName: "checklist")
-                    .font(.system(size: 18, weight: .medium))
-            }
-            Button(action: onSketch) {
-                Image(systemName: "pencil.tip")
-                    .font(.system(size: 18, weight: .medium))
-            }
-            Spacer()
-            Button(action: onAI) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 20, weight: .semibold))
-            }
-            Button(action: onFormatting) {
-                Image(systemName: "text.badge.plus")
-                    .font(.system(size: 18, weight: .medium))
-            }
+        HStack(spacing: 28) {
+            glassToolButton(systemName: "checklist", action: onChecklist)
+            glassToolButton(systemName: "pencil.tip", action: onSketch)
+            glassToolButton(systemName: "sparkles", action: onAI)
+            glassToolButton(systemName: "text.badge.plus", action: onFormatting)
+        }
+    }
+
+    private func glassToolButton(systemName: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(T.text)
+                .frame(width: 54, height: 54)
+                .background(
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .overlay(Circle().stroke(T.borderSoft.opacity(0.35), lineWidth: 0.7))
+                )
         }
         .buttonStyle(.plain)
-        .foregroundColor(Color.primary)
+        .shadow(color: T.shadow.opacity(0.18), radius: 10, y: 8)
+    }
+}
+
+extension NoteDetailView {
+    @ViewBuilder
+    private func glassIconButton(systemName: String, action: @escaping () -> Void = {}) -> some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(T.text)
+                .frame(width: 34, height: 34)
+                .background(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .stroke(T.borderSoft.opacity(0.45), lineWidth: 0.7)
+                        )
+                )
+        }
+        .buttonStyle(.plain)
+        .shadow(color: T.shadow.opacity(0.18), radius: 8, y: 6)
     }
 }
 
@@ -556,14 +789,70 @@ private struct NotesAIPanel: View {
                                 messageView(for: entry)
                                     .id(idx)
                             }
+                            if let streaming = session.streamingThought, streaming.isEmpty == false {
+                                Text(streaming)
+                                    .font(.callout)
+                                    .foregroundStyle(.secondary)
+                                    .padding(12)
+                                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                    .id("streaming")
+                            }
                         }
                         .onChange(of: session.messages.count) { _, _ in
                             withAnimation { proxy.scrollTo(session.messages.count - 1, anchor: .bottom) }
-                            let latest = session.currentNote.content
-                            editorState.text = latest
-                            onContentApplied(latest)
+                            syncEditor()
+                        }
+                        .onChange(of: session.streamingThought) { _, _ in
+                            withAnimation { proxy.scrollTo("streaming", anchor: .bottom) }
                         }
                     }
+                }
+
+                if !session.pendingPreviews.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("Proposed Changes")
+                                .font(.headline)
+                            Spacer()
+                            Button("Apply All") { applyAllPreviews() }
+                                .disabled(isSending)
+                        }
+                        ForEach(session.pendingPreviews) { preview in
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(preview.description)
+                                    .font(.subheadline.weight(.semibold))
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Before")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    Text(preview.beforeSnippet)
+                                        .font(.system(.body, design: .monospaced))
+                                        .textSelection(.enabled)
+                                    Text("After")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    Text(preview.afterSnippet)
+                                        .font(.system(.body, design: .monospaced))
+                                        .textSelection(.enabled)
+                                }
+                                HStack {
+                                    Button("Apply") { apply(preview: preview) }
+                                        .buttonStyle(.borderedProminent)
+                                    Button("Discard") { discard(preview: preview) }
+                                        .buttonStyle(.bordered)
+                                }
+                            }
+                            .padding(12)
+                            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        }
+                    }
+                }
+
+                if let error = session.lastError {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
                 TextField("Ask the assistant to edit…", text: $prompt, axis: .vertical)
@@ -612,6 +901,11 @@ private struct NotesAIPanel: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
+        case .system(let text):
+            Text(text)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
@@ -623,19 +917,36 @@ private struct NotesAIPanel: View {
         prompt = ""
         Task {
             await session.send(prompt: currentPrompt)
-            await MainActor.run {
-                isSending = false
-                let latest = session.currentNote.content
-                editorState.text = latest
-                onContentApplied(latest)
-            }
+            syncEditor()
+            isSending = false
         }
+    }
+
+    private func apply(preview: NoteAIToolchain.ActionPreview) {
+        session.apply(preview: preview)
+        syncEditor()
+    }
+
+    private func discard(preview: NoteAIToolchain.ActionPreview) {
+        session.discard(preview: preview)
+    }
+
+    private func applyAllPreviews() {
+        session.applyAllPreviews()
+        syncEditor()
+    }
+
+    private func syncEditor() {
+        let latest = session.currentNote.content
+        editorState.text = latest
+        onContentApplied(latest)
     }
 }
 
 private struct NoteInspectorView: View {
     @Environment(\.dismiss) private var dismiss
     let note: Note
+    let workspace: NotesWorkspace
 
     private var revisions: [NoteRevision] {
         note.revisions.sorted(by: { $0.createdAt > $1.createdAt })
@@ -652,6 +963,9 @@ private struct NoteInspectorView: View {
                     if note.tags.isEmpty == false {
                         LabeledContent("Tags", value: note.tags.joined(separator: ", "))
                     }
+                    if let folder = note.folder {
+                        LabeledContent("Folder", value: folder.name)
+                    }
                 }
 
                 Section("Revisions") {
@@ -660,31 +974,30 @@ private struct NoteInspectorView: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(revisions) { revision in
-                            VStack(alignment: .leading, spacing: 6) {
-                                HStack {
+                            NavigationLink(value: revision.id) {
+                                VStack(alignment: .leading, spacing: 4) {
                                     Text(revision.summary)
-                                        .font(.headline)
-                                    Spacer()
+                                        .font(.subheadline.weight(.semibold))
                                     Text(revision.createdAt.formatted(date: .abbreviated, time: .shortened))
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                 }
-                                Text("Editor: \(revision.editor)")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                if revision.appliedDiff.isEmpty == false {
-                                    Text(revision.appliedDiff)
-                                        .font(.caption2)
-                                        .foregroundStyle(.secondary)
-                                        .textSelection(.enabled)
-                                }
+                                .padding(.vertical, 4)
                             }
-                            .padding(.vertical, 6)
                         }
                     }
                 }
             }
             .navigationTitle("Note Inspector")
+            .navigationDestination(for: UUID.self) { revisionID in
+                if let revision = revisions.first(where: { $0.id == revisionID }) {
+                    RevisionDetailView(note: note,
+                                       revision: revision,
+                                       onRestore: {
+                                           workspace.restore(note: note, to: revision)
+                                       })
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") { dismiss() }
@@ -692,6 +1005,135 @@ private struct NoteInspectorView: View {
             }
         }
         .presentationDetents([.medium, .large])
+    }
+}
+
+private struct RevisionDetailView: View {
+    @Environment(\.dismiss) private var dismiss
+    let note: Note
+    let revision: NoteRevision
+    let onRestore: () -> Void
+    @State private var showRestoreConfirm = false
+
+    private var diffLines: [DiffLine] {
+        DiffBuilder.buildDiff(from: revision.contentSnapshot, to: note.content)
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(revision.summary)
+                        .font(.title3.weight(.semibold))
+                    Text("Edited by \(revision.editor) on \(revision.createdAt.formatted(date: .abbreviated, time: .shortened))")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Diff vs. current")
+                        .font(.headline)
+                    ForEach(diffLines) { line in
+                        Text(line.description)
+                            .font(.system(.body, design: .monospaced))
+                            .foregroundStyle(line.color)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                .padding(.vertical, 8)
+            }
+            .padding(20)
+        }
+        .navigationTitle("Revision")
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Restore") { showRestoreConfirm = true }
+            }
+        }
+        .alert("Restore Revision?", isPresented: $showRestoreConfirm) {
+            Button("Cancel", role: .cancel) { }
+            Button("Restore", role: .destructive) {
+                onRestore()
+                dismiss()
+            }
+        } message: {
+            Text("This will replace the note content with the snapshot from this revision.")
+        }
+    }
+}
+
+struct DiffLine: Identifiable {
+    enum Kind { case same, added, removed }
+    let id = UUID()
+    let kind: Kind
+    let text: String
+
+    var description: String {
+        switch kind {
+        case .same: return "  " + text
+        case .added: return "+ " + text
+        case .removed: return "- " + text
+        }
+    }
+
+    var color: Color {
+        switch kind {
+        case .same: return .primary
+        case .added: return .green
+        case .removed: return .red
+        }
+    }
+}
+
+enum DiffBuilder {
+    static func buildDiff(from old: String, to new: String) -> [DiffLine] {
+        let oldLines = old.components(separatedBy: "\n")
+        let newLines = new.components(separatedBy: "\n")
+        let lcsTable = longestCommonSubsequenceTable(old: oldLines, new: newLines)
+        var result: [DiffLine] = []
+        var i = oldLines.count
+        var j = newLines.count
+        while i > 0 || j > 0 {
+            if i > 0, j > 0, oldLines[i - 1] == newLines[j - 1] {
+                result.append(DiffLine(kind: .same, text: oldLines[i - 1]))
+                i -= 1
+                j -= 1
+            } else if j > 0, (i == 0 || lcsTable[i][j - 1] >= lcsTable[i - 1][j]) {
+                result.append(DiffLine(kind: .added, text: newLines[j - 1]))
+                j -= 1
+            } else if i > 0, (j == 0 || lcsTable[i][j - 1] < lcsTable[i - 1][j]) {
+                result.append(DiffLine(kind: .removed, text: oldLines[i - 1]))
+                i -= 1
+            }
+        }
+        return result.reversed()
+    }
+
+    private static func longestCommonSubsequenceTable(old: [String], new: [String]) -> [[Int]] {
+        let m = old.count
+        let n = new.count
+        var table = Array(repeating: Array(repeating: 0, count: n + 1), count: m + 1)
+        for i in 0..<m {
+            for j in 0..<n {
+                if old[i] == new[j] {
+                    table[i + 1][j + 1] = table[i][j] + 1
+                } else {
+                    table[i + 1][j + 1] = max(table[i][j + 1], table[i + 1][j])
+                }
+            }
+        }
+        return table
+    }
+}
+
+private extension AttributedString {
+    func applyingParagraphStyle(lineSpacing: CGFloat, paragraphSpacing: CGFloat) -> AttributedString {
+        let mutable = NSMutableAttributedString(attributedString: NSAttributedString(self))
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.lineSpacing = lineSpacing
+        paragraph.paragraphSpacing = paragraphSpacing
+        mutable.addAttribute(.paragraphStyle, value: paragraph, range: NSRange(location: 0, length: mutable.length))
+        return AttributedString(mutable)
     }
 }
 

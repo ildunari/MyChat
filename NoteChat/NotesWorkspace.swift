@@ -6,29 +6,23 @@ import Combine
 final class NotesWorkspace: ObservableObject {
     @Published private(set) var notes: [Note] = []
     @Published var selectedNote: Note?
+    @Published private(set) var folders: [NoteFolder] = []
 
     private let context: ModelContext
     private var fetchDescriptor: FetchDescriptor<Note>
+    private var folderDescriptor: FetchDescriptor<NoteFolder>
 
     init(context: ModelContext) {
         self.context = context
         self.fetchDescriptor = FetchDescriptor<Note>()
+        self.folderDescriptor = FetchDescriptor<NoteFolder>(sortBy: [SortDescriptor(\NoteFolder.name, order: .forward)])
         reload()
         selectedNote = notes.first
     }
 
     func reload() {
-        let allNotes = (try? context.fetch(fetchDescriptor)) ?? []
-        // Sort manually after fetching
-        notes = allNotes.sorted { first, second in
-            if first.isPinned != second.isPinned {
-                return first.isPinned && !second.isPinned
-            }
-            return first.updatedAt > second.updatedAt
-        }
-        if let selected = selectedNote, !notes.contains(where: { $0.id == selected.id }) {
-            selectedNote = notes.first
-        }
+        reloadNotes()
+        reloadFolders()
     }
 
     @discardableResult
@@ -44,9 +38,7 @@ final class NotesWorkspace: ObservableObject {
     }
 
     func delete(note: Note) {
-        context.delete(note)
-        try? context.save()
-        reload()
+        delete(notes: [note])
     }
 
     func select(note: Note?) {
@@ -69,13 +61,23 @@ final class NotesWorkspace: ObservableObject {
     }
 
     func recordRevision(for note: Note, summary: String, diff: String, editor: String, selectionRange: Range<Int>?) {
-        let revision = NoteRevision(createdAt: Date(), editor: editor, summary: summary, appliedDiff: diff, selectionRange: selectionRange, note: note)
+        let revision = NoteRevision(createdAt: Date(),
+                                    editor: editor,
+                                    summary: summary,
+                                    appliedDiff: diff,
+                                    selectionRange: selectionRange,
+                                    contentSnapshot: note.content,
+                                    note: note)
         context.insert(revision)
         try? context.save()
     }
 }
 
 extension NotesWorkspace {
+    var availableTags: [String] {
+        Set(notes.flatMap { $0.tags }).sorted(by: { $0.lowercased() < $1.lowercased() })
+    }
+
     func updateContent(of note: Note, replacing range: Range<Int>, with text: String, editor: String) {
         let current = note.content
         guard let swiftRange = current.range(for: range) else { return }
@@ -107,6 +109,97 @@ extension NotesWorkspace {
     func replaceAll(in note: Note, with text: String, editor: String) {
         let diff = "replace_all"
         update(note: note, mutate: { item in item.content = text }, editor: editor, summary: "Replaced content", diff: diff, selection: 0..<text.count)
+    }
+
+}
+
+// MARK: - Bulk operations & helpers
+extension NotesWorkspace {
+    func addTag(_ tag: String, to notes: [Note]) {
+        guard tag.isEmpty == false else { return }
+        for note in notes {
+            if note.tags.contains(where: { $0.caseInsensitiveCompare(tag) == .orderedSame }) {
+                continue
+            }
+            note.tags.append(tag)
+            note.updatedAt = Date()
+        }
+        try? context.save()
+        reload()
+    }
+
+    func removeTag(_ tag: String, from notes: [Note]) {
+        guard tag.isEmpty == false else { return }
+        for note in notes {
+            note.tags.removeAll { $0.caseInsensitiveCompare(tag) == .orderedSame }
+            note.updatedAt = Date()
+        }
+        try? context.save()
+        reload()
+    }
+
+    func assign(notes: [Note], to folder: NoteFolder?) {
+        for note in notes {
+            note.folder = folder
+            note.updatedAt = Date()
+        }
+        try? context.save()
+        reload()
+    }
+
+    func togglePinned(notes: [Note], pinned: Bool) {
+        for note in notes {
+            note.isPinned = pinned
+            note.updatedAt = Date()
+        }
+        try? context.save()
+        reload()
+    }
+
+    func delete(notes: [Note]) {
+        for note in notes {
+            context.delete(note)
+        }
+        try? context.save()
+        reload()
+    }
+
+    @discardableResult
+    func createFolder(name: String, colorHex: String? = nil) -> NoteFolder {
+        let folder = NoteFolder(name: name, colorHex: colorHex)
+        context.insert(folder)
+        try? context.save()
+        reloadFolders()
+        return folder
+    }
+
+    func restore(note: Note, to revision: NoteRevision) {
+        update(note: note,
+               mutate: { $0.content = revision.contentSnapshot },
+               editor: "user",
+               summary: "Reverted to revision",
+               diff: "restore_\(revision.id)",
+               selection: nil)
+    }
+}
+
+// MARK: - Private helpers
+private extension NotesWorkspace {
+    func reloadNotes() {
+        let allNotes = (try? context.fetch(fetchDescriptor)) ?? []
+        notes = allNotes.sorted { first, second in
+            if first.isPinned != second.isPinned {
+                return first.isPinned && !second.isPinned
+            }
+            return first.updatedAt > second.updatedAt
+        }
+        if let selected = selectedNote, !notes.contains(where: { $0.id == selected.id }) {
+            selectedNote = notes.first
+        }
+    }
+
+    func reloadFolders() {
+        folders = (try? context.fetch(folderDescriptor)) ?? []
     }
 }
 

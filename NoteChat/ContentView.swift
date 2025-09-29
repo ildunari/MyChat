@@ -19,6 +19,16 @@ struct ContentView: View {
     @State private var newChatTitle: String = ""
     @State private var navNewChat: Chat? = nil
     @State private var navBarHeight: CGFloat = 0
+    @State private var scrollOffset: CGFloat = 0
+    private var homeTitle: String {
+        let first = store.userFirstName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if first.isEmpty == false { return "Hi, \(first)" }
+        let username = store.userUsername.trimmingCharacters(in: .whitespacesAndNewlines)
+        if username.isEmpty == false { return "Welcome, \(username)" }
+        let last = store.userLastName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if last.isEmpty == false { return "Hi, \(last)" }
+        return "Home"
+    }
     var body: some View {
         NavigationStack {
             ZStack {
@@ -28,6 +38,14 @@ struct ContentView: View {
                     let topPadding = proxy.safeAreaInsets.top + navBarHeight + 24
                     ScrollView {
                         VStack(spacing: 16) {
+                            // Invisible tracker view for scroll offset
+                            GeometryReader { geo in
+                                Color.clear
+                                    .preference(key: ScrollOffsetPreferenceKey.self, 
+                                               value: geo.frame(in: .global).minY - proxy.safeAreaInsets.top - navBarHeight)
+                            }
+                            .frame(height: 1)
+                            
                             ForEach(sectionOrder, id: \.self) { kind in
                                 let offsetY = dragOffsets[kind] ?? 0
                                 SectionContainer(
@@ -101,7 +119,7 @@ struct ContentView: View {
         }
         .background(T.bg.ignoresSafeArea())
         .safeAreaInset(edge: .top, spacing: 0) {
-            GlassNavigationBar(title: "Home", trailing: {
+            AnimatedGlassNavigationBar(title: homeTitle, scrollOffset: scrollOffset, trailing: {
                 ComposeButton { createAndNavigate() }
             })
             .padding(.horizontal, 20)
@@ -112,6 +130,11 @@ struct ContentView: View {
                     Color.clear.preference(key: NavBarHeightPreferenceKey.self, value: navGeo.size.height)
                 }
             )
+        }
+        .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+            withAnimation(.interactiveSpring(response: 0.3, dampingFraction: 0.8, blendDuration: 0)) {
+                scrollOffset = value
+            }
         }
         .onAppear {
             loadOrderFromStore()

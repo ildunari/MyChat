@@ -10,6 +10,7 @@ struct RootView: View {
     @Environment(SettingsStore.self) private var store
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @State private var tab: MainTab = .home
+    @StateObject private var dockController = DockController()
     @Namespace private var highlightNS
 
     init() {
@@ -31,18 +32,23 @@ struct RootView: View {
                 ChatRootView()
                     .tag(MainTab.chat)
 
-                NotesPlaceholderView()
+                NotesTabContainer()
                     .tag(MainTab.notes)
 
-                MediaPlaceholderView()
+                MediaWorkspaceView()
                     .tag(MainTab.media)
 
                 SettingsView()
                     .tag(MainTab.settings)
             }
+            .environmentObject(dockController)
             .toolbar(.hidden, for: .tabBar)
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                DockTabBar(selected: $tab, highlightNS: highlightNS)
+                DockTabBar(selected: $tab,
+                           highlightNS: highlightNS,
+                           collapseProgress: dockController.collapseProgress,
+                           currentHeight: dockController.currentHeight,
+                           onExpand: { dockController.expand() })
                     .padding(.horizontal, 16)
                     .padding(.bottom, 12)
                     .frame(maxWidth: .infinity)
@@ -57,27 +63,58 @@ private struct DockTabBar: View {
     @Environment(\.colorScheme) private var scheme
     @Binding var selected: MainTab
     var highlightNS: Namespace.ID
+    var collapseProgress: CGFloat
+    var currentHeight: CGFloat
+    var onExpand: () -> Void
 
     private let items: [MainTab] = [.home, .chat, .notes, .media, .settings]
 
     var body: some View {
-        HStack(spacing: 8) {
-            ForEach(items, id: \.self) { item in
-                dockButton(for: item)
+        let fullVisibility = max(0, 1 - collapseProgress / 0.65)
+        let collapsedVisibility = min(max((collapseProgress - 0.25) / 0.75, 0), 1)
+
+        ZStack {
+            LiquidGlassPanel(cornerRadius: 30,
+                              padding: EdgeInsets(top: 14, leading: 14, bottom: 14, trailing: 14),
+                              shadowRadius: 20,
+                              shadowOpacity: 0.24) {
+                HStack(spacing: 8) {
+                    ForEach(items, id: \.self) { item in
+                        dockButton(for: item)
+                    }
+                }
             }
+            .opacity(fullVisibility)
+            .allowsHitTesting(fullVisibility > 0.1)
+
+            LiquidGlassPanel(cornerRadius: 20,
+                              padding: EdgeInsets(top: 6, leading: 18, bottom: 6, trailing: 18),
+                              shadowRadius: 12,
+                              shadowOpacity: 0.18) {
+                Button(action: onExpand) {
+                    VStack(spacing: 6) {
+                        Capsule()
+                            .fill(T.borderSoft.opacity(scheme == .dark ? 0.45 : 0.35))
+                            .frame(height: 3)
+                            .overlay(
+                                HStack(spacing: 6) {
+                                    AppIcon.chevronUp(12)
+                                    AppIcon.chevronUp(12)
+                                }
+                                .foregroundStyle(T.accent)
+                            )
+                    }
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Show dock tabs")
+            }
+            .opacity(collapsedVisibility)
+            .allowsHitTesting(collapsedVisibility > 0.1)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 12)
-        .frame(height: DockMetrics.height)
-        .background(
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 30, style: .continuous)
-                        .stroke(T.borderSoft.opacity(scheme == .dark ? 0.32 : 0.55), lineWidth: 0.8)
-                )
-        )
-        .shadow(color: T.shadow.opacity(0.25), radius: 20, y: 16)
+        .frame(height: currentHeight)
+        .animation(.easeInOut(duration: 0.24), value: collapseProgress)
     }
 
     @ViewBuilder
@@ -144,7 +181,10 @@ private struct DockTabBar: View {
     }
 }
 
-enum DockMetrics { static let height: CGFloat = 84 }
+enum DockMetrics {
+    static let expandedHeight: CGFloat = 84
+    static let collapsedHeight: CGFloat = 32
+}
 
 // MARK: - Chat Root with left drawer
 
@@ -319,33 +359,7 @@ private struct ChatRootView: View {
     }
 }
 
-// MARK: - Placeholder Views
-private struct NotesPlaceholderView: View {
-    @Environment(\.tokens) private var T
-    var body: some View {
-        VStack(spacing: 12) {
-            Text("🚧 Under construction")
-                .font(.headline)
-                .foregroundStyle(T.text)
-            Text("Notes will arrive soon.")
-                .foregroundStyle(T.textSecondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-private struct MediaPlaceholderView: View {
-    @Environment(\.tokens) private var T
-    var body: some View {
-        VStack(spacing: 12) {
-            Text("🚧 Under construction")
-                .font(.headline)
-                .foregroundStyle(T.text)
-            Text("Media gallery will arrive soon.")
-                .foregroundStyle(T.textSecondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
+// MARK: - No placeholder views needed - both workspaces are implemented
 
 // MARK: - Haptics helper
 private enum Haptics {

@@ -12,7 +12,16 @@ import SwiftData
 struct NoteChatApp: App {
     // Create the SwiftData container for our models, with safe recovery on failure
     let container: ModelContainer = {
-        let schema = Schema([Chat.self, Message.self, AppSettings.self, NoteFolder.self, Note.self, NoteRevision.self])
+        let schema = Schema([
+            Chat.self, 
+            Message.self, 
+            AppSettings.self, 
+            NoteFolder.self, 
+            Note.self, 
+            NoteRevision.self,
+            MediaCanvas.self,
+            MediaAsset.self
+        ])
 
         // Resolve a stable store URL in Application Support
         let storeURL: URL = {

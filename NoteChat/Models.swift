@@ -155,6 +155,7 @@ final class AppSettings: Identifiable {
     }
 }
 
+// MARK: - Notes Models
 @Model
 final class NoteFolder: Identifiable {
     @Attribute(.unique) var id: UUID
@@ -239,5 +240,83 @@ final class NoteRevision: Identifiable {
         self.selectionRange = selectionRange
         self.contentSnapshot = contentSnapshot
         self.note = note
+    }
+}
+
+// MARK: - Media Models
+@Model
+final class MediaCanvas: Identifiable {
+    @Attribute(.unique) var id: UUID
+    var title: String
+    var prompt: String
+    var createdAt: Date
+    var updatedAt: Date
+    var providerIdentifier: String
+    var defaultModelIdentifier: String
+    var aspectRatio: String
+    @Attribute(.externalStorage) var coverImageData: Data?
+    @Relationship(deleteRule: .cascade, inverse: \MediaAsset.canvas) var assets: [MediaAsset]
+
+    init(
+        id: UUID = UUID(),
+        title: String,
+        prompt: String = "",
+        createdAt: Date = Date(),
+        updatedAt: Date = Date(),
+        providerIdentifier: String = "openai",
+        defaultModelIdentifier: String = "gpt-image-1",
+        aspectRatio: String = "square",
+        coverImageData: Data? = nil,
+        assets: [MediaAsset] = []
+    ) {
+        self.id = id
+        self.title = title
+        self.prompt = prompt
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.providerIdentifier = providerIdentifier
+        self.defaultModelIdentifier = defaultModelIdentifier
+        self.aspectRatio = aspectRatio
+        self.coverImageData = coverImageData
+        self.assets = assets
+    }
+}
+
+@Model
+final class MediaAsset: Identifiable {
+    @Attribute(.unique) var id: UUID
+    var prompt: String
+    var createdAt: Date
+    var variationLevel: Double
+    var modelIdentifier: String
+    var isFavorite: Bool
+    var sourceType: String
+    var aspectRatio: String
+    @Relationship var canvas: MediaCanvas?
+    @Attribute(.externalStorage) var imageData: Data?
+
+    init(
+        id: UUID = UUID(),
+        prompt: String,
+        createdAt: Date = Date(),
+        variationLevel: Double = 0.0,
+        modelIdentifier: String = "gpt-image-1",
+        isFavorite: Bool = false,
+        sourceType: String = "generated",
+        aspectRatio: String = "square",
+        canvas: MediaCanvas? = nil,
+        imageData: Data? = nil
+    ) {
+        self.id = id
+        self.prompt = prompt
+        self.createdAt = createdAt
+        self.variationLevel = variationLevel
+        self.modelIdentifier = modelIdentifier
+        self.isFavorite = isFavorite
+        self.sourceType = sourceType
+        self.aspectRatio = aspectRatio
+        self.canvas = canvas
+        self.imageData = imageData
+>>>>>>> feat/media-liquid-glass
     }
 }

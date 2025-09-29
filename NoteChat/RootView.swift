@@ -35,7 +35,7 @@ struct RootView: View {
                 NotesTabContainer()
                     .tag(MainTab.notes)
 
-                MediaPlaceholderView()
+                MediaWorkspaceView()
                     .tag(MainTab.media)
 
                 SettingsView()
@@ -359,20 +359,7 @@ private struct ChatRootView: View {
     }
 }
 
-// MARK: - Placeholder Views
-private struct MediaPlaceholderView: View {
-    @Environment(\.tokens) private var T
-    var body: some View {
-        VStack(spacing: 12) {
-            Text("🚧 Under construction")
-                .font(.headline)
-                .foregroundStyle(T.text)
-            Text("Media gallery will arrive soon.")
-                .foregroundStyle(T.textSecondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
+// MARK: - No placeholder views needed - both workspaces are implemented
 
 // MARK: - Haptics helper
 private enum Haptics {

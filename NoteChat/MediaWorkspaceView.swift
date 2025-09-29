@@ -1,0 +1,899 @@
+import SwiftUI
+import UIKit
+import PhotosUI
+import Photos
+import SwiftData
+
+struct MediaWorkspaceView: View {
+    @Environment(\.tokens) private var T
+    @Environment(\.modelContext) private var context
+    @Environment(SettingsStore.self) private var store
+    @Environment(\.colorScheme) private var scheme
+    @Query(sort: \MediaCanvas.updatedAt, order: .reverse, animation: .default)
+    private var canvases: [MediaCanvas]
+
+    @State private var prompt: String = ""
+    @State private var variationCount: Double = 3
+    @State private var variationIntensity: Double = 0.35
+    @State private var selectedProviderID: String = ""
+    @State private var availableModels: [String] = []
+    @State private var selectedModel: String = ""
+    @State private var isGenerating: Bool = false
+    @State private var generationProgress: String?
+    @State private var generated: [GeneratedImage] = []
+    @State private var selectedGeneratedID: UUID?
+    @State private var pickerItem: PhotosPickerItem?
+    @State private var errorMessage: String?
+    @State private var showingCanvas: MediaCanvas?
+    @State private var isSavingToPhotos: Bool = false
+    @FocusState private var promptFocused: Bool
+
+    private let adaptiveColumns: [GridItem] = [
+        GridItem(.adaptive(minimum: 320, maximum: 420), spacing: 24, alignment: .top)
+    ]
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 28) {
+                if #available(iOS 18.0, *) {
+                    GlassEffectContainer(spacing: 24) {
+                        contentGrid
+                    }
+                } else {
+                    contentGrid
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 32)
+        }
+        .navigationTitle("Canvas Studio")
+        .onAppear { configureProviderIfNeeded() }
+        .onChange(of: providerOptions.hashValue) { _ in configureProviderIfNeeded() }
+        .onChange(of: pickerItem) { newValue in
+            guard let item = newValue else { return }
+            Task { await importPhoto(from: item) }
+        }
+    }
+
+    @ViewBuilder
+    private var contentGrid: some View {
+        LazyVGrid(columns: adaptiveColumns, spacing: 24) {
+            heroCard
+                .gridCellColumns(2)
+
+            creationCard
+
+            libraryCard
+
+            historyCard
+        }
+    }
+
+    private var heroCard: some View {
+        LiquidGlassCard {
+            HStack(alignment: .center, spacing: 24) {
+                Image("MediaCanvasHero")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 140, height: 140)
+                    .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 28, style: .continuous)
+                            .stroke(T.borderSoft.opacity(0.35), lineWidth: 0.8)
+                    )
+                    .ifAvailableGlass { view in
+                        view.glassEffect(.regular.tint(T.accent).interactive(), in: .rect(cornerRadius: 28))
+                    }
+
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Media Canvas Studio")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundStyle(T.text)
+                    Text("Design, remix, and organize AI-generated canvases with responsive Liquid Glass containers. Start from a prompt, remix past work, and keep everything in sync with your creative library.")
+                        .font(.subheadline)
+                        .foregroundStyle(T.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    HStack(spacing: 12) {
+                        Button {
+                            promptFocused = true
+                        } label: {
+                            Label("New Canvas", systemImage: "scribble.variable")
+                        }
+                        .liquidGlassButtonStyle(prominent: true)
+
+                        Button {
+                            if let first = canvases.first {
+                                showingCanvas = first
+                            }
+                        } label: {
+                            Label("Open Library", systemImage: "square.grid.2x2")
+                        }
+                        .liquidGlassButtonStyle()
+                        .disabled(canvases.isEmpty)
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+        }
+    }
+
+    private var creationCard: some View {
+        LiquidGlassCard {
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Create")
+                    .font(.title3.bold())
+                    .foregroundStyle(T.text)
+
+                if providerOptions.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Connect an image provider")
+                            .font(.headline)
+                            .foregroundStyle(T.text)
+                        Text("Add an API key under Settings → Providers to unlock image generation. Imported photos still appear here once you load them.")
+                            .font(.subheadline)
+                            .foregroundStyle(T.textSecondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(T.surface)
+                            .opacity(0.6)
+                    )
+                }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Prompt")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(T.textSecondary)
+                    TextField("Describe what you want to create", text: $prompt, axis: .vertical)
+                        .lineLimit(3, reservesSpace: true)
+                        .textFieldStyle(.roundedBorder)
+                        .focused($promptFocused)
+                }
+
+                HStack(spacing: 16) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Variations: \(Int(variationCount))")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(T.textSecondary)
+                        Slider(value: $variationCount, in: 1...6, step: 1)
+                            .tint(T.accent)
+                    }
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Remix intensity")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(T.textSecondary)
+                        Slider(value: $variationIntensity, in: 0...1)
+                            .tint(T.accent)
+                    }
+                }
+
+                if !providerOptions.isEmpty {
+                    providerPicker
+                }
+
+                HStack(spacing: 12) {
+                    PhotosPicker(selection: $pickerItem, matching: .images, photoLibrary: .shared()) {
+                        Label("Load from Photos", systemImage: "photo.on.rectangle")
+                    }
+                    .liquidGlassButtonStyle()
+
+                    Button(action: performGeneration) {
+                        if isGenerating {
+                            ProgressView()
+                                .progressViewStyle(.circular)
+                        } else {
+                            Label("Generate", systemImage: "sparkles")
+                        }
+                    }
+                    .liquidGlassButtonStyle(prominent: true)
+                    .disabled(isGenerating || providerOptions.isEmpty)
+                }
+
+                if let progress = generationProgress {
+                    Text(progress)
+                        .font(.footnote)
+                        .foregroundStyle(T.textSecondary)
+                }
+
+                if let error = errorMessage {
+                    Text(error)
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                }
+
+                if !generated.isEmpty {
+                    Divider()
+                    generatedGrid
+                    actionBar
+                }
+            }
+        }
+    }
+
+    private var providerPicker: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Provider & model")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(T.textSecondary)
+            HStack(spacing: 12) {
+                Picker("Provider", selection: $selectedProviderID) {
+                    ForEach(providerOptions) { option in
+                        Text(option.name).tag(option.id)
+                    }
+                }
+                .pickerStyle(.menu)
+                .frame(maxWidth: .infinity)
+
+                Picker("Model", selection: $selectedModel) {
+                    ForEach(availableModels, id: \.self) { model in
+                        Text(model).tag(model)
+                    }
+                }
+                .pickerStyle(.menu)
+                .frame(maxWidth: .infinity)
+                .disabled(availableModels.isEmpty)
+            }
+        }
+    }
+
+    private var generatedGrid: some View {
+        LazyVGrid(columns: adaptiveColumns, spacing: 16) {
+            ForEach(generated) { item in
+                GeneratedThumbnail(imageData: item.data, title: itemTitle(for: item), isSelected: selectedGeneratedID == item.id, accent: T.accent) {
+                    selectedGeneratedID = item.id
+                }
+            }
+        }
+    }
+
+    private var actionBar: some View {
+        HStack(spacing: 12) {
+            Button(action: saveSelectedToLibrary) {
+                Label("Save to Library", systemImage: "square.and.arrow.down")
+            }
+            .liquidGlassButtonStyle(prominent: true)
+            .disabled(selectedGenerated == nil)
+
+            Menu {
+                Button(action: { if let canvas = canvases.first { saveSelected(to: canvas) } }) {
+                    Label("Append to Latest Canvas", systemImage: "square.grid.2x2")
+                }
+                ForEach(canvases) { canvas in
+                    Button(canvas.title) { saveSelected(to: canvas) }
+                }
+            } label: {
+                Label("Add to Canvas", systemImage: "rectangle.stack.badge.plus")
+            }
+            .liquidGlassButtonStyle()
+            .disabled(selectedGenerated == nil || canvases.isEmpty)
+
+            Button(action: saveSelectedToPhotos) {
+                if isSavingToPhotos {
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                } else {
+                    Label("Save to Photos", systemImage: "square.and.arrow.up.on.square")
+                }
+            }
+            .liquidGlassButtonStyle()
+            .disabled(selectedGenerated == nil || isSavingToPhotos)
+        }
+    }
+
+    private var libraryCard: some View {
+        LiquidGlassCard {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Text("Library")
+                        .font(.title3.bold())
+                        .foregroundStyle(T.text)
+                    Spacer()
+                    Button("View All") { if let first = canvases.first { showingCanvas = first } }
+                        .liquidGlassButtonStyle()
+                        .disabled(canvases.isEmpty)
+                }
+
+                if canvases.isEmpty {
+                    Text("Saved canvases will appear here for quick access.")
+                        .font(.subheadline)
+                        .foregroundStyle(T.textSecondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(canvases.prefix(4)) { canvas in
+                            Button {
+                                showingCanvas = canvas
+                            } label: {
+                                LibraryRow(canvas: canvas, accent: T.accent, text: T.text, textSecondary: T.textSecondary)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(canvas.title)
+                        }
+                    }
+                }
+            }
+        }
+        .sheet(item: $showingCanvas) { canvas in
+            MediaCanvasDetailView(canvas: canvas)
+                .environment(\.tokens, T)
+        }
+    }
+
+    private var historyCard: some View {
+        LiquidGlassCard {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Activity")
+                    .font(.title3.bold())
+                    .foregroundStyle(T.text)
+                if generated.isEmpty && canvases.isEmpty {
+                    Text("Generate or import artwork to see your recent activity timeline.")
+                        .font(.subheadline)
+                        .foregroundStyle(T.textSecondary)
+                } else {
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(activityEntries.prefix(6), id: \.id) { entry in
+                            HStack(alignment: .top, spacing: 12) {
+                                Circle()
+                                    .fill(entry.iconColor)
+                                    .frame(width: 10, height: 10)
+                                    .padding(.top, 6)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(entry.title)
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(T.text)
+                                    Text(entry.subtitle)
+                                        .font(.footnote)
+                                        .foregroundStyle(T.textSecondary)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var activityEntries: [ActivityEntry] {
+        let generatedEntries = generated.map { item in
+            ActivityEntry(id: item.id, title: "Prepared \(itemTitle(for: item))", subtitle: item.source == .imported ? "Imported from Photos" : "Generated with \(item.model)", iconColor: T.accent, date: Date())
+        }
+        let canvasEntries = canvases.map { canvas in
+            ActivityEntry(id: canvas.id, title: "Saved canvas ‘\(canvas.title)’", subtitle: relativeTime(for: canvas.updatedAt), iconColor: T.borderSoft, date: canvas.updatedAt)
+        }
+        return (generatedEntries + canvasEntries).sorted(by: { $0.date > $1.date })
+    }
+
+    private func relativeTime(for date: Date) -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        return formatter.localizedString(for: date, relativeTo: .now)
+    }
+
+    private var selectedGenerated: GeneratedImage? {
+        generated.first(where: { $0.id == selectedGeneratedID })
+    }
+
+    private func configureProviderIfNeeded() {
+        guard selectedProviderID.isEmpty else { return }
+        if let first = providerOptions.first {
+            selectedProviderID = first.id
+            loadModels(for: first)
+        } else {
+            availableModels = []
+            selectedModel = ""
+        }
+    }
+
+    private func loadModels(for option: ProviderOption) {
+        if let provider = option.make() {
+            Task {
+                do {
+                    let models = try await provider.listModels()
+                    await MainActor.run {
+                        self.availableModels = models.isEmpty ? option.fallbackModels : models
+                        self.selectedModel = self.availableModels.first ?? ""
+                    }
+                } catch {
+                    await MainActor.run {
+                        self.availableModels = option.fallbackModels
+                        self.selectedModel = self.availableModels.first ?? ""
+                        self.errorMessage = "Could not load models: \(error.localizedDescription)"
+                    }
+                }
+            }
+        } else {
+            availableModels = option.fallbackModels
+            selectedModel = availableModels.first ?? ""
+        }
+    }
+
+    private func performGeneration() {
+        guard providerOptions.isEmpty == false else { return }
+        guard let option = providerOptions.first(where: { $0.id == selectedProviderID }) else { return }
+        guard let provider = option.make() else {
+            errorMessage = "Add a valid API key in Settings → Providers to enable generation."
+            return
+        }
+        let trimmedPrompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmedPrompt.isEmpty == false else {
+            errorMessage = "Enter a prompt before generating."
+            return
+        }
+        guard selectedModel.isEmpty == false else {
+            errorMessage = "Select a model before generating."
+            return
+        }
+
+        errorMessage = nil
+        generationProgress = "Generating \(Int(variationCount)) variation(s)…"
+        generated.removeAll(where: { $0.source == .generated })
+        isGenerating = true
+
+        let count = Int(variationCount)
+        let model = selectedModel
+        let providerID = option.id
+        let intensity = variationIntensity
+        Task {
+            await generateImages(using: provider, providerID: providerID, basePrompt: trimmedPrompt, model: model, count: count, intensity: intensity)
+        }
+    }
+
+    @MainActor
+    private func handleGenerationCompletion() {
+        isGenerating = false
+        generationProgress = nil
+    }
+
+    private func generateImages(using provider: ImageProvider, providerID: String, basePrompt: String, model: String, count: Int, intensity: Double) async {
+        do {
+            try await withThrowingTaskGroup(of: GeneratedImage.self) { group in
+                for index in 0..<count {
+                    let promptVariant = promptVariant(for: basePrompt, index: index, intensity: intensity)
+                    group.addTask {
+                        let data = try await provider.generateImage(prompt: promptVariant, model: model)
+                        return GeneratedImage(prompt: promptVariant, data: data, model: model, provider: providerID, variation: intensity, source: .generated, aspectRatioDescriptor: aspectRatioDescriptor(for: data))
+                    }
+                }
+
+                for try await image in group {
+                    await MainActor.run {
+                        generated.append(image)
+                        if selectedGeneratedID == nil {
+                            selectedGeneratedID = image.id
+                        }
+                    }
+                }
+            }
+            await MainActor.run { handleGenerationCompletion() }
+        } catch {
+            await MainActor.run {
+                self.errorMessage = error.localizedDescription
+                handleGenerationCompletion()
+            }
+        }
+    }
+
+    private func promptVariant(for base: String, index: Int, intensity: Double) -> String {
+        guard intensity > 0.05 else { return base }
+        let modifiers = ["emphasize cinematic lighting", "experiment with macro depth", "introduce bold complementary colors", "explore calm minimalist composition", "add tactile paper textures", "highlight dynamic motion" ]
+        let descriptor = modifiers[index % modifiers.count]
+        let scaled = String(format: "%.2f", intensity)
+        return "\(base)\nVariation \(index + 1): \(descriptor) at intensity \(scaled)."
+    }
+
+    private func saveSelectedToLibrary() {
+        guard let selected = selectedGenerated else { return }
+        do {
+            try persist(selected, in: nil)
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func saveSelected(to canvas: MediaCanvas) {
+        guard let selected = selectedGenerated else { return }
+        do {
+            try persist(selected, in: canvas)
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func persist(_ generated: GeneratedImage, in existingCanvas: MediaCanvas?) throws {
+        let targetCanvas: MediaCanvas
+        if let canvas = existingCanvas {
+            targetCanvas = canvas
+        } else {
+            let title = makeCanvasTitle(from: generated)
+            let canvas = MediaCanvas(
+                title: title,
+                prompt: prompt,
+                providerIdentifier: generated.provider,
+                defaultModelIdentifier: generated.model,
+                aspectRatio: generated.aspectRatioDescriptor,
+                coverImageData: generated.data
+            )
+            context.insert(canvas)
+            targetCanvas = canvas
+        }
+
+        let asset = MediaAsset(
+            prompt: generated.prompt,
+            variationLevel: generated.variation,
+            modelIdentifier: generated.model,
+            sourceType: generated.source == .imported ? "imported" : "generated",
+            aspectRatio: generated.aspectRatioDescriptor,
+            canvas: targetCanvas,
+            imageData: generated.data
+        )
+        targetCanvas.assets.append(asset)
+        targetCanvas.updatedAt = Date()
+        if targetCanvas.coverImageData == nil {
+            targetCanvas.coverImageData = generated.data
+        }
+
+        try context.save()
+    }
+
+    private func makeCanvasTitle(from generated: GeneratedImage) -> String {
+        if generated.source == .imported {
+            return "Imported \(DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .short))"
+        }
+        if prompt.isEmpty == false {
+            let trimmed = prompt.prefix(60)
+            return String(trimmed)
+        }
+        return "Canvas \(DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .short))"
+    }
+
+    private func saveSelectedToPhotos() {
+        guard let selected = selectedGenerated else { return }
+        isSavingToPhotos = true
+        Task {
+            do {
+                try await saveToPhotoLibrary(imageData: selected.data)
+                await MainActor.run {
+                    isSavingToPhotos = false
+                    errorMessage = nil
+                }
+            } catch {
+                await MainActor.run {
+                    isSavingToPhotos = false
+                    errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+
+    private func saveToPhotoLibrary(imageData: Data) async throws {
+        guard let uiImage = UIImage(data: imageData) else {
+            throw NSError(domain: "MediaWorkspace", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unable to decode image data."])
+        }
+        try await PHPhotoLibrary.shared().performChanges {
+            PHAssetCreationRequest.creationRequestForAsset(from: uiImage)
+        }
+    }
+
+    private func importPhoto(from item: PhotosPickerItem) async {
+        do {
+            if let data = try await item.loadTransferable(type: Data.self) {
+                await MainActor.run {
+                    let imported = GeneratedImage(
+                        prompt: "Imported photo",
+                        data: data,
+                        model: "photo-library",
+                        provider: "photos",
+                        variation: 0,
+                        source: .imported,
+                        aspectRatioDescriptor: aspectRatioDescriptor(for: data)
+                    )
+                    generated.insert(imported, at: 0)
+                    selectedGeneratedID = imported.id
+                    errorMessage = nil
+                }
+            }
+        } catch {
+            await MainActor.run {
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    private func aspectRatioDescriptor(for data: Data) -> String {
+        guard let image = UIImage(data: data) else { return "unknown" }
+        let ratio = image.size.width / max(image.size.height, 1)
+        if abs(ratio - 1) < 0.08 { return "square" }
+        return ratio > 1 ? "landscape" : "portrait"
+    }
+
+    private func itemTitle(for item: GeneratedImage) -> String {
+        switch item.source {
+        case .generated: return "Variation \(generated.firstIndex(of: item).map { $0 + 1 } ?? 1)"
+        case .imported: return "Imported"
+        }
+    }
+
+    private var providerOptions: [ProviderOption] {
+        var options: [ProviderOption] = []
+        let openAIKey = store.openAIAPIKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        if openAIKey.isEmpty == false {
+            options.append(ProviderOption(id: "openai-images", name: "OpenAI Images", fallbackModels: ["gpt-image-1"]) {
+                OpenAIImageProvider(apiKey: openAIKey)
+            })
+        }
+        return options
+    }
+}
+
+// MARK: - Helper models & views
+
+private struct ProviderOption: Identifiable, Hashable {
+    let id: String
+    let name: String
+    let fallbackModels: [String]
+    let make: () -> ImageProvider?
+
+    init(id: String, name: String, fallbackModels: [String], make: @escaping () -> ImageProvider?) {
+        self.id = id
+        self.name = name
+        self.fallbackModels = fallbackModels
+        self.make = make
+    }
+}
+
+private struct GeneratedImage: Identifiable, Equatable {
+    enum Source { case generated, imported }
+    let id: UUID = UUID()
+    let prompt: String
+    let data: Data
+    let model: String
+    let provider: String
+    let variation: Double
+    let source: Source
+    let aspectRatioDescriptor: String
+
+    static func == (lhs: GeneratedImage, rhs: GeneratedImage) -> Bool {
+        lhs.id == rhs.id
+    }
+}
+
+private struct ActivityEntry {
+    let id: UUID
+    let title: String
+    let subtitle: String
+    let iconColor: Color
+    let date: Date
+}
+
+private struct LiquidGlassCard<Content: View>: View {
+    @Environment(\.tokens) private var T
+    let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+
+    var body: some View {
+        Group {
+            content
+                .padding(24)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 32, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 32, style: .continuous)
+                                .stroke(T.borderSoft.opacity(0.35), lineWidth: 0.9)
+                        )
+                )
+                .shadow(color: T.shadow.opacity(0.18), radius: 20, y: 14)
+        }
+    }
+}
+
+private struct GeneratedThumbnail: View {
+    let imageData: Data
+    let title: String
+    let isSelected: Bool
+    let accent: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 10) {
+                if let image = UIImage(data: imageData) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(height: 160)
+                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                .stroke(isSelected ? accent : Color.clear, lineWidth: 3)
+                        )
+                        .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                } else {
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .fill(Color.gray.opacity(0.15))
+                        .frame(height: 160)
+                }
+
+                Text(title)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.primary)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct LibraryRow: View {
+    let canvas: MediaCanvas
+    let accent: Color
+    let text: Color
+    let textSecondary: Color
+
+    var body: some View {
+        HStack(spacing: 16) {
+            if let data = canvas.coverImageData, let uiImage = UIImage(data: data) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .aspectRatio(1, contentMode: .fill)
+                    .frame(width: 56, height: 56)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            } else {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(accent.opacity(0.15))
+                    AppIcon.image(24).foregroundStyle(accent)
+                }
+                .frame(width: 56, height: 56)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(canvas.title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(text)
+                Text("Updated \(RelativeDateTimeFormatter().localizedString(for: canvas.updatedAt, relativeTo: .now)) • \(canvas.assets.count) assets")
+                    .font(.caption)
+                    .foregroundStyle(textSecondary)
+            }
+            Spacer()
+        }
+        .padding(.vertical, 6)
+        .contentShape(Rectangle())
+    }
+}
+
+private struct MediaCanvasDetailView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.tokens) private var T
+    let canvas: MediaCanvas
+    @State private var selectedAsset: MediaAsset?
+    @State private var isSaving: Bool = false
+    @State private var errorMessage: String?
+
+    private var assets: [MediaAsset] { canvas.assets.sorted { $0.createdAt > $1.createdAt } }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    if let data = selectedAsset?.imageData ?? canvas.coverImageData,
+                       let uiImage = UIImage(data: data) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(canvas.title)
+                            .font(.title.bold())
+                        if canvas.prompt.isEmpty == false {
+                            Text(canvas.prompt)
+                                .font(.body)
+                                .foregroundStyle(T.textSecondary)
+                        }
+                        Text("\(assets.count) variation(s)")
+                            .font(.callout.weight(.semibold))
+                            .foregroundStyle(T.textSecondary)
+                    }
+
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 16)], spacing: 16) {
+                        ForEach(assets) { asset in
+                            Button {
+                                selectedAsset = asset
+                            } label: {
+                                if let data = asset.imageData, let image = UIImage(data: data) {
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(height: 120)
+                                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                                .stroke(selectedAsset?.id == asset.id ? T.accent : Color.clear, lineWidth: 3)
+                                        )
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .font(.footnote)
+                            .foregroundStyle(.red)
+                    }
+                }
+                .padding(24)
+            }
+            .navigationTitle("Canvas")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close", action: { dismiss() })
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button {
+                        Task { await saveCurrentSelection() }
+                    } label: {
+                        if isSaving {
+                            ProgressView()
+                        } else {
+                            Label("Save to Photos", systemImage: "square.and.arrow.up.on.square")
+                        }
+                    }
+                    .disabled(isSaving || currentImageData == nil)
+                }
+            }
+        }
+    }
+
+    private var currentImageData: Data? {
+        selectedAsset?.imageData ?? canvas.coverImageData
+    }
+
+    private func saveCurrentSelection() async {
+        guard let data = currentImageData else { return }
+        isSaving = true
+        do {
+            try await PHPhotoLibrary.shared().performChanges {
+                if let image = UIImage(data: data) {
+                    PHAssetCreationRequest.creationRequestForAsset(from: image)
+                }
+            }
+            await MainActor.run { isSaving = false }
+        } catch {
+            await MainActor.run {
+                isSaving = false
+                errorMessage = error.localizedDescription
+            }
+        }
+    }
+}
+
+private extension View {
+    @ViewBuilder
+    func ifAvailableGlass<Content: View>(_ transform: (Self) -> Content) -> some View {
+        if #available(iOS 18.0, *) {
+            transform(self)
+        } else {
+            self
+        }
+    }
+
+    @ViewBuilder
+    func liquidGlassButtonStyle(prominent: Bool = false) -> some View {
+        if #available(iOS 18.0, *) {
+            self.buttonStyle(prominent ? .glassProminent : .glass)
+        } else {
+            self.buttonStyle(prominent ? .borderedProminent : .bordered)
+        }
+    }
+}

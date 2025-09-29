@@ -1,0 +1,363 @@
+Command line invocation:
+    /Applications/Xcode-beta.app/Contents/Developer/usr/bin/xcodebuild -project NoteChat.xcodeproj -scheme NoteChat -destination "generic/platform=iOS Simulator" -derivedDataPath /Users/kosta/DerivedData/notechat-media-liquid-glass build
+
+Resolve Package Graph
+
+
+Resolved source packages:
+  Down: https://github.com/johnxnguyen/Down @ e754ab1
+  Highlighter: https://github.com/smittytone/HighlighterSwift @ 1.1.7
+  SwiftMath: https://github.com/mgriebling/SwiftMath @ 1.7.3
+  PhosphorSwift: https://github.com/phosphor-icons/swift @ 2.1.0
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (14 targets)
+    Target 'NoteChat' in project 'NoteChat'
+        ➜ Explicit dependency on target 'Highlighter' in project 'Highlighter'
+        ➜ Explicit dependency on target 'PhosphorSwift' in project 'PhosphorSwift'
+        ➜ Explicit dependency on target 'Down' in project 'Down'
+        ➜ Explicit dependency on target 'SwiftMath' in project 'SwiftMath'
+    Target 'SwiftMath' in project 'SwiftMath'
+        ➜ Explicit dependency on target 'SwiftMath' in project 'SwiftMath'
+        ➜ Explicit dependency on target 'SwiftMath_SwiftMath' in project 'SwiftMath'
+    Target 'SwiftMath' in project 'SwiftMath'
+        ➜ Explicit dependency on target 'SwiftMath_SwiftMath' in project 'SwiftMath'
+    Target 'SwiftMath_SwiftMath' in project 'SwiftMath' (no dependencies)
+    Target 'Down' in project 'Down'
+        ➜ Explicit dependency on target 'Down' in project 'Down'
+        ➜ Explicit dependency on target 'Down_Down' in project 'Down'
+        ➜ Explicit dependency on target 'libcmark' in project 'Down'
+    Target 'Down' in project 'Down'
+        ➜ Explicit dependency on target 'Down_Down' in project 'Down'
+        ➜ Explicit dependency on target 'libcmark' in project 'Down'
+    Target 'libcmark' in project 'Down' (no dependencies)
+    Target 'Down_Down' in project 'Down' (no dependencies)
+    Target 'PhosphorSwift' in project 'PhosphorSwift'
+        ➜ Explicit dependency on target 'PhosphorSwift' in project 'PhosphorSwift'
+        ➜ Explicit dependency on target 'PhosphorSwift_PhosphorSwift' in project 'PhosphorSwift'
+    Target 'PhosphorSwift' in project 'PhosphorSwift'
+        ➜ Explicit dependency on target 'PhosphorSwift_PhosphorSwift' in project 'PhosphorSwift'
+    Target 'PhosphorSwift_PhosphorSwift' in project 'PhosphorSwift' (no dependencies)
+    Target 'Highlighter' in project 'Highlighter'
+        ➜ Explicit dependency on target 'Highlighter' in project 'Highlighter'
+        ➜ Explicit dependency on target 'Highlighter_Highlighter' in project 'Highlighter'
+    Target 'Highlighter' in project 'Highlighter'
+        ➜ Explicit dependency on target 'Highlighter_Highlighter' in project 'Highlighter'
+    Target 'Highlighter_Highlighter' in project 'Highlighter' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode-beta.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode-beta.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Assets.xcassets
+
+ExecuteExternalTool /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+ExecuteExternalTool /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch x86_64 -isysroot /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk -x c -c /dev/null
+
+Build description signature: e2ce04fed268092c01053fa8001daa7b
+Build description path: /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/XCBuildData/e2ce04fed268092c01053fa8001daa7b.xcbuilddata
+ClangStatCache /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk /Users/kosta/DerivedData/notechat-media-liquid-glass/SDKStatCaches.noindex/iphonesimulator26.0-23A5324a-fc862078e33f881139a9d2f83bd1a9d0.sdkstatcache
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat.xcodeproj
+    /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk -o /Users/kosta/DerivedData/notechat-media-liquid-glass/SDKStatCaches.noindex/iphonesimulator26.0-23A5324a-fc862078e33f881139a9d2f83bd1a9d0.sdkstatcache
+
+CompileAssetCatalogVariant thinned /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/PhosphorSwift_PhosphorSwift.bundle /Users/kosta/DerivedData/notechat-media-liquid-glass/SourcePackages/checkouts/swift/Sources/PhosphorSwift/Resources/Assets.xcassets (in target 'PhosphorSwift_PhosphorSwift' from project 'PhosphorSwift')
+    cd /Users/kosta/DerivedData/notechat-media-liquid-glass/SourcePackages/checkouts/swift
+    /Applications/Xcode-beta.app/Contents/Developer/usr/bin/actool /Users/kosta/DerivedData/notechat-media-liquid-glass/SourcePackages/checkouts/swift/Sources/PhosphorSwift/Resources/Assets.xcassets --compile /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/PhosphorSwift.build/Debug-iphonesimulator/PhosphorSwift_PhosphorSwift.build/assetcatalog_output/thinned --output-format human-readable-text --notices --warnings --export-dependency-info /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/PhosphorSwift.build/Debug-iphonesimulator/PhosphorSwift_PhosphorSwift.build/assetcatalog_dependencies_thinned --output-partial-info-plist /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/PhosphorSwift.build/Debug-iphonesimulator/PhosphorSwift_PhosphorSwift.build/assetcatalog_generated_info.plist_thinned --compress-pngs --enable-on-demand-resources NO --development-region en --target-device iphone --target-device ipad --minimum-deployment-target 13.0 --platform iphonesimulator
+
+ProcessInfoPlistFile /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/SwiftMath_SwiftMath.bundle/Info.plist /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/SwiftMath.build/Debug-iphonesimulator/SwiftMath_SwiftMath.build/empty-SwiftMath_SwiftMath.plist (in target 'SwiftMath_SwiftMath' from project 'SwiftMath')
+    cd /Users/kosta/DerivedData/notechat-media-liquid-glass/SourcePackages/checkouts/SwiftMath
+    builtin-infoPlistUtility /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/SwiftMath.build/Debug-iphonesimulator/SwiftMath_SwiftMath.build/empty-SwiftMath_SwiftMath.plist -producttype com.apple.product-type.bundle -expandbuildsettings -format binary -platform iphonesimulator -o /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/SwiftMath_SwiftMath.bundle/Info.plist
+
+ProcessInfoPlistFile /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/Highlighter_Highlighter.bundle/Info.plist /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/Highlighter.build/Debug-iphonesimulator/Highlighter_Highlighter.build/empty-Highlighter_Highlighter.plist (in target 'Highlighter_Highlighter' from project 'Highlighter')
+    cd /Users/kosta/DerivedData/notechat-media-liquid-glass/SourcePackages/checkouts/HighlighterSwift
+    builtin-infoPlistUtility /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/Highlighter.build/Debug-iphonesimulator/Highlighter_Highlighter.build/empty-Highlighter_Highlighter.plist -producttype com.apple.product-type.bundle -expandbuildsettings -format binary -platform iphonesimulator -o /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/Highlighter_Highlighter.bundle/Info.plist
+
+ProcessInfoPlistFile /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/Down_Down.bundle/Info.plist /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/Down.build/Debug-iphonesimulator/Down_Down.build/empty-Down_Down.plist (in target 'Down_Down' from project 'Down')
+    cd /Users/kosta/DerivedData/notechat-media-liquid-glass/SourcePackages/checkouts/Down
+    builtin-infoPlistUtility /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/Down.build/Debug-iphonesimulator/Down_Down.build/empty-Down_Down.plist -producttype com.apple.product-type.bundle -expandbuildsettings -format binary -platform iphonesimulator -o /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/Down_Down.bundle/Info.plist
+
+SwiftDriver NoteChat normal arm64 com.apple.xcode.tools.swift.compiler (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    builtin-SwiftDriver -- /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name NoteChat -Onone -enforce-exclusivity\=checked @/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64/NoteChat.SwiftFileList -DDEBUG -Xcc -fmodule-map-file\=/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/GeneratedModuleMaps-iphonesimulator/libcmark.modulemap -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk -target arm64-apple-ios26.0-simulator -g -module-cache-path /Users/kosta/DerivedData/notechat-media-liquid-glass/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/kosta/DerivedData/notechat-media-liquid-glass/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator -F /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator -emit-localized-strings -emit-localized-strings-path /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64 -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/kosta/DerivedData/notechat-media-liquid-glass/SDKStatCaches.noindex/iphonesimulator26.0-23A5324a-fc862078e33f881139a9d2f83bd1a9d0.sdkstatcache -output-file-map /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64/NoteChat-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/kosta/DerivedData/notechat-media-liquid-glass/ModuleCache.noindex -sdk-module-cache-path /Users/kosta/DerivedData/notechat-media-liquid-glass/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64/NoteChat.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/kosta/DerivedData/notechat-media-liquid-glass/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64/NoteChat_const_extract_protocols.json -Xcc -iquote -Xcc /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat-generated-files.hmap -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat-own-target-headers.hmap -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat-881a864bbb55040a7be77ded444bdadb-VFS-iphonesimulator/all-product-headers.yaml -Xcc -iquote -Xcc /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat-project-headers.hmap -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/SourcePackages/checkouts/Down/Sources/cmark -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/DerivedSources-normal/arm64 -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/DerivedSources/arm64 -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64/NoteChat-Swift.h -working-directory /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass -experimental-emit-module-separately -disable-cmo
+
+SwiftDriver NoteChat normal x86_64 com.apple.xcode.tools.swift.compiler (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    builtin-SwiftDriver -- /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name NoteChat -Onone -enforce-exclusivity\=checked @/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/x86_64/NoteChat.SwiftFileList -DDEBUG -Xcc -fmodule-map-file\=/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/GeneratedModuleMaps-iphonesimulator/libcmark.modulemap -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk -target x86_64-apple-ios26.0-simulator -g -module-cache-path /Users/kosta/DerivedData/notechat-media-liquid-glass/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /Users/kosta/DerivedData/notechat-media-liquid-glass/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator -F /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator -emit-localized-strings -emit-localized-strings-path /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/x86_64 -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/kosta/DerivedData/notechat-media-liquid-glass/SDKStatCaches.noindex/iphonesimulator26.0-23A5324a-fc862078e33f881139a9d2f83bd1a9d0.sdkstatcache -output-file-map /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/x86_64/NoteChat-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/kosta/DerivedData/notechat-media-liquid-glass/ModuleCache.noindex -sdk-module-cache-path /Users/kosta/DerivedData/notechat-media-liquid-glass/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/x86_64/NoteChat.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/kosta/DerivedData/notechat-media-liquid-glass/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/x86_64/NoteChat_const_extract_protocols.json -Xcc -iquote -Xcc /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat-generated-files.hmap -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat-own-target-headers.hmap -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat-881a864bbb55040a7be77ded444bdadb-VFS-iphonesimulator/all-product-headers.yaml -Xcc -iquote -Xcc /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat-project-headers.hmap -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/SourcePackages/checkouts/Down/Sources/cmark -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/DerivedSources-normal/x86_64 -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/DerivedSources/x86_64 -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/x86_64/NoteChat-Swift.h -working-directory /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass -experimental-emit-module-separately -disable-cmo
+
+SwiftCompile normal arm64 Compiling\ ChatStyles.swift,\ ChatUI.swift,\ ChatView.swift,\ ContentView.swift,\ DebugLog.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ChatStyles.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ChatUI.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ChatView.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ContentView.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/DebugLog.swift (in target 'NoteChat' from project 'NoteChat')
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ChatStyles.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ChatUI.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ChatView.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ContentView.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/DebugLog.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ NoteChat (in target 'NoteChat' from project 'NoteChat')
+Failed frontend command:
+/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -emit-module -experimental-skip-non-inlinable-function-bodies-without-types /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Providers/Anthropic/AnthropicProvider.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Providers/Core/AIProvider.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Providers/Core/ProviderAPIs.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Providers/Core/ProviderCapabilities.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Providers/Core/StreamingSSE.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Providers/Google/GoogleProvider.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Providers/OpenAI/OpenAIProvider.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Providers/XAI/XAIProvider.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/UIPlayground/ButtonStyles.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/UIPlayground/ChatBubbles.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/UIPlayground/ChatViewPlayground.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/UIPlayground/PlaygroundExample.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/AIResponseView.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/AppThemeView.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ChatCanvasView.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ChatStyles.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ChatUI.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ChatView.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ContentView.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/DebugLog.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/EnvLoader.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/FlowLayout.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/GlassNavigationBar.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Icons.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ImageProvider.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Item.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/KeychainService.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/LiquidGlassBackground.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/LiquidGlassPanel.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/MarkdownRenderer.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/MathWebView.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/MediaWorkspaceView.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ModelCapabilities.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Models.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/NetworkClient.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/NoteChatApp.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/OpenAIImageProvider.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/RootView.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/SettingsStore.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/SettingsView.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/SystemPrompt.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ThemeTokens.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ToolCallBubble.swift /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/DerivedSources/GeneratedAssetSymbols.swift -target arm64-apple-ios26.0-simulator -module-can-import-version CryptoKit 324.0.18 0 -module-can-import-version DeveloperToolsSupport 23.0.4 23.0.4 -module-can-import Down -module-can-import Highlighter -module-can-import PhosphorSwift -module-can-import-version SwiftUI 7.0.84.1 7.0.84 -module-can-import-version UIKit 9088.1.110 9088.1.110 -disable-cross-import-overlay-search -swift-module-cross-import PhotosUI /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/System/Library/Frameworks/PhotosUI.framework/Modules/PhotosUI.swiftcrossimport/SwiftUI.swiftoverlay -swift-module-cross-import PhotosUI /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/System/Library/Frameworks/PhotosUI.framework/Modules/PhotosUI.swiftcrossimport/WidgetKit.swiftoverlay -swift-module-cross-import PhotosUI /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk/System/Library/Frameworks/PhotosUI.framework/Modules/PhotosUI.swiftcrossimport/SwiftUI.swiftoverlay -swift-module-cross-import PhotosUI /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk/System/Library/Frameworks/PhotosUI.framework/Modules/PhotosUI.swiftcrossimport/WidgetKit.swiftoverlay -swift-module-cross-import SwiftData /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk/System/Library/Frameworks/SwiftData.framework/Modules/SwiftData.swiftcrossimport/CoreData.swiftoverlay -swift-module-cross-import SwiftData /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk/System/Library/Frameworks/SwiftData.framework/Modules/SwiftData.swiftcrossimport/SwiftUI.swiftoverlay -swift-module-cross-import WebKit /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/System/Cryptexes/OS/System/Library/Frameworks/WebKit.framework/Modules/WebKit.swiftcrossimport/SwiftUI.swiftoverlay -swift-module-cross-import WebKit /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk/System/Library/Frameworks/WebKit.framework/Modules/WebKit.swiftcrossimport/SwiftUI.swiftoverlay -load-resolved-plugin /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins/libFoundationMacros.dylib\#/Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server\#FoundationMacros -load-resolved-plugin /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins/libObservationMacros.dylib\#/Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server\#ObservationMacros -load-resolved-plugin /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins/libPreviewsMacros.dylib\#/Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server\#PreviewsMacros -load-resolved-plugin /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins/libSwiftDataMacros.dylib\#/Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server\#SwiftDataMacros -load-resolved-plugin /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins/libSwiftMacros.dylib\#/Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server\#SwiftMacros -load-resolved-plugin /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins/libSwiftUIMacros.dylib\#/Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server\#SwiftUIMacros -disable-implicit-swift-modules -Xcc -fno-implicit-modules -Xcc -fno-implicit-module-maps -explicit-swift-module-map-file /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64/NoteChat-dependencies-2.json -Xllvm -aarch64-use-tbi -enable-objc-interop -sdk /Applications/Xcode-beta.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk -I /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator -F /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/PackageFrameworks -F /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator -no-color-diagnostics -Xcc -fno-color-diagnostics -enable-testing -g -debug-info-format\=dwarf -dwarf-version\=5 -module-cache-path /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -swift-version 5 -enforce-exclusivity\=checked -Onone -D DEBUG -serialize-debugging-options -const-gather-protocols-file /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64/NoteChat_const_extract_protocols.json -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -enable-bare-slash-regex -default-isolation\=MainActor -empty-abi-descriptor -validate-clang-modules-once -clang-build-session-file /Users/kosta/DerivedData/notechat-media-liquid-glass/ModuleCache.noindex/Session.modulevalidation -Xcc -working-directory -Xcc /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass -enable-anonymous-context-mangled-names -file-compilation-dir /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass -Xcc -fmodule-map-file\=/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/GeneratedModuleMaps-iphonesimulator/libcmark.modulemap -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -Xcc -ivfsstatcache -Xcc /Users/kosta/DerivedData/notechat-media-liquid-glass/SDKStatCaches.noindex/iphonesimulator26.0-23A5324a-fc862078e33f881139a9d2f83bd1a9d0.sdkstatcache -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/swift-overrides.hmap -Xcc -iquote -Xcc /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat-generated-files.hmap -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat-own-target-headers.hmap -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat-all-non-framework-target-headers.hmap -Xcc -ivfsoverlay -Xcc /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat-881a864bbb55040a7be77ded444bdadb-VFS-iphonesimulator/all-product-headers.yaml -Xcc -iquote -Xcc /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/NoteChat-project-headers.hmap -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/SourcePackages/checkouts/Down/Sources/cmark -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/DerivedSources-normal/arm64 -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/DerivedSources/arm64 -Xcc -I/Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/DerivedSources -Xcc -DDEBUG\=1 -no-auto-bridging-header-chaining -module-name NoteChat -frontend-parseable-output -disable-clang-spi -target-sdk-version 26.0 -target-sdk-name iphonesimulator26.0 -clang-target arm64-apple-ios26.0-simulator -in-process-plugin-server-path /Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -emit-module-doc-path /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64/NoteChat.swiftdoc -emit-module-source-info-path /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64/NoteChat.swiftsourceinfo -emit-objc-header-path /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64/NoteChat-Swift.h -serialize-diagnostics-path /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64/NoteChat-primary-emit-module.dia -emit-dependencies-path /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64/NoteChat-primary-emit-module.d -o /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64/NoteChat.swiftmodule -emit-abi-descriptor-path /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/Objects-normal/arm64/NoteChat.abi.json
+
+EmitSwiftModule normal arm64 (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+/Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/MediaWorkspaceView.swift:635:16: error: type 'ProviderOption' does not conform to protocol 'Hashable'
+private struct ProviderOption: Identifiable, Hashable {
+               ^
+/Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/MediaWorkspaceView.swift:639:9: note: stored property type '() -> (any ImageProvider)?' does not conform to protocol 'Hashable', preventing synthesized conformance of 'ProviderOption' to 'Hashable'
+    let make: () -> ImageProvider?
+        ^
+/Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/MediaWorkspaceView.swift:635:16: error: type 'ProviderOption' does not conform to protocol 'Equatable'
+private struct ProviderOption: Identifiable, Hashable {
+               ^
+/Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/MediaWorkspaceView.swift:639:9: note: stored property type '() -> (any ImageProvider)?' does not conform to protocol 'Equatable', preventing synthesized conformance of 'ProviderOption' to 'Equatable'
+    let make: () -> ImageProvider?
+        ^
+Swift.==:1:24: note: candidate would match if 'ProviderOption' conformed to 'RawRepresentable'
+@inlinable public func == <T>(lhs: T, rhs: T) -> Bool where T : RawRepresentable, T.RawValue : Equatable
+                       ^
+Swift.FloatingPoint.==:2:20: note: candidate would match if 'ProviderOption' conformed to 'FloatingPoint'
+public static func == (lhs: Self, rhs: Self) -> Bool}
+                   ^
+Swift.BinaryInteger.==:2:20: note: candidate would match if 'ProviderOption' conformed to 'BinaryInteger'
+public static func == <Other>(lhs: Self, rhs: Other) -> Bool where Other : BinaryInteger}
+                   ^
+Swift._Pointer.==:2:20: note: candidate would match if 'ProviderOption' conformed to '_Pointer'
+public static func == (lhs: Self, rhs: Self) -> Bool}
+                   ^
+Swift._Pointer.==:2:31: note: candidate would match if 'ProviderOption' conformed to '_Pointer'
+@inlinable public static func == <Other>(lhs: Self, rhs: Other) -> Bool where Other : _Pointer}
+                              ^
+Swift.Strideable.==:2:31: note: candidate would match if 'ProviderOption' conformed to 'Strideable'
+@inlinable public static func == (x: Self, y: Self) -> Bool}
+                              ^
+Swift.StringProtocol.==:2:31: note: candidate would match if 'ProviderOption' conformed to 'StringProtocol'
+@inlinable public static func == <RHS>(lhs: Self, rhs: RHS) -> Bool where RHS : StringProtocol}
+                              ^
+Swift.SIMD.==:2:20: note: candidate would match if 'ProviderOption' conformed to 'SIMD'
+public static func == (a: Self, b: Self) -> Bool}
+                   ^
+SwiftData.PersistentModel.==:2:20: note: candidate would match if 'ProviderOption' conformed to 'PersistentModel'
+public static func == (lhs: Self, rhs: Self) -> Bool}
+                   ^
+Foundation.AttributedStringProtocol.==:2:20: note: candidate would match if 'ProviderOption' conformed to 'AttributedStringProtocol'
+public static func == <RHS>(lhs: Self, rhs: RHS) -> Bool where RHS : AttributedStringProtocol}
+                   ^
+Foundation._BridgedStoredNSError.==:2:20: note: candidate would match if 'ProviderOption' conformed to '_BridgedStoredNSError'
+public static func == (lhs: Self, rhs: Self) -> Bool}
+                   ^
+CoreFoundation._CFObject.==:2:20: note: candidate would match if 'ProviderOption' conformed to '_CFObject'
+public static func == (left: Self, right: Self) -> Bool}
+                   ^
+/Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/MediaWorkspaceView.swift:635:16: note: add stubs for conformance
+private struct ProviderOption: Identifiable, Hashable {
+               ^
+Swift.Equatable.==:2:13: note: protocol requires function '==' with type '(ProviderOption, ProviderOption) -> Bool'
+static func == (lhs: Self, rhs: Self) -> Bool}
+            ^
+
+SwiftCompile normal arm64 Compiling\ EnvLoader.swift,\ FlowLayout.swift,\ GlassNavigationBar.swift,\ Icons.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/EnvLoader.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/FlowLayout.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/GlassNavigationBar.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Icons.swift (in target 'NoteChat' from project 'NoteChat')
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/EnvLoader.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/FlowLayout.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/GlassNavigationBar.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Icons.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 Compiling\ SystemPrompt.swift,\ ThemeTokens.swift,\ ToolCallBubble.swift,\ GeneratedAssetSymbols.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/SystemPrompt.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ThemeTokens.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ToolCallBubble.swift /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'NoteChat' from project 'NoteChat')
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/SystemPrompt.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ThemeTokens.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ToolCallBubble.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/DerivedData/notechat-media-liquid-glass/Build/Intermediates.noindex/NoteChat.build/Debug-iphonesimulator/NoteChat.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 Compiling\ GoogleProvider.swift,\ OpenAIProvider.swift,\ XAIProvider.swift,\ ButtonStyles.swift,\ ChatBubbles.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Providers/Google/GoogleProvider.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Providers/OpenAI/OpenAIProvider.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Providers/XAI/XAIProvider.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/UIPlayground/ButtonStyles.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/UIPlayground/ChatBubbles.swift (in target 'NoteChat' from project 'NoteChat')
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Providers/Google/GoogleProvider.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Providers/OpenAI/OpenAIProvider.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Providers/XAI/XAIProvider.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/UIPlayground/ButtonStyles.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/UIPlayground/ChatBubbles.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 Compiling\ OpenAIImageProvider.swift,\ RootView.swift,\ SettingsStore.swift,\ SettingsView.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/OpenAIImageProvider.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/RootView.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/SettingsStore.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/SettingsView.swift (in target 'NoteChat' from project 'NoteChat')
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/OpenAIImageProvider.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/RootView.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/SettingsStore.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/SettingsView.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 Compiling\ ModelCapabilities.swift,\ Models.swift,\ NetworkClient.swift,\ NoteChatApp.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ModelCapabilities.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Models.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/NetworkClient.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/NoteChatApp.swift (in target 'NoteChat' from project 'NoteChat')
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ModelCapabilities.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Models.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/NetworkClient.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/NoteChatApp.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 Compiling\ LiquidGlassPanel.swift,\ MarkdownRenderer.swift,\ MathWebView.swift,\ MediaWorkspaceView.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/LiquidGlassPanel.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/MarkdownRenderer.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/MathWebView.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/MediaWorkspaceView.swift (in target 'NoteChat' from project 'NoteChat')
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/LiquidGlassPanel.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/MarkdownRenderer.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/MathWebView.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/MediaWorkspaceView.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 Compiling\ ImageProvider.swift,\ Item.swift,\ KeychainService.swift,\ LiquidGlassBackground.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ImageProvider.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Item.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/KeychainService.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/LiquidGlassBackground.swift (in target 'NoteChat' from project 'NoteChat')
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/ImageProvider.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Item.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/KeychainService.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal arm64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/LiquidGlassBackground.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftEmitModule normal x86_64 Emitting\ module\ for\ NoteChat (in target 'NoteChat' from project 'NoteChat')
+
+EmitSwiftModule normal x86_64 (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling SystemPrompt.swift, ThemeTokens.swift, ToolCallBubble.swift, GeneratedAssetSymbols.swift (in target 'NoteChat' from project 'NoteChat')
+
+SwiftCompile normal x86_64 Compiling\ MarkdownRenderer.swift,\ MathWebView.swift,\ MediaWorkspaceView.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/MarkdownRenderer.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/MathWebView.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/MediaWorkspaceView.swift (in target 'NoteChat' from project 'NoteChat')
+
+SwiftCompile normal x86_64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/MarkdownRenderer.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal x86_64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/MathWebView.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal x86_64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/MediaWorkspaceView.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling EnvLoader.swift, FlowLayout.swift, GlassNavigationBar.swift, Icons.swift (in target 'NoteChat' from project 'NoteChat')
+
+SwiftCompile normal x86_64 Compiling\ Item.swift,\ KeychainService.swift,\ LiquidGlassBackground.swift,\ LiquidGlassPanel.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Item.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/KeychainService.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/LiquidGlassBackground.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/LiquidGlassPanel.swift (in target 'NoteChat' from project 'NoteChat')
+
+SwiftCompile normal x86_64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/Item.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal x86_64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/KeychainService.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal x86_64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/LiquidGlassBackground.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftCompile normal x86_64 /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/LiquidGlassPanel.swift (in target 'NoteChat' from project 'NoteChat')
+    cd /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling ImageProvider.swift, Item.swift, KeychainService.swift, LiquidGlassBackground.swift (in target 'NoteChat' from project 'NoteChat')
+
+SwiftCompile normal x86_64 Compiling\ ChatBubbles.swift,\ ChatViewPlayground.swift,\ PlaygroundExample.swift,\ AIResponseView.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/UIPlayground/ChatBubbles.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/UIPlayground/ChatViewPlayground.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/UIPlayground/PlaygroundExample.swift /Users/kosta/Documents/ProjectsXcode/NoteChat-media-liquid-glass/NoteChat/AIResponseView.swift (in target 'NoteChat' from project 'NoteChat')
+

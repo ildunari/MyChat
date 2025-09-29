@@ -34,7 +34,7 @@ struct RootView: View {
                 NotesPlaceholderView()
                     .tag(MainTab.notes)
 
-                MediaPlaceholderView()
+                MediaWorkspaceView()
                     .tag(MainTab.media)
 
                 SettingsView()
@@ -328,19 +328,6 @@ private struct NotesPlaceholderView: View {
                 .font(.headline)
                 .foregroundStyle(T.text)
             Text("Notes will arrive soon.")
-                .foregroundStyle(T.textSecondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-private struct MediaPlaceholderView: View {
-    @Environment(\.tokens) private var T
-    var body: some View {
-        VStack(spacing: 12) {
-            Text("🚧 Under construction")
-                .font(.headline)
-                .foregroundStyle(T.text)
-            Text("Media gallery will arrive soon.")
                 .foregroundStyle(T.textSecondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

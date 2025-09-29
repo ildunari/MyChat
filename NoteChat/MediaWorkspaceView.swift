@@ -48,8 +48,10 @@ struct MediaWorkspaceView: View {
         }
         .navigationTitle("Canvas Studio")
         .onAppear { configureProviderIfNeeded() }
-        .onChange(of: providerOptions.hashValue) { _ in configureProviderIfNeeded() }
-        .onChange(of: pickerItem) { newValue in
+        .onChange(of: providerOptions.hashValue) {
+            configureProviderIfNeeded()
+        }
+        .onChange(of: pickerItem) { _, newValue in
             guard let item = newValue else { return }
             Task { await importPhoto(from: item) }
         }
@@ -71,45 +73,63 @@ struct MediaWorkspaceView: View {
 
     private var heroCard: some View {
         LiquidGlassCard {
-            HStack(alignment: .center, spacing: 24) {
+            HStack(alignment: .center, spacing: 28) {
                 Image("MediaCanvasHero")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 140, height: 140)
-                    .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                    .frame(width: 180, height: 180)
+                    .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .stroke(T.borderSoft.opacity(0.35), lineWidth: 0.8)
+                        RoundedRectangle(cornerRadius: 32, style: .continuous)
+                            .stroke(T.borderSoft.opacity(0.4), lineWidth: 1.2)
                     )
+                    .shadow(color: T.shadow.opacity(0.15), radius: 12, x: 0, y: 6)
                     .ifAvailableGlass { view in
-                        view.glassEffect(.regular.tint(T.accent).interactive(), in: .rect(cornerRadius: 28))
+                        view.glassEffect(.regular.tint(T.accent).interactive(), in: .rect(cornerRadius: 32))
                     }
 
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Media Canvas Studio")
-                        .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundStyle(T.text)
-                    Text("Design, remix, and organize AI-generated canvases with responsive Liquid Glass containers. Start from a prompt, remix past work, and keep everything in sync with your creative library.")
-                        .font(.subheadline)
-                        .foregroundStyle(T.textSecondary)
+                VStack(alignment: .leading, spacing: 18) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Media Canvas Studio")
+                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .foregroundStyle(T.text)
+                        Text("Create, remix, and organize AI-generated artwork")
+                            .font(.title3.weight(.medium))
+                            .foregroundStyle(T.textSecondary)
+                    }
+                    
+                    Text("Start from a prompt or import photos to build your creative library.")
+                        .font(.callout)
+                        .foregroundStyle(T.textSecondary.opacity(0.9))
                         .fixedSize(horizontal: false, vertical: true)
 
-                    HStack(spacing: 12) {
+                    HStack(spacing: 14) {
                         Button {
                             promptFocused = true
                         } label: {
-                            Label("New Canvas", systemImage: "scribble.variable")
+                            HStack(spacing: 8) {
+                                Image(systemName: "sparkles")
+                                    .font(.body.weight(.semibold))
+                                Text("Create Canvas")
+                                    .font(.body.weight(.semibold))
+                            }
+                            .padding(.horizontal, 4)
                         }
                         .liquidGlassButtonStyle(prominent: true)
+                        .controlSize(.large)
 
                         Button {
                             if let first = canvases.first {
                                 showingCanvas = first
                             }
                         } label: {
-                            Label("Open Library", systemImage: "square.grid.2x2")
+                            HStack(spacing: 8) {
+                                Image(systemName: "square.grid.2x2")
+                                Text("Browse")
+                            }
                         }
                         .liquidGlassButtonStyle()
+                        .controlSize(.large)
                         .disabled(canvases.isEmpty)
                     }
                 }
@@ -120,88 +140,179 @@ struct MediaWorkspaceView: View {
 
     private var creationCard: some View {
         LiquidGlassCard {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("Create")
-                    .font(.title3.bold())
-                    .foregroundStyle(T.text)
+            VStack(alignment: .leading, spacing: 22) {
+                HStack(alignment: .center, spacing: 10) {
+                    Image(systemName: "wand.and.stars")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(T.accent)
+                    Text("Create")
+                        .font(.title2.bold())
+                        .foregroundStyle(T.text)
+                }
 
                 if providerOptions.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Connect an image provider")
-                            .font(.headline)
-                            .foregroundStyle(T.text)
-                        Text("Add an API key under Settings → Providers to unlock image generation. Imported photos still appear here once you load them.")
-                            .font(.subheadline)
-                            .foregroundStyle(T.textSecondary)
+                    VStack(alignment: .center, spacing: 16) {
+                        Image(systemName: "key.horizontal.fill")
+                            .font(.system(size: 42))
+                            .foregroundStyle(T.accent.opacity(0.5))
+                            .padding(.top, 8)
+                        
+                        VStack(spacing: 8) {
+                            Text("Connect an Image Provider")
+                                .font(.headline.weight(.semibold))
+                                .foregroundStyle(T.text)
+                            Text("Add an API key in Settings → Providers to unlock AI image generation.")
+                                .font(.subheadline)
+                                .foregroundStyle(T.textSecondary)
+                                .multilineTextAlignment(.center)
+                        }
+                        .padding(.horizontal, 8)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 28)
+                    .padding(.horizontal, 20)
                     .background(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(T.surface)
-                            .opacity(0.6)
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .fill(T.accentSoft.opacity(0.5))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                    .stroke(T.accent.opacity(0.15), lineWidth: 1)
+                            )
                     )
                 }
 
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Prompt")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(T.textSecondary)
-                    TextField("Describe what you want to create", text: $prompt, axis: .vertical)
-                        .lineLimit(3, reservesSpace: true)
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack {
+                        Image(systemName: "text.bubble")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(T.accent)
+                        Text("Prompt")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(T.text)
+                    }
+                    TextField("Describe what you want to create...", text: $prompt, axis: .vertical)
+                        .lineLimit(3...5)
                         .textFieldStyle(.roundedBorder)
                         .focused($promptFocused)
+                        .font(.body)
                 }
 
-                HStack(spacing: 16) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Variations: \(Int(variationCount))")
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(T.textSecondary)
+                VStack(spacing: 16) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Image(systemName: "square.grid.3x3")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(T.accent.opacity(0.8))
+                            Text("Variations")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(T.text)
+                            Spacer()
+                            Text("\(Int(variationCount))")
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(T.accent)
+                                .monospacedDigit()
+                        }
                         Slider(value: $variationCount, in: 1...6, step: 1)
                             .tint(T.accent)
                     }
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Remix intensity")
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(T.textSecondary)
+                    
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Image(systemName: "slider.horizontal.3")
+                                .font(.caption2.weight(.semibold))
+                                .foregroundStyle(T.accent.opacity(0.8))
+                            Text("Remix Intensity")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(T.text)
+                            Spacer()
+                            Text("\(Int(variationIntensity * 100))%")
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(T.accent)
+                                .monospacedDigit()
+                        }
                         Slider(value: $variationIntensity, in: 0...1)
                             .tint(T.accent)
                     }
                 }
+                .padding(.vertical, 4)
 
                 if !providerOptions.isEmpty {
                     providerPicker
                 }
 
-                HStack(spacing: 12) {
+                HStack(spacing: 14) {
                     PhotosPicker(selection: $pickerItem, matching: .images, photoLibrary: .shared()) {
-                        Label("Load from Photos", systemImage: "photo.on.rectangle")
+                        HStack(spacing: 8) {
+                            Image(systemName: "photo.badge.plus")
+                                .font(.body.weight(.medium))
+                            Text("Import")
+                                .font(.body.weight(.medium))
+                        }
                     }
                     .liquidGlassButtonStyle()
+                    .controlSize(.large)
 
                     Button(action: performGeneration) {
                         if isGenerating {
-                            ProgressView()
-                                .progressViewStyle(.circular)
+                            HStack(spacing: 8) {
+                                ProgressView()
+                                    .progressViewStyle(.circular)
+                                    .controlSize(.small)
+                                Text("Generating...")
+                                    .font(.body.weight(.semibold))
+                            }
                         } else {
-                            Label("Generate", systemImage: "sparkles")
+                            HStack(spacing: 8) {
+                                Image(systemName: "sparkles")
+                                    .font(.body.weight(.semibold))
+                                Text("Generate")
+                                    .font(.body.weight(.semibold))
+                            }
                         }
                     }
                     .liquidGlassButtonStyle(prominent: true)
+                    .controlSize(.large)
                     .disabled(isGenerating || providerOptions.isEmpty)
                 }
 
                 if let progress = generationProgress {
-                    Text(progress)
-                        .font(.footnote)
-                        .foregroundStyle(T.textSecondary)
+                    HStack(spacing: 8) {
+                        Image(systemName: "hourglass")
+                            .font(.caption)
+                            .foregroundStyle(T.accent)
+                        Text(progress)
+                            .font(.callout)
+                            .foregroundStyle(T.textSecondary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(T.accentSoft.opacity(0.3))
+                    )
                 }
 
                 if let error = errorMessage {
-                    Text(error)
-                        .font(.footnote)
-                        .foregroundStyle(.red)
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.callout)
+                            .foregroundStyle(.red)
+                        Text(error)
+                            .font(.callout)
+                            .foregroundStyle(.red)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color.red.opacity(0.08))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .stroke(Color.red.opacity(0.2), lineWidth: 1)
+                            )
+                    )
                 }
 
                 if !generated.isEmpty {
@@ -214,27 +325,67 @@ struct MediaWorkspaceView: View {
     }
 
     private var providerPicker: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Provider & model")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(T.textSecondary)
-            HStack(spacing: 12) {
-                Picker("Provider", selection: $selectedProviderID) {
-                    ForEach(providerOptions) { option in
-                        Text(option.name).tag(option.id)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Image(systemName: "server.rack")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(T.accent)
+                Text("Provider & Model")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(T.text)
+            }
+            
+            VStack(spacing: 12) {
+                HStack(spacing: 12) {
+                    Image(systemName: "building.2")
+                        .font(.subheadline)
+                        .foregroundStyle(T.textSecondary)
+                        .frame(width: 20)
+                    
+                    Picker("Provider", selection: $selectedProviderID) {
+                        ForEach(providerOptions) { option in
+                            Text(option.name).tag(option.id)
+                        }
                     }
+                    .pickerStyle(.menu)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .pickerStyle(.menu)
-                .frame(maxWidth: .infinity)
-
-                Picker("Model", selection: $selectedModel) {
-                    ForEach(availableModels, id: \.self) { model in
-                        Text(model).tag(model)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(T.surface.opacity(0.6))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(T.borderSoft, lineWidth: 0.5)
+                        )
+                )
+                
+                HStack(spacing: 12) {
+                    Image(systemName: "cpu")
+                        .font(.subheadline)
+                        .foregroundStyle(T.textSecondary)
+                        .frame(width: 20)
+                    
+                    Picker("Model", selection: $selectedModel) {
+                        ForEach(availableModels, id: \.self) { model in
+                            Text(model).tag(model)
+                        }
                     }
+                    .pickerStyle(.menu)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .disabled(availableModels.isEmpty)
                 }
-                .pickerStyle(.menu)
-                .frame(maxWidth: .infinity)
-                .disabled(availableModels.isEmpty)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(T.surface.opacity(0.6))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(T.borderSoft, lineWidth: 0.5)
+                        )
+                )
             }
         }
     }
@@ -250,59 +401,113 @@ struct MediaWorkspaceView: View {
     }
 
     private var actionBar: some View {
-        HStack(spacing: 12) {
-            Button(action: saveSelectedToLibrary) {
-                Label("Save to Library", systemImage: "square.and.arrow.down")
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                Button(action: saveSelectedToLibrary) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "square.and.arrow.down.fill")
+                            .font(.body.weight(.semibold))
+                        Text("Save to Library")
+                            .font(.body.weight(.semibold))
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .liquidGlassButtonStyle(prominent: true)
+                .controlSize(.large)
+                .disabled(selectedGenerated == nil)
             }
-            .liquidGlassButtonStyle(prominent: true)
-            .disabled(selectedGenerated == nil)
+            
+            HStack(spacing: 12) {
+                Menu {
+                    Button(action: { if let canvas = canvases.first { saveSelected(to: canvas) } }) {
+                        Label("Append to Latest Canvas", systemImage: "square.grid.2x2")
+                    }
+                    Divider()
+                    ForEach(canvases) { canvas in
+                        Button(canvas.title) { saveSelected(to: canvas) }
+                    }
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "rectangle.stack.badge.plus")
+                        Text("Add to Canvas")
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .liquidGlassButtonStyle()
+                .controlSize(.large)
+                .disabled(selectedGenerated == nil || canvases.isEmpty)
 
-            Menu {
-                Button(action: { if let canvas = canvases.first { saveSelected(to: canvas) } }) {
-                    Label("Append to Latest Canvas", systemImage: "square.grid.2x2")
+                Button(action: saveSelectedToPhotos) {
+                    if isSavingToPhotos {
+                        HStack(spacing: 8) {
+                            ProgressView()
+                                .progressViewStyle(.circular)
+                                .controlSize(.small)
+                            Text("Saving...")
+                        }
+                        .frame(maxWidth: .infinity)
+                    } else {
+                        HStack(spacing: 8) {
+                            Image(systemName: "photo.badge.arrow.down")
+                            Text("Export")
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
                 }
-                ForEach(canvases) { canvas in
-                    Button(canvas.title) { saveSelected(to: canvas) }
-                }
-            } label: {
-                Label("Add to Canvas", systemImage: "rectangle.stack.badge.plus")
+                .liquidGlassButtonStyle()
+                .controlSize(.large)
+                .disabled(selectedGenerated == nil || isSavingToPhotos)
             }
-            .liquidGlassButtonStyle()
-            .disabled(selectedGenerated == nil || canvases.isEmpty)
-
-            Button(action: saveSelectedToPhotos) {
-                if isSavingToPhotos {
-                    ProgressView()
-                        .progressViewStyle(.circular)
-                } else {
-                    Label("Save to Photos", systemImage: "square.and.arrow.up.on.square")
-                }
-            }
-            .liquidGlassButtonStyle()
-            .disabled(selectedGenerated == nil || isSavingToPhotos)
         }
     }
 
     private var libraryCard: some View {
         LiquidGlassCard {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
+            VStack(alignment: .leading, spacing: 18) {
+                HStack(alignment: .center, spacing: 10) {
+                    Image(systemName: "photo.stack")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(T.accent)
                     Text("Library")
-                        .font(.title3.bold())
+                        .font(.title2.bold())
                         .foregroundStyle(T.text)
                     Spacer()
-                    Button("View All") { if let first = canvases.first { showingCanvas = first } }
+                    if !canvases.isEmpty {
+                        Button {
+                            if let first = canvases.first { showingCanvas = first }
+                        } label: {
+                            HStack(spacing: 6) {
+                                Text("View All")
+                                    .font(.subheadline.weight(.semibold))
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.bold))
+                            }
+                        }
                         .liquidGlassButtonStyle()
-                        .disabled(canvases.isEmpty)
+                    }
                 }
 
                 if canvases.isEmpty {
-                    Text("Saved canvases will appear here for quick access.")
-                        .font(.subheadline)
-                        .foregroundStyle(T.textSecondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .center, spacing: 14) {
+                        Image(systemName: "photo.on.rectangle.angled")
+                            .font(.system(size: 38))
+                            .foregroundStyle(T.textSecondary.opacity(0.5))
+                            .padding(.top, 6)
+                        
+                        VStack(spacing: 6) {
+                            Text("No Canvases Yet")
+                                .font(.headline.weight(.semibold))
+                                .foregroundStyle(T.text)
+                            Text("Generated artwork will be saved here")
+                                .font(.subheadline)
+                                .foregroundStyle(T.textSecondary)
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 24)
                 } else {
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 10) {
                         ForEach(canvases.prefix(4)) { canvas in
                             Button {
                                 showingCanvas = canvas
@@ -324,31 +529,60 @@ struct MediaWorkspaceView: View {
 
     private var historyCard: some View {
         LiquidGlassCard {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Activity")
-                    .font(.title3.bold())
-                    .foregroundStyle(T.text)
+            VStack(alignment: .leading, spacing: 18) {
+                HStack(alignment: .center, spacing: 10) {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(T.accent)
+                    Text("Activity")
+                        .font(.title2.bold())
+                        .foregroundStyle(T.text)
+                }
+                
                 if generated.isEmpty && canvases.isEmpty {
-                    Text("Generate or import artwork to see your recent activity timeline.")
-                        .font(.subheadline)
-                        .foregroundStyle(T.textSecondary)
+                    VStack(alignment: .center, spacing: 14) {
+                        Image(systemName: "timeline.selection")
+                            .font(.system(size: 38))
+                            .foregroundStyle(T.textSecondary.opacity(0.5))
+                            .padding(.top, 6)
+                        
+                        VStack(spacing: 6) {
+                            Text("No Activity Yet")
+                                .font(.headline.weight(.semibold))
+                                .foregroundStyle(T.text)
+                            Text("Your recent generations will appear here")
+                                .font(.subheadline)
+                                .foregroundStyle(T.textSecondary)
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 24)
                 } else {
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 14) {
                         ForEach(activityEntries.prefix(6), id: \.id) { entry in
-                            HStack(alignment: .top, spacing: 12) {
-                                Circle()
-                                    .fill(entry.iconColor)
-                                    .frame(width: 10, height: 10)
-                                    .padding(.top, 6)
-                                VStack(alignment: .leading, spacing: 4) {
+                            HStack(alignment: .top, spacing: 14) {
+                                ZStack {
+                                    Circle()
+                                        .fill(entry.iconColor.opacity(0.15))
+                                        .frame(width: 32, height: 32)
+                                    Image(systemName: entry.iconName)
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundStyle(entry.iconColor)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 5) {
                                     Text(entry.title)
                                         .font(.subheadline.weight(.semibold))
                                         .foregroundStyle(T.text)
                                     Text(entry.subtitle)
-                                        .font(.footnote)
+                                        .font(.caption)
                                         .foregroundStyle(T.textSecondary)
                                 }
+                                
+                                Spacer(minLength: 0)
                             }
+                            .padding(.vertical, 2)
                         }
                     }
                 }
@@ -358,10 +592,11 @@ struct MediaWorkspaceView: View {
 
     private var activityEntries: [ActivityEntry] {
         let generatedEntries = generated.map { item in
-            ActivityEntry(id: item.id, title: "Prepared \(itemTitle(for: item))", subtitle: item.source == .imported ? "Imported from Photos" : "Generated with \(item.model)", iconColor: T.accent, date: Date())
+            let iconName = item.source == .imported ? "photo.badge.plus.fill" : "sparkles"
+            return ActivityEntry(id: item.id, title: "Prepared \(itemTitle(for: item))", subtitle: item.source == .imported ? "Imported from Photos" : "Generated with \(item.model)", iconColor: T.accent, iconName: iconName, date: Date())
         }
         let canvasEntries = canvases.map { canvas in
-            ActivityEntry(id: canvas.id, title: "Saved canvas ‘\(canvas.title)’", subtitle: relativeTime(for: canvas.updatedAt), iconColor: T.borderSoft, date: canvas.updatedAt)
+            ActivityEntry(id: canvas.id, title: "Saved canvas ‘\(canvas.title)’", subtitle: relativeTime(for: canvas.updatedAt), iconColor: T.accent.opacity(0.7), iconName: "square.and.arrow.down.fill", date: canvas.updatedAt)
         }
         return (generatedEntries + canvasEntries).sorted(by: { $0.date > $1.date })
     }
@@ -678,6 +913,7 @@ private struct ActivityEntry {
     let title: String
     let subtitle: String
     let iconColor: Color
+    let iconName: String
     let date: Date
 }
 

@@ -317,6 +317,5 @@ final class MediaAsset: Identifiable {
         self.aspectRatio = aspectRatio
         self.canvas = canvas
         self.imageData = imageData
->>>>>>> feat/media-liquid-glass
     }
 }

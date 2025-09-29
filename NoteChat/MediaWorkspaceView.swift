@@ -632,7 +632,7 @@ struct MediaWorkspaceView: View {
 
 // MARK: - Helper models & views
 
-private struct ProviderOption: Identifiable, Hashable {
+private struct ProviderOption: Identifiable {
     let id: String
     let name: String
     let fallbackModels: [String]
@@ -644,7 +644,18 @@ private struct ProviderOption: Identifiable, Hashable {
         self.fallbackModels = fallbackModels
         self.make = make
     }
+    
+    // Manual Hashable conformance using only id
+    static func == (lhs: ProviderOption, rhs: ProviderOption) -> Bool {
+        lhs.id == rhs.id
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
 }
+
+extension ProviderOption: Hashable, Equatable {}
 
 private struct GeneratedImage: Identifiable, Equatable {
     enum Source { case generated, imported }
@@ -890,10 +901,10 @@ private extension View {
 
     @ViewBuilder
     func liquidGlassButtonStyle(prominent: Bool = false) -> some View {
-        if #available(iOS 18.0, *) {
-            self.buttonStyle(prominent ? .glassProminent : .glass)
+        if prominent {
+            self.buttonStyle(.borderedProminent)
         } else {
-            self.buttonStyle(prominent ? .borderedProminent : .bordered)
+            self.buttonStyle(.bordered)
         }
     }
 }

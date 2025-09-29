@@ -154,3 +154,90 @@ final class AppSettings: Identifiable {
         self.defaultHistoryLimit = defaultHistoryLimit
     }
 }
+
+@Model
+final class NoteFolder: Identifiable {
+    @Attribute(.unique) var id: UUID
+    var name: String
+    var colorHex: String?
+    @Relationship(deleteRule: .nullify, inverse: \Note.folder) var notes: [Note]
+
+    init(id: UUID = UUID(), name: String, colorHex: String? = nil, notes: [Note] = []) {
+        self.id = id
+        self.name = name
+        self.colorHex = colorHex
+        self.notes = notes
+    }
+}
+
+@Model
+final class Note: Identifiable {
+    @Attribute(.unique) var id: UUID
+    var title: String
+    var content: String
+    var createdAt: Date
+    var updatedAt: Date
+    var isPinned: Bool
+    var tags: [String]
+    var lastEditor: String
+    var lastSummary: String
+    var folder: NoteFolder?
+    @Relationship(deleteRule: .cascade, inverse: \NoteRevision.note) var revisions: [NoteRevision]
+
+    init(
+        id: UUID = UUID(),
+        title: String = "Untitled",
+        content: String = "",
+        createdAt: Date = Date(),
+        updatedAt: Date = Date(),
+        isPinned: Bool = false,
+        tags: [String] = [],
+        lastEditor: String = "user",
+        lastSummary: String = "",
+        folder: NoteFolder? = nil
+    ) {
+        self.id = id
+        self.title = title
+        self.content = content
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.isPinned = isPinned
+        self.tags = tags
+        self.lastEditor = lastEditor
+        self.lastSummary = lastSummary
+        self.folder = folder
+        self.revisions = []
+    }
+}
+
+@Model
+final class NoteRevision: Identifiable {
+    @Attribute(.unique) var id: UUID
+    var createdAt: Date
+    var editor: String
+    var summary: String
+    var appliedDiff: String
+    var selectionRange: Range<Int>?
+    var contentSnapshot: String
+    var note: Note?
+
+    init(
+        id: UUID = UUID(),
+        createdAt: Date = Date(),
+        editor: String,
+        summary: String,
+        appliedDiff: String,
+        selectionRange: Range<Int>? = nil,
+        contentSnapshot: String,
+        note: Note? = nil
+    ) {
+        self.id = id
+        self.createdAt = createdAt
+        self.editor = editor
+        self.summary = summary
+        self.appliedDiff = appliedDiff
+        self.selectionRange = selectionRange
+        self.contentSnapshot = contentSnapshot
+        self.note = note
+    }
+}

@@ -46,3 +46,17 @@
   - Auto-applied: UI preferences (theme, font, bubble colors), provider/model selection, toggles
 - **User experience**: Save button appears when changes are made, disappears after saving, reappears with new changes.
 - **Implementation tested**: Verified on iPhone 16 Pro Max simulator - button appears/disappears correctly based on changes.
+
+## Updates - 2025-09-13
+
+### Notes Workspace MVP
+- **New SwiftData models**: Added `Note` and `NoteRevision` entities with cascaded history tracking and metadata for AI edits.
+- **Notes tab**: Replaced placeholder with `NotesRootView` featuring a split layout, grouped list, pin toggles, and inspector access.
+- **Detail editor**: Apple Notes-inspired layout with debounced autosave, Markdown preview, and Down-based rendering reuse.
+- **AI assistant**: Embedded tool-aware panel enabling targeted edits via `NoteAIToolchain` functions (read/replace/insert/delete) backed by provider responses.
+- **Revision inspector**: Sheet surfacing metadata and change summaries per revision for auditability.
+
+### Follow-ups
+- Integrate multi-note selection gestures and drag-to-pin interactions in the list.
+- Expand AI panel to show streamed reasoning and allow manual tool replay.
+- Add XCTest coverage for `NotesWorkspace` mutations and `NoteAIToolchain` safety checks.

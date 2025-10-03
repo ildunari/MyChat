@@ -11,14 +11,16 @@ import SwiftMath // SwiftMath provides MTMathUILabel for native LaTeX rendering
 
 struct AIResponseView: View {
     let content: String
+    var isStreaming: Bool = false // Flag to optimize for streaming scenarios
     @Environment(\.tokens) private var T
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 12) {
             ForEach(parseBlocks(from: content)) { block in
                 switch block.kind {
                 case .markdown(let text):
-                    MarkdownSegment(text: text)
+                    MarkdownSegment(text: text, isStreaming: isStreaming)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 case .code(let lang, let code):
                     CodeBlockSegment(language: lang, code: code)
                 case .math(let latex):
@@ -28,6 +30,7 @@ struct AIResponseView: View {
         }
         .padding(.vertical, 2)
         .tint(T.link)
+        .id(isStreaming ? "streaming" : content.prefix(50)) // Optimize SwiftUI diffing
     }
 }
 
@@ -108,39 +111,78 @@ private func parseBlocks(from text: String) -> [Block] {
 
 private struct MarkdownSegment: View {
     let text: String
+    var isStreaming: Bool = false
     @Environment(\.tokens) private var T
-
-    // Lightweight detector for Markdown tables (header and pipes present)
-    private var containsTable: Bool {
-        text.contains("|") && text.contains("---")
-    }
+    @State private var debouncedText: String = ""
+    @State private var debounceTask: Task<Void, Never>?
 
     var body: some View {
         Group {
-            if text.contains("$") {
+            let hasTable = containsTable(in: effectiveText)
+            if containsInlineMath(effectiveText) {
                 // Use our inline math renderer when inline $...$ detected
-                InlineMathParagraph(text: text)
+                InlineMathParagraph(text: effectiveText)
                     .foregroundStyle(T.text)
+                    .fixedSize(horizontal: false, vertical: true)
             } else {
                 // Down-based renderer → AttributedString → SwiftUI Text
-                let attributed = renderMarkdownAttributed(text,
+                let attributed = renderMarkdownAttributed(effectiveText,
                                                           linkColor: T.link,
+                                                          textColor: T.text,
                                                           preferSystemStyling: true)
-                if containsTable {
-                    ScrollView(.horizontal, showsIndicators: true) {
+                if hasTable {
+                    // Wrap table in scrollable container with intrinsic sizing
+                    ScrollView(.horizontal, showsIndicators: false) {
                         Text(attributed)
-                            .font(.body)
-                            .foregroundStyle(T.text)
+                            .font(.system(.body, design: .monospaced))
                             .textSelection(.enabled)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .fixedSize(horizontal: true, vertical: false)
                     }
+                    .background(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(T.surface.opacity(0.5))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .stroke(T.borderSoft.opacity(0.6), lineWidth: 1)
+                    )
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
                     Text(attributed)
-                        .font(.body)
-                        .foregroundStyle(T.text)
                         .textSelection(.enabled)
+                        .lineSpacing(4)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
         }
+        .onChange(of: text) { _, newValue in
+            if isStreaming {
+                // Debounce markdown rendering during streaming for better performance
+                debounceTask?.cancel()
+                debounceTask = Task {
+                    try? await Task.sleep(nanoseconds: 50_000_000) // 50ms debounce
+                    guard !Task.isCancelled else { return }
+                    await MainActor.run {
+                        debouncedText = newValue
+                    }
+                }
+            } else {
+                debouncedText = newValue
+            }
+        }
+        .onAppear {
+            debouncedText = text
+        }
+    }
+    
+    private var effectiveText: String {
+        isStreaming ? debouncedText : text
+    }
+
+    private func containsTable(in text: String) -> Bool {
+        text.contains("|") && text.contains("---")
     }
 }
 
@@ -149,30 +191,26 @@ private struct CodeBlockSegment: View {
     let code: String
     @Environment(\.tokens) private var T
     var body: some View {
-        Group {
-            #if canImport(Highlightr) || canImport(Highlighter) || canImport(HighlighterSwift)
-            HighlightedCodeView(code: code, language: language)
-                .padding(6)
-                .background(T.codeBg)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(T.borderSoft, lineWidth: 1)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            #else
-            ScrollView(.horizontal, showsIndicators: true) {
+        ScrollView(.horizontal, showsIndicators: true) {
+            Group {
+                #if canImport(Highlightr) || canImport(Highlighter) || canImport(HighlighterSwift)
+                HighlightedCodeView(code: code, language: language)
+                    .padding(12)
+                #else
                 Text(code)
                     .font(.system(.body, design: .monospaced))
                     .padding(12)
+                #endif
             }
-            .background(T.codeBg)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(T.borderSoft, lineWidth: 1)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            #endif
+            .fixedSize(horizontal: true, vertical: false)
         }
+        .background(T.codeBg)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(T.borderSoft, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -204,7 +242,8 @@ private struct HighlightedCodeView: UIViewRepresentable {
         let tv = UITextView()
         tv.isEditable = false
         tv.isScrollEnabled = false
-        tv.textContainerInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
+        tv.textContainerInset = .zero
+        tv.textContainer.lineFragmentPadding = 0
         tv.backgroundColor = UIColor.clear
         return tv
     }
@@ -229,7 +268,8 @@ private struct HighlightedCodeView: UIViewRepresentable {
         let tv = UITextView()
         tv.isEditable = false
         tv.isScrollEnabled = false
-        tv.textContainerInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
+        tv.textContainerInset = .zero
+        tv.textContainer.lineFragmentPadding = 0
         tv.backgroundColor = UIColor.clear
         return tv
     }
@@ -253,7 +293,8 @@ private struct HighlightedCodeView: UIViewRepresentable {
         let tv = UITextView()
         tv.isEditable = false
         tv.isScrollEnabled = false
-        tv.textContainerInset = UIEdgeInsets(top: 12, left: 12, bottom: 12, right: 12)
+        tv.textContainerInset = .zero
+        tv.textContainer.lineFragmentPadding = 0
         tv.backgroundColor = UIColor.clear
         return tv
     }
@@ -341,6 +382,13 @@ private struct InlineMathParagraph: View {
 
 private enum InlinePiece { case text(String), math(String) }
 
+private func containsInlineMath(_ text: String) -> Bool {
+    guard text.contains("$") else { return false }
+    // Require at least one non-whitespace character between delimiters
+    // Avoid matching lone $ or $$ (which are block delimiters)
+    return text.range(of: #"\$[^\s$][^$\n]*[^\s$]\$"#, options: .regularExpression) != nil
+}
+
 private func parseInlineMath(_ s: String) -> [InlinePiece] {
     var out: [InlinePiece] = []
     var buffer = ""
@@ -349,19 +397,28 @@ private func parseInlineMath(_ s: String) -> [InlinePiece] {
     while i < s.endIndex {
         let ch = s[i]
         if ch == "$" {
-            // toggle math mode (ignore $$ which are handled as blocks earlier)
-            // If next is '$', treat as literal and skip
+            // Check for $$ (block delimiter - treat as literal)
             let nextIndex = s.index(after: i)
             if nextIndex < s.endIndex, s[nextIndex] == "$" {
                 buffer.append("$$")
                 i = s.index(after: nextIndex)
                 continue
             }
+            
             if inMath {
-                out.append(.math(buffer))
+                // Closing delimiter - validate content has non-whitespace
+                let trimmed = buffer.trimmingCharacters(in: .whitespaces)
+                if !trimmed.isEmpty {
+                    out.append(.math(buffer))
+                } else {
+                    // Invalid math (empty or whitespace only) - treat as literal
+                    if !buffer.isEmpty { out.append(.text("$\(buffer)$")) }
+                    else { out.append(.text("$$")) }
+                }
                 buffer.removeAll()
                 inMath = false
             } else {
+                // Opening delimiter
                 if buffer.isEmpty == false { out.append(.text(buffer)); buffer.removeAll() }
                 inMath = true
             }
@@ -372,7 +429,8 @@ private func parseInlineMath(_ s: String) -> [InlinePiece] {
         i = s.index(after: i)
     }
     if buffer.isEmpty == false {
-        out.append(inMath ? .math(buffer) : .text(buffer))
+        // Unclosed math delimiter - treat as literal text
+        out.append(inMath ? .text("$\(buffer)") : .text(buffer))
     }
     return out
 }

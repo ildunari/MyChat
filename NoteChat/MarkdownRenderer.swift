@@ -3,6 +3,7 @@
 
 import SwiftUI
 import Foundation
+import UIKit
 #if canImport(CryptoKit)
 import CryptoKit
 #endif
@@ -16,22 +17,35 @@ import Down
 /// - Returns: AttributedString with basic styling applied. Falls back to AttributedString(markdown:) if Down is unavailable.
 func renderMarkdownAttributed(_ markdown: String,
                               linkColor: Color? = nil,
+                              textColor: Color? = nil,
                               preferSystemStyling: Bool = false) -> AttributedString {
     // Cache raw parsed output to avoid re-parsing on every redraw
     let key = markdownCacheKey(markdown)
     if let cached = MarkdownCache.get(key) {
-        return postProcess(cached, linkColor: linkColor)
+        return postProcess(cached, linkColor: linkColor, textColor: textColor)
     }
     // Optionally prefer Foundation's Markdown parser so resulting Text inherits SwiftUI environment
     // font design and dynamic type settings (for consistent app-wide appearance).
+#if canImport(Down)
+    let styler = MarkdownStylerFactory.styler(
+        textColor: uiColor(from: textColor, fallback: .label),
+        secondaryTextColor: UIColor.secondaryLabel,
+        accentColor: uiColor(from: linkColor, fallback: .systemBlue)
+    )
+    if let attributed = try? Down(markdownString: markdown).toAttributedString(styler: styler) {
+        let converted = AttributedString(attributed)
+        MarkdownCache.put(key, converted)
+        return postProcess(converted, linkColor: linkColor, textColor: textColor)
+    }
+#endif
     if preferSystemStyling {
         if let a = try? AttributedString(markdown: markdown) {
             MarkdownCache.put(key, a)
-            return postProcess(a, linkColor: linkColor)
+            return postProcess(a, linkColor: linkColor, textColor: textColor)
         }
         let a = AttributedString(markdown)
         MarkdownCache.put(key, a)
-        return postProcess(a, linkColor: linkColor)
+        return postProcess(a, linkColor: linkColor, textColor: textColor)
     }
 
     // Otherwise prefer Down (handles more complete Markdown than the Foundation parser alone)
@@ -41,32 +55,33 @@ func renderMarkdownAttributed(_ markdown: String,
         let ns = try down.toAttributedString()
         let raw = AttributedString(ns)
         MarkdownCache.put(key, raw)
-        return postProcess(raw, linkColor: linkColor)
+        return postProcess(raw, linkColor: linkColor, textColor: textColor)
     } catch {
-        // Fall back to Foundation's Markdown parser
         if let a = try? AttributedString(markdown: markdown) {
             MarkdownCache.put(key, a)
-            return postProcess(a, linkColor: linkColor)
+            return postProcess(a, linkColor: linkColor, textColor: textColor)
         }
         let a = AttributedString(markdown)
         MarkdownCache.put(key, a)
-        return postProcess(a, linkColor: linkColor)
+        return postProcess(a, linkColor: linkColor, textColor: textColor)
     }
     #else
     // iOS 15+ AttributedString(markdown:) fallback
     if let a = try? AttributedString(markdown: markdown) {
         MarkdownCache.put(key, a)
-        return postProcess(a, linkColor: linkColor)
+        return postProcess(a, linkColor: linkColor, textColor: textColor)
     }
     let a = AttributedString(markdown)
     MarkdownCache.put(key, a)
-    return postProcess(a, linkColor: linkColor)
+    return postProcess(a, linkColor: linkColor, textColor: textColor)
     #endif
 }
 
 // MARK: - Lightweight styling pass
 
-private func postProcess(_ input: AttributedString, linkColor: Color?) -> AttributedString {
+private func postProcess(_ input: AttributedString,
+                        linkColor: Color?,
+                        textColor: Color?) -> AttributedString {
     var a = input
     // Tint links, preserving underline
     if let color = linkColor {
@@ -74,6 +89,11 @@ private func postProcess(_ input: AttributedString, linkColor: Color?) -> Attrib
             if run.attributes.link != nil {
                 a[run.range].foregroundColor = color
             }
+        }
+    }
+    if let base = textColor {
+        for run in a.runs where run.attributes.link == nil {
+            a[run.range].foregroundColor = base
         }
     }
     // Monospaced inline code (when detectable via inlinePresentationIntent)
@@ -111,4 +131,11 @@ private func markdownCacheKey(_ s: String) -> String {
     #else
     return String(s.hashValue)
     #endif
+}
+
+private func uiColor(from color: Color?, fallback: UIColor) -> UIColor {
+    if let color {
+        return UIColor(color)
+    }
+    return fallback
 }

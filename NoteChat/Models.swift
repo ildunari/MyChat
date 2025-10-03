@@ -7,12 +7,14 @@ final class Chat: Identifiable {
     @Attribute(.unique) var id: UUID
     var title: String
     var createdAt: Date
+    var isFavorite: Bool
     @Relationship(deleteRule: .cascade, inverse: \Message.chat) var messages: [Message]
 
-    init(id: UUID = UUID(), title: String, createdAt: Date = Date(), messages: [Message] = []) {
+    init(id: UUID = UUID(), title: String, createdAt: Date = Date(), isFavorite: Bool = false, messages: [Message] = []) {
         self.id = id
         self.title = title
         self.createdAt = createdAt
+        self.isFavorite = isFavorite
         self.messages = messages
     }
 }
@@ -25,13 +27,26 @@ final class Message: Identifiable {
     var content: String
     var createdAt: Date
     var chat: Chat?
+    var turnID: UUID?
+    var versionIndex: Int
+    var selectedVersionIndex: Int
 
-    init(id: UUID = UUID(), role: String, content: String, createdAt: Date = Date(), chat: Chat? = nil) {
+    init(id: UUID = UUID(),
+         role: String,
+         content: String,
+         createdAt: Date = Date(),
+         chat: Chat? = nil,
+         turnID: UUID? = nil,
+         versionIndex: Int = 0,
+         selectedVersionIndex: Int = 0) {
         self.id = id
         self.role = role
         self.content = content
         self.createdAt = createdAt
         self.chat = chat
+        self.turnID = turnID
+        self.versionIndex = versionIndex
+        self.selectedVersionIndex = selectedVersionIndex
     }
 }
 

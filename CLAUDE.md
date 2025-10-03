@@ -279,6 +279,34 @@ Use **context7** to pull current documentation:
 8. **Cleanup**: Remove temp files, stop log capture
 9. **Report**: Structured summary with next steps
 
+## Worktree-Specific Simulator Configuration
+
+**This Worktree**: `NoteChat-chat-feature`
+**Dedicated Simulator**: `NoteChat-Test-160630`
+**Simulator UUID**: `338A0A25-078B-4918-803E-7B48D8AFF77D`
+**Purpose**: Isolated simulator for this feature branch to avoid conflicts with other worktrees
+
+When building/testing in this worktree, always use this specific simulator:
+```bash
+# List simulators to verify it's available
+xcrun simctl list devices
+
+# Boot simulator if needed
+xcrun simctl boot 338A0A25-078B-4918-803E-7B48D8AFF77D
+
+# Use in xcodebuildmcp commands
+xcodebuildmcp.build_run_sim({
+  scheme: "NoteChat",
+  simulatorId: "338A0A25-078B-4918-803E-7B48D8AFF77D"
+})
+```
+
+**Recovery**: If simulator is deleted or unavailable, recreate with:
+```bash
+xcrun simctl create "NoteChat-Test-160630" "iPhone 16 Pro Max"
+# Update .simulator-id file with new UUID
+```
+
 ## Simulator Refresh Workflow (After Significant Changes)
 
 **Important**: Reuse existing simulator. Do not create new devices unless user asks.

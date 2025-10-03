@@ -202,12 +202,26 @@ private struct ChatRootView: View {
             ZStack(alignment: .leading) {
                 if let chat = current ?? chats.first {
                     NavigationStack {
-                        ChatView(chat: chat, onNewChat: {
-                            let newChat = Chat(title: "New Chat")
-                            modelContext.insert(newChat)
-                            try? modelContext.save()
-                            withAnimation(.spring()) { current = newChat }
-                        })
+                        ChatView(
+                            chat: chat,
+                            onNewChat: {
+                                let newChat = Chat(title: "New Chat")
+                                modelContext.insert(newChat)
+                                try? modelContext.save()
+                                withAnimation(.spring()) { current = newChat }
+                            },
+                            onSelectChat: { selected in
+                                guard selected.id != current?.id else { return }
+                                withAnimation(.spring()) { current = selected }
+                            },
+                            onDeleteChat: { deleted in
+                                guard current?.id == deleted.id else { return }
+                                DispatchQueue.main.async {
+                                    let fallback = chats.first(where: { $0.id != deleted.id })
+                                    withAnimation(.spring()) { current = fallback }
+                                }
+                            }
+                        )
                     }
                 } else {
                     Text("No chats yet. Tap + to start.")

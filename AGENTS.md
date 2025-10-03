@@ -18,6 +18,11 @@ This guide helps contributors work efficiently in this SwiftUI iOS project.
 ## Parallel Branch & Build Strategy
 - **Separate worktrees or clones**: keep each branch in its own folder (`git worktree add ../NoteChat-main main`, `git worktree add ../NoteChat-notes feat/notes-ai-workspace`) so agents can work concurrently without constant checkouts.
 - **Unique DerivedData per branch**: pass `-derivedDataPath ~/DerivedData/notechat-<branch>` (or set Xcode's Derived Data location) before running builds/tests to prevent cache corruption.
+- **Unique simulator per worktree**: Each worktree should use its own dedicated simulator to prevent conflicts:
+  - **This worktree** (`NoteChat-chat-feature`): Use `NoteChat-Test-160630` (UUID: `338A0A25-078B-4918-803E-7B48D8AFF77D`)
+  - Always reference this simulator by UUID in build commands
+  - See `.simulator-id` file for quick reference
+  - Recovery: If deleted, recreate with `xcrun simctl create "NoteChat-Test-160630" "iPhone 16 Pro Max"` and update `.simulator-id`
 - **Announce long builds**: when you kick off `xcodebuild`/`build_run_sim`, mention the branch and derived data path in your update so teammates can pause other builds; call out when the run finishes.
 - **Simulator coordination**: reuse the existing iPhone 16 simulator; only one agent should hold it for UI tests at a time. If you must reset, note it in the hand-off.
 - **Record test coverage**: after completing your work, document which tests/smoke flows you executed (or skipped) so the next agent knows what remains.

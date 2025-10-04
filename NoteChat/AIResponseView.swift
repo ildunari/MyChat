@@ -118,42 +118,23 @@ private struct MarkdownSegment: View {
 
     var body: some View {
         Group {
-            let hasTable = containsTable(in: effectiveText)
-            if containsInlineMath(effectiveText) {
-                // Use our inline math renderer when inline $...$ detected
-                InlineMathParagraph(text: effectiveText)
-                    .foregroundStyle(T.text)
-                    .fixedSize(horizontal: false, vertical: true)
+            if isStreaming {
+                markdownTextView(for: effectiveText)
             } else {
-                // Down-based renderer → AttributedString → SwiftUI Text
-                let attributed = renderMarkdownAttributed(effectiveText,
-                                                          linkColor: T.link,
-                                                          textColor: T.text,
-                                                          preferSystemStyling: true)
-                if hasTable {
-                    // Wrap table in scrollable container with intrinsic sizing
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        Text(attributed)
-                            .font(.system(.body, design: .monospaced))
-                            .textSelection(.enabled)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .fixedSize(horizontal: true, vertical: false)
-                    }
-                    .background(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(T.surface.opacity(0.5))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .stroke(T.borderSoft.opacity(0.6), lineWidth: 1)
-                    )
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                let pieces = markdownPieces(from: effectiveText)
+                if pieces.count == 1, case .text(let chunk) = pieces.first {
+                    markdownTextView(for: chunk)
                 } else {
-                    Text(attributed)
-                        .textSelection(.enabled)
-                        .lineSpacing(4)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach(Array(pieces.enumerated()), id: \.offset) { _, piece in
+                            switch piece {
+                            case .text(let chunk):
+                                markdownTextView(for: chunk)
+                            case .table(let table):
+                                MarkdownTableView(table: table)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -181,8 +162,26 @@ private struct MarkdownSegment: View {
         isStreaming ? debouncedText : text
     }
 
-    private func containsTable(in text: String) -> Bool {
-        text.contains("|") && text.contains("---")
+    @ViewBuilder
+    private func markdownTextView(for text: String) -> some View {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            EmptyView()
+        } else if containsInlineMath(text) {
+            InlineMathParagraph(text: text)
+                .foregroundStyle(T.text)
+                .fixedSize(horizontal: false, vertical: true)
+        } else {
+            let attributed = renderMarkdownAttributed(text,
+                                                      linkColor: T.link,
+                                                      textColor: T.text,
+                                                      preferSystemStyling: true,
+                                                      cachePolicy: isStreaming ? .bypass : .enabled)
+            Text(attributed)
+                .textSelection(.enabled)
+                .lineSpacing(4)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 }
 
@@ -433,4 +432,173 @@ private func parseInlineMath(_ s: String) -> [InlinePiece] {
         out.append(inMath ? .text("$\(buffer)") : .text(buffer))
     }
     return out
+}
+
+private enum MarkdownPiece { case text(String), table(MarkdownTable) }
+
+private func markdownPieces(from text: String) -> [MarkdownPiece] {
+    var pieces: [MarkdownPiece] = []
+    let segments = text.components(separatedBy: "\n\n")
+    for segment in segments {
+        if isTableBlock(segment), let table = parseMarkdownTable(from: segment) {
+            pieces.append(.table(table))
+        } else {
+            pieces.append(.text(segment))
+        }
+    }
+    return pieces
+}
+
+private func isTableBlock(_ text: String) -> Bool {
+    let lines = text.split(separator: "\n")
+    guard lines.count >= 2 else { return false }
+    let body = lines.map { $0.trimmingCharacters(in: .whitespaces) }
+    guard body.contains(where: { $0.contains("|") }) else { return false }
+    return body.dropFirst().contains { $0.contains("---") || $0.contains(":-") }
+}
+
+private struct MarkdownTable {
+    enum Alignment {
+        case leading, center, trailing
+
+        var horizontalAlignment: HorizontalAlignment {
+            switch self {
+            case .leading: return .leading
+            case .center: return .center
+            case .trailing: return .trailing
+            }
+        }
+
+        var textAlignment: TextAlignment {
+            switch self {
+            case .leading: return .leading
+            case .center: return .center
+            case .trailing: return .trailing
+            }
+        }
+
+        var frameAlignment: SwiftUI.Alignment {
+            SwiftUI.Alignment(horizontal: horizontalAlignment, vertical: .center)
+        }
+    }
+
+    var headers: [String]
+    var rows: [[String]]
+    var alignments: [Alignment]
+}
+
+private func parseMarkdownTable(from block: String) -> MarkdownTable? {
+    let rawLines = block.components(separatedBy: "\n")
+        .map { $0.trimmingCharacters(in: .whitespaces) }
+        .filter { $0.isEmpty == false }
+    guard rawLines.count >= 2 else { return nil }
+
+    guard let headerIndex = rawLines.firstIndex(where: { $0.contains("|") }) else { return nil }
+    let candidates = Array(rawLines.suffix(from: headerIndex))
+    guard candidates.count >= 2 else { return nil }
+    let headerLine = candidates[0]
+    let separatorLine = candidates[1]
+    let bodyLines = Array(candidates.dropFirst(2))
+
+    let headers = splitTableRow(headerLine)
+    var alignments = parseAlignmentRow(separatorLine, expectedCount: headers.count)
+    if alignments.count < headers.count {
+        alignments += Array(repeating: .leading, count: headers.count - alignments.count)
+    }
+
+    var rows: [[String]] = []
+    for line in bodyLines {
+        var cells = splitTableRow(line)
+        if cells.count < headers.count {
+            cells += Array(repeating: "", count: headers.count - cells.count)
+        }
+        rows.append(cells)
+    }
+
+    return MarkdownTable(headers: headers, rows: rows, alignments: alignments)
+}
+
+private func splitTableRow(_ line: String) -> [String] {
+    let trimmed = line.trimmingCharacters(in: .whitespaces)
+    let withoutPipes = trimmed.trimmingCharacters(in: CharacterSet(charactersIn: "|"))
+    return withoutPipes
+        .components(separatedBy: "|")
+        .map { $0.trimmingCharacters(in: .whitespaces) }
+}
+
+private func parseAlignmentRow(_ line: String, expectedCount: Int) -> [MarkdownTable.Alignment] {
+    let tokens = splitTableRow(line)
+    return tokens.prefix(expectedCount).map { token in
+        let trimmed = token.trimmingCharacters(in: .whitespaces)
+        let startsWithColon = trimmed.hasPrefix(":")
+        let endsWithColon = trimmed.hasSuffix(":")
+
+        switch (startsWithColon, endsWithColon) {
+        case (true, true): return .center
+        case (false, true): return .trailing
+        case (true, false): return .leading
+        default: return .leading
+        }
+    }
+}
+
+private struct MarkdownTableView: View {
+    let table: MarkdownTable
+    @Environment(\.tokens) private var T
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 0) {
+                Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
+                    GridRow {
+                        ForEach(Array(table.headers.enumerated()), id: \.offset) { index, header in
+                            Text(header.isEmpty ? " " : header)
+                                .font(.subheadline.weight(.semibold))
+                                .multilineTextAlignment(table.alignments[safe: index]?.textAlignment ?? .leading)
+                                .frame(maxWidth: .infinity,
+                                       alignment: table.alignments[safe: index]?.frameAlignment ?? .leading)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                    .background(T.surfaceElevated.opacity(0.85))
+
+                    ForEach(Array(table.rows.enumerated()), id: \.offset) { rowIndex, row in
+                        Divider()
+                            .gridCellUnsizedAxes([.horizontal, .vertical])
+
+                        GridRow {
+                            ForEach(0..<table.headers.count, id: \.self) { column in
+                                let text = column < row.count ? row[column] : ""
+                                Text(text.isEmpty ? " " : text)
+                                    .font(.callout)
+                                    .multilineTextAlignment(table.alignments[safe: column]?.textAlignment ?? .leading)
+                                    .frame(maxWidth: .infinity,
+                                           alignment: table.alignments[safe: column]?.frameAlignment ?? .leading)
+                            }
+                        }
+                        .padding(.vertical, 8)
+                        .background(rowIndex % 2 == 0 ? T.surface.opacity(0.28) : T.surface.opacity(0.14))
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(8)
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(T.surfaceElevated.opacity(0.55))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(T.borderSoft.opacity(0.6), lineWidth: 1)
+        )
+        .shadow(color: T.shadow.opacity(0.08), radius: 10, y: 6)
+    }
+}
+
+private extension Collection {
+    subscript(safe index: Index) -> Element? {
+        guard indices.contains(index) else { return nil }
+        return self[index]
+    }
 }

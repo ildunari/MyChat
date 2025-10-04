@@ -11,6 +11,8 @@
 		0A04849B2E6F9A5A00670BBE /* Highlighter in Frameworks */ = {isa = PBXBuildFile; productRef = 0A04849A2E6F9A5A00670BBE /* Highlighter */; };
 		0A04849E2E6F9A9700670BBE /* SwiftMath in Frameworks */ = {isa = PBXBuildFile; productRef = 0A04849D2E6F9A9700670BBE /* SwiftMath */; };
 		0A0484E92E6FAC4900670BBE /* PhosphorSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 0A0484E82E6FAC4900670BBE /* PhosphorSwift */; };
+		0AAE35892E90948300B7C021 /* Markdown in Frameworks */ = {isa = PBXBuildFile; productRef = 0AAE35882E90948300B7C021 /* Markdown */; };
+		0AAE358C2E9094BC00B7C021 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = 0AAE358B2E9094BC00B7C021 /* MarkdownUI */; };
 		3FE10B95D19D1CDE80ADCFAB /* NoteChatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2793EC5F11618EE4BBE42D2B /* NoteChatTests.swift */; };
 		5667C080976D668417E67332 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 16A29328F62006CAE4E535F9 /* Foundation.framework */; };
 		5F5127CFC55751AF308A724C /* NoteChatUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBBF3A65AF88B6B6858C48F9 /* NoteChatUITests.swift */; };
@@ -80,6 +82,8 @@
 				0A04849B2E6F9A5A00670BBE /* Highlighter in Frameworks */,
 				0A0484E92E6FAC4900670BBE /* PhosphorSwift in Frameworks */,
 				0A0484982E6F9A0400670BBE /* Down in Frameworks */,
+				0AAE358C2E9094BC00B7C021 /* MarkdownUI in Frameworks */,
+				0AAE35892E90948300B7C021 /* Markdown in Frameworks */,
 				0A04849E2E6F9A9700670BBE /* SwiftMath in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -185,6 +189,8 @@
 				0A04849A2E6F9A5A00670BBE /* Highlighter */,
 				0A04849D2E6F9A9700670BBE /* SwiftMath */,
 				0A0484E82E6FAC4900670BBE /* PhosphorSwift */,
+				0AAE35882E90948300B7C021 /* Markdown */,
+				0AAE358B2E9094BC00B7C021 /* MarkdownUI */,
 			);
 			productName = NoteChat;
 			productReference = 0A0484882E6F833800670BBE /* NoteChat.app */;
@@ -258,6 +264,8 @@
 				0A0484992E6F9A5A00670BBE /* XCRemoteSwiftPackageReference "HighlighterSwift" */,
 				0A04849C2E6F9A9700670BBE /* XCRemoteSwiftPackageReference "SwiftMath" */,
 				0A0484E72E6FAC4900670BBE /* XCRemoteSwiftPackageReference "swift" */,
+				0AAE35872E90948300B7C021 /* XCRemoteSwiftPackageReference "swift-markdown" */,
+				0AAE358A2E9094BC00B7C021 /* XCRemoteSwiftPackageReference "MarkdownUI" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0A0484892E6F833800670BBE /* Products */;
@@ -695,6 +703,22 @@
 				minimumVersion = 2.1.0;
 			};
 		};
+		0AAE35872E90948300B7C021 /* XCRemoteSwiftPackageReference "swift-markdown" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/swiftlang/swift-markdown";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.7.2;
+			};
+		};
+		0AAE358A2E9094BC00B7C021 /* XCRemoteSwiftPackageReference "MarkdownUI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/gonzalezreal/MarkdownUI";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.1;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -717,6 +741,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 0A0484E72E6FAC4900670BBE /* XCRemoteSwiftPackageReference "swift" */;
 			productName = PhosphorSwift;
+		};
+		0AAE35882E90948300B7C021 /* Markdown */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0AAE35872E90948300B7C021 /* XCRemoteSwiftPackageReference "swift-markdown" */;
+			productName = Markdown;
+		};
+		0AAE358B2E9094BC00B7C021 /* MarkdownUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 0AAE358A2E9094BC00B7C021 /* XCRemoteSwiftPackageReference "MarkdownUI" */;
+			productName = MarkdownUI;
 		};
 		B0D0D0CF2F00000100000001 /* Down */ = {
 			isa = XCSwiftPackageProductDependency;

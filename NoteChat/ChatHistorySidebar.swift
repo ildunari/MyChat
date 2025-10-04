@@ -132,11 +132,11 @@ struct ChatHistorySidebar: View {
     }
     
     private func deleteChat(_ chat: Chat) {
-        let wasActive = chat.id == currentChatID
-        modelContext.delete(chat)
-        try? modelContext.save()
-        if wasActive {
-            onDeleteChat?(chat)
+        if let handler = onDeleteChat {
+            handler(chat)
+        } else {
+            modelContext.delete(chat)
+            try? modelContext.save()
         }
     }
     

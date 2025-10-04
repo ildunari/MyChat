@@ -12,16 +12,19 @@ import CryptoKit
 import Down
 #endif
 
+enum MarkdownCachePolicy { case enabled, bypass }
+
 /// Renders markdown into an AttributedString suitable for SwiftUI Text.
 /// - Parameter markdown: source markdown text
 /// - Returns: AttributedString with basic styling applied. Falls back to AttributedString(markdown:) if Down is unavailable.
 func renderMarkdownAttributed(_ markdown: String,
                               linkColor: Color? = nil,
                               textColor: Color? = nil,
-                              preferSystemStyling: Bool = false) -> AttributedString {
+                              preferSystemStyling: Bool = false,
+                              cachePolicy: MarkdownCachePolicy = .enabled) -> AttributedString {
     // Cache raw parsed output to avoid re-parsing on every redraw
     let key = markdownCacheKey(markdown)
-    if let cached = MarkdownCache.get(key) {
+    if cachePolicy == .enabled, let cached = MarkdownCache.get(key) {
         return postProcess(cached, linkColor: linkColor, textColor: textColor)
     }
     // Optionally prefer Foundation's Markdown parser so resulting Text inherits SwiftUI environment
@@ -34,17 +37,17 @@ func renderMarkdownAttributed(_ markdown: String,
     )
     if let attributed = try? Down(markdownString: markdown).toAttributedString(styler: styler) {
         let converted = AttributedString(attributed)
-        MarkdownCache.put(key, converted)
+        if cachePolicy == .enabled { MarkdownCache.put(key, converted) }
         return postProcess(converted, linkColor: linkColor, textColor: textColor)
     }
 #endif
     if preferSystemStyling {
         if let a = try? AttributedString(markdown: markdown) {
-            MarkdownCache.put(key, a)
+            if cachePolicy == .enabled { MarkdownCache.put(key, a) }
             return postProcess(a, linkColor: linkColor, textColor: textColor)
         }
         let a = AttributedString(markdown)
-        MarkdownCache.put(key, a)
+        if cachePolicy == .enabled { MarkdownCache.put(key, a) }
         return postProcess(a, linkColor: linkColor, textColor: textColor)
     }
 
@@ -54,25 +57,25 @@ func renderMarkdownAttributed(_ markdown: String,
         let down = Down(markdownString: markdown)
         let ns = try down.toAttributedString()
         let raw = AttributedString(ns)
-        MarkdownCache.put(key, raw)
+        if cachePolicy == .enabled { MarkdownCache.put(key, raw) }
         return postProcess(raw, linkColor: linkColor, textColor: textColor)
     } catch {
         if let a = try? AttributedString(markdown: markdown) {
-            MarkdownCache.put(key, a)
+            if cachePolicy == .enabled { MarkdownCache.put(key, a) }
             return postProcess(a, linkColor: linkColor, textColor: textColor)
         }
         let a = AttributedString(markdown)
-        MarkdownCache.put(key, a)
+        if cachePolicy == .enabled { MarkdownCache.put(key, a) }
         return postProcess(a, linkColor: linkColor, textColor: textColor)
     }
     #else
     // iOS 15+ AttributedString(markdown:) fallback
     if let a = try? AttributedString(markdown: markdown) {
-        MarkdownCache.put(key, a)
+        if cachePolicy == .enabled { MarkdownCache.put(key, a) }
         return postProcess(a, linkColor: linkColor, textColor: textColor)
     }
     let a = AttributedString(markdown)
-    MarkdownCache.put(key, a)
+    if cachePolicy == .enabled { MarkdownCache.put(key, a) }
     return postProcess(a, linkColor: linkColor, textColor: textColor)
     #endif
 }

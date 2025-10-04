@@ -1,0 +1,31 @@
+{
+  "output": {
+    "filePath": "repo.md"
+  },
+  "ignore": {
+    "customPatterns": [
+      "AGENTS.md",
+      "CLAUDE.md",
+      "docs/**/*.md",
+      "*.xcodeproj/**",
+      "*.xcworkspace/**",
+      ".codex/**",
+      ".githooks/**",
+      ".github/**",
+      ".scripts/**",
+      ".gitignore",
+      ".mcp.json",
+      "*.xctestplan",
+      "porting.md",
+      "repomix.config.json",
+      "NoteChat/Env/.env",
+      ".simulator-id",
+      "test_codex_qdrant.txt",
+      "**/Assets.xcassets/**",
+      "**/Info.plist",
+      "NoteChat/UIPlayground/**",
+      "UIPlayground/**",
+      "**/.env.example"
+    ]
+  }
+}

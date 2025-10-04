@@ -10,6 +10,8 @@ struct RootView: View {
     @Environment(SettingsStore.self) private var store
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @State private var tab: MainTab = .home
+    @State private var selectedChat: Chat? = nil
+    @Query(sort: \Chat.createdAt, order: .reverse) private var chats: [Chat]
     @StateObject private var dockController = DockController()
     @Namespace private var highlightNS
 
@@ -26,10 +28,11 @@ struct RootView: View {
             }
 
             TabView(selection: $tab) {
-                ContentView()
+                ContentView(onOpenChat: { chat in openChatFromHome(chat) },
+                             onDeleteChat: { chat in handleChatDeleted(chat) })
                     .tag(MainTab.home)
 
-                ChatRootView()
+                ChatRootView(selectedChat: $selectedChat)
                     .tag(MainTab.chat)
 
                 NotesTabContainer()
@@ -56,6 +59,52 @@ struct RootView: View {
         }
         .background(T.bg.opacity(0.4).ignoresSafeArea())
     }
+
+    private func openChatFromHome(_ chat: Chat) {
+        selectedChat = chat
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
+            tab = .chat
+        }
+        dockController.expand()
+    }
+
+    private func handleChatDeleted(_ chat: Chat) {
+        guard let target = chats.first(where: { $0.id == chat.id }) else { return }
+        let wasActive = selectedChat?.id == chat.id
+        let fallback = chats.first(where: { $0.id != chat.id })
+
+        modelContext.delete(target)
+        try? modelContext.save()
+
+        if wasActive {
+            if let next = fallback {
+                selectedChat = next
+            } else {
+                selectedChat = nil
+            }
+        }
+
+        ensureChatExists()
+    }
+
+    private func ensureChatExists() {
+        guard tab == .chat else { return }
+        guard selectedChat == nil else { return }
+
+        if let existing = chats.first {
+            withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
+                selectedChat = existing
+            }
+        } else {
+            let newChat = Chat(title: "New Chat")
+            modelContext.insert(newChat)
+            try? modelContext.save()
+            withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
+                selectedChat = newChat
+            }
+        }
+    }
+
 }
 
 private struct DockTabBar: View {
@@ -189,18 +238,20 @@ enum DockMetrics {
 // MARK: - Chat Root with left drawer
 
 private struct ChatRootView: View {
+    @Binding var selectedChat: Chat?
     @Environment(\.tokens) private var T
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Chat.createdAt, order: .reverse) private var chats: [Chat]
-    @State private var current: Chat? = nil
     @State private var drawerX: CGFloat = -1 // -1 closed, 0 open (as fraction of width)
     @State private var drawerOpen: Bool = false
+
+    private var activeChat: Chat? { selectedChat ?? chats.first }
 
     var body: some View {
         GeometryReader { geo in
             let maxWidth = geo.size.width * 0.66
             ZStack(alignment: .leading) {
-                if let chat = current ?? chats.first {
+                if let chat = activeChat {
                     NavigationStack {
                         ChatView(
                             chat: chat,
@@ -208,20 +259,24 @@ private struct ChatRootView: View {
                                 let newChat = Chat(title: "New Chat")
                                 modelContext.insert(newChat)
                                 try? modelContext.save()
-                                withAnimation(.spring()) { current = newChat }
+                                withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
+                                    selectedChat = newChat
+                                }
                             },
                             onSelectChat: { selected in
-                                guard selected.id != current?.id else { return }
-                                withAnimation(.spring()) { current = selected }
+                                guard selected.id != selectedChat?.id else { return }
+                                withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) { selectedChat = selected }
                             },
                             onDeleteChat: { deleted in
-                                guard current?.id == deleted.id else { return }
+                                guard selectedChat?.id == deleted.id else { return }
                                 DispatchQueue.main.async {
                                     let fallback = chats.first(where: { $0.id != deleted.id })
-                                    withAnimation(.spring()) { current = fallback }
+                                    withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) { selectedChat = fallback }
+                                    ensureChatExists()
                                 }
                             }
                         )
+                        .id(chat.id)
                     }
                 } else {
                     Text("No chats yet. Tap + to start.")
@@ -268,18 +323,7 @@ private struct ChatRootView: View {
                         if open != drawerOpen { Haptics.selection(); drawerOpen = open }
                     }
             )
-            .onAppear {
-                if current == nil {
-                    if let first = chats.first {
-                        current = first
-                    } else {
-                        let newChat = Chat(title: "New Chat")
-                        modelContext.insert(newChat)
-                        try? modelContext.save()
-                        current = newChat
-                    }
-                }
-            }
+            .onAppear { ensureChatExists() }
         }
     }
 
@@ -319,7 +363,7 @@ private struct ChatRootView: View {
                 ScrollView {
                     LazyVStack(spacing: 10) {
                         ForEach(chats) { c in
-                            Button(action: { current = c; withAnimation(.spring()) { drawerX = -1 } }) {
+                            Button(action: { selectedChat = c; withAnimation(.spring()) { drawerX = -1 } }) {
                                 HStack(alignment: .center, spacing: 12) {
                                     AppIcon.text(16)
                                         .foregroundStyle(T.accent)
@@ -355,12 +399,28 @@ private struct ChatRootView: View {
         .confirmationDialog("Clear all chats?", isPresented: $showClearAll, titleVisibility: .visible) {
             Button("Delete All Chats", role: .destructive) {
                 for c in chats { modelContext.delete(c) }
-                try? modelContext.save(); current = nil
+                try? modelContext.save(); selectedChat = nil
             }
             Button("Cancel", role: .cancel) { }
         }
     }
     @State private var showClearAll = false
+
+    private func ensureChatExists() {
+        guard selectedChat == nil else { return }
+        if let existing = chats.first {
+            withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
+                selectedChat = existing
+            }
+        } else {
+            let newChat = Chat(title: "New Chat")
+            modelContext.insert(newChat)
+            try? modelContext.save()
+            withAnimation(.spring(response: 0.32, dampingFraction: 0.85)) {
+                selectedChat = newChat
+            }
+        }
+    }
 
     private func relative(_ date: Date) -> String {
         let secs = max(1, Int(Date().timeIntervalSince(date)))

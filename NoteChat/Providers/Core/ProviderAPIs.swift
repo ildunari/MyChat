@@ -138,16 +138,21 @@ struct ProviderAPIs {
             struct ModelList: Decodable { struct Item: Decodable { let id: String }
                 let data: [Item] }
             let decoded = try JSONDecoder().decode(ModelList.self, from: data)
-            let infos = decoded.data.map { item in
+            let infos = decoded.data.map { item -> ProviderModelInfo in
                 // Heuristic defaults. Adjust as needed when OpenAI exposes richer metadata.
-                let supportsImages = item.id.hasPrefix("gpt-4o") || item.id.hasPrefix("o4") || item.id.hasPrefix("o3") || item.id.lowercased().contains("vision")
-                return ProviderModelInfo(id: item.id,
-                                  displayName: nil,
-                                  inputTokenLimit: nil,
-                                  outputTokenLimit: 8192,
-                                  maxTemperature: 2.0,
-                                  supportsPromptCaching: false,
-                                  supportsImages: supportsImages)
+                let lowercasedID = item.id.lowercased()
+                let supportsImages = item.id.hasPrefix("gpt-4o") || item.id.hasPrefix("o4") || item.id.hasPrefix("o3") || lowercasedID.contains("vision")
+                var info = ProviderModelInfo(id: item.id,
+                                             displayName: nil,
+                                             inputTokenLimit: nil,
+                                             outputTokenLimit: 8192,
+                                             maxTemperature: 2.0,
+                                             supportsPromptCaching: false,
+                                             supportsImages: supportsImages)
+                if lowercasedID.hasPrefix("gpt-5") || lowercasedID.hasPrefix("o4") || lowercasedID.hasPrefix("o3") {
+                    info.preferredReasoningEffort = "medium"
+                }
+                return info
             }
             ModelCapabilitiesStore.putDefault(provider: provider.rawValue, infos: infos)
             return infos

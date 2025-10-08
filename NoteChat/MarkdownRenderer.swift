@@ -1,5 +1,5 @@
 // Rendering/MarkdownRenderer.swift
-// Lightweight Markdown -> AttributedString pipeline using Down, with safe fallbacks.
+// Lightweight Markdown -> AttributedString pipeline backed by Swift's Markdown parser.
 
 import SwiftUI
 import Foundation
@@ -7,66 +7,31 @@ import Foundation
 import CryptoKit
 #endif
 
-#if canImport(Down)
-import Down
-#endif
+enum MarkdownCachePolicy { case enabled, bypass }
 
 /// Renders markdown into an AttributedString suitable for SwiftUI Text.
 /// - Parameter markdown: source markdown text
 /// - Returns: AttributedString with basic styling applied. Falls back to AttributedString(markdown:) if Down is unavailable.
 func renderMarkdownAttributed(_ markdown: String,
                               linkColor: Color? = nil,
-                              preferSystemStyling: Bool = false) -> AttributedString {
-    // Cache raw parsed output to avoid re-parsing on every redraw
+                              textColor: Color? = nil,
+                              preferSystemStyling: Bool = false,
+                              cachePolicy: MarkdownCachePolicy = .enabled) -> AttributedString {
     let key = markdownCacheKey(markdown)
-    if let cached = MarkdownCache.get(key) {
-        return postProcess(cached, linkColor: linkColor)
-    }
-    // Optionally prefer Foundation's Markdown parser so resulting Text inherits SwiftUI environment
-    // font design and dynamic type settings (for consistent app-wide appearance).
-    if preferSystemStyling {
-        if let a = try? AttributedString(markdown: markdown) {
-            MarkdownCache.put(key, a)
-            return postProcess(a, linkColor: linkColor)
-        }
-        let a = AttributedString(markdown)
-        MarkdownCache.put(key, a)
-        return postProcess(a, linkColor: linkColor)
+    if cachePolicy == .enabled, let cached = MarkdownCache.get(key) {
+        return preferSystemStyling ? cached : postProcess(cached, linkColor: linkColor, textColor: textColor)
     }
 
-    // Otherwise prefer Down (handles more complete Markdown than the Foundation parser alone)
-    #if canImport(Down)
-    do {
-        let down = Down(markdownString: markdown)
-        let ns = try down.toAttributedString()
-        let raw = AttributedString(ns)
-        MarkdownCache.put(key, raw)
-        return postProcess(raw, linkColor: linkColor)
-    } catch {
-        // Fall back to Foundation's Markdown parser
-        if let a = try? AttributedString(markdown: markdown) {
-            MarkdownCache.put(key, a)
-            return postProcess(a, linkColor: linkColor)
-        }
-        let a = AttributedString(markdown)
-        MarkdownCache.put(key, a)
-        return postProcess(a, linkColor: linkColor)
-    }
-    #else
-    // iOS 15+ AttributedString(markdown:) fallback
-    if let a = try? AttributedString(markdown: markdown) {
-        MarkdownCache.put(key, a)
-        return postProcess(a, linkColor: linkColor)
-    }
-    let a = AttributedString(markdown)
-    MarkdownCache.put(key, a)
-    return postProcess(a, linkColor: linkColor)
-    #endif
+    let parsed = (try? AttributedString(markdown: markdown)) ?? AttributedString(markdown)
+    if cachePolicy == .enabled { MarkdownCache.put(key, parsed) }
+    return preferSystemStyling ? parsed : postProcess(parsed, linkColor: linkColor, textColor: textColor)
 }
 
 // MARK: - Lightweight styling pass
 
-private func postProcess(_ input: AttributedString, linkColor: Color?) -> AttributedString {
+private func postProcess(_ input: AttributedString,
+                        linkColor: Color?,
+                        textColor: Color?) -> AttributedString {
     var a = input
     // Tint links, preserving underline
     if let color = linkColor {
@@ -74,6 +39,11 @@ private func postProcess(_ input: AttributedString, linkColor: Color?) -> Attrib
             if run.attributes.link != nil {
                 a[run.range].foregroundColor = color
             }
+        }
+    }
+    if let base = textColor {
+        for run in a.runs where run.attributes.link == nil {
+            a[run.range].foregroundColor = base
         }
     }
     // Monospaced inline code (when detectable via inlinePresentationIntent)

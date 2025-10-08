@@ -42,3 +42,20 @@ MyChat/Env/.env
 
 # Qdrant Docker storage (multi-agent support)
 .qdrant-docker/
+
+# Build logs
+build.log
+build_latest.log
+*.log
+
+# Local chat history captures
+ChatHistory/
+
+# Test files
+test_*.txt
+
+# Simulator config
+.simulator-id
+
+# Repomix exports
+repo.md

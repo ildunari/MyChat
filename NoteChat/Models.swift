@@ -7,12 +7,14 @@ final class Chat: Identifiable {
     @Attribute(.unique) var id: UUID
     var title: String
     var createdAt: Date
+    var isFavorite: Bool
     @Relationship(deleteRule: .cascade, inverse: \Message.chat) var messages: [Message]
 
-    init(id: UUID = UUID(), title: String, createdAt: Date = Date(), messages: [Message] = []) {
+    init(id: UUID = UUID(), title: String, createdAt: Date = Date(), isFavorite: Bool = false, messages: [Message] = []) {
         self.id = id
         self.title = title
         self.createdAt = createdAt
+        self.isFavorite = isFavorite
         self.messages = messages
     }
 }
@@ -25,13 +27,26 @@ final class Message: Identifiable {
     var content: String
     var createdAt: Date
     var chat: Chat?
+    var turnID: UUID?
+    var versionIndex: Int
+    var selectedVersionIndex: Int
 
-    init(id: UUID = UUID(), role: String, content: String, createdAt: Date = Date(), chat: Chat? = nil) {
+    init(id: UUID = UUID(),
+         role: String,
+         content: String,
+         createdAt: Date = Date(),
+         chat: Chat? = nil,
+         turnID: UUID? = nil,
+         versionIndex: Int = 0,
+         selectedVersionIndex: Int = 0) {
         self.id = id
         self.role = role
         self.content = content
         self.createdAt = createdAt
         self.chat = chat
+        self.turnID = turnID
+        self.versionIndex = versionIndex
+        self.selectedVersionIndex = selectedVersionIndex
     }
 }
 
@@ -94,9 +109,9 @@ final class AppSettings: Identifiable {
         id: UUID = UUID(),
         defaultProvider: String = "openai",
         defaultModel: String = "gpt-4o-mini",
-        defaultSystemPrompt: String = "You are a helpful AI assistant.",
+        defaultSystemPrompt: String = MASTER_SYSTEM_PROMPT,
         defaultTemperature: Double = 1.0,
-        defaultMaxTokens: Int = 1024,
+        defaultMaxTokens: Int = 8192,
         openAIEnabledModels: [String] = ["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini"],
         anthropicEnabledModels: [String] = ["claude-3-5-sonnet", "claude-3-opus", "claude-3-haiku"],
         googleEnabledModels: [String] = ["gemini-1.5-pro", "gemini-1.5-flash"],
@@ -106,7 +121,7 @@ final class AppSettings: Identifiable {
         interfaceTextSizeIndex: Int = 2,
         chatBubbleColorID: String = "coolSlate",
         promptCachingEnabled: Bool = false,
-        useWebCanvas: Bool = true,
+        useWebCanvas: Bool = false,
         useLiquidGlass: Bool = true,
         liquidGlassIntensity: Double = 0.22,
         homeSectionOrder: [String] = ["chats", "agents"],

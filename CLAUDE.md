@@ -1,6 +1,569 @@
+
+## 🔥 InjectionIII Hot Reload - CONFIGURED ✅
+
+**Status**: InjectionIII hot reload is fully configured for this project.
+
+**What's set up:**
+- ✅ Injection bundle loading code in `NoteChatApp.swift`
+- ✅ Linker flags (`-Xlinker -interposable`) in Debug configuration
+- ✅ `EMIT_FRONTEND_COMMAND_LINES = YES` build setting for Xcode 16.3+
+
+**How to use:**
+1. Run the app in the iOS Simulator
+2. Make changes to any Swift file and save
+3. Changes will hot-reload instantly without rebuilding
+
+**Important notes:**
+- Do NOT add/remove/reorder stored properties while using hot reload (will crash)
+- Only works in DEBUG builds (zero impact on release)
+- SwiftUI views work best with `@ObserveInjection` wrapper (from HotSwiftUI or Inject packages)
+
+**Added**: 2025-10-04
+**DO NOT** re-add injection code - it's already configured!
+
+---
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## iOS 26 Liquid Glass Playbook (2025 update for Claude)
+_Added October 2025 so Claude agents inherit the full post-cutoff Liquid Glass guidance for Xcode 26. The complete playbook below should be treated as authoritative for iOS 26 UI decisions._
+
+# iOS 26 UI/UX + SwiftUI Liquid glass — comprehensive implementation guide (codex-grounded edition)
+_Last updated: 2025-10-03 • Targets iOS 26 SDK & Xcode 26 • SwiftUI-first_
+
+> Purpose. A comprehensive, implementation-focused guide to iOS 26’s design language (**Liquid glass**) and related SwiftUI APIs. This edition removes deprecated or misleading patterns, folds in migration recipes, and adds agent-facing scaffolds so a 2024-cutoff LLM (Codex CLI) can reliably ship correct iOS 26 UI. No external citations included by request.
+
+---
+
+## 0) What changed (and what to stop doing)
+- **Liquid glass** is the platform visual language in iOS 26. Most system bars and controls adopt it automatically. For custom surfaces, apply `glassEffect(...)` and coordinate with `GlassEffectContainer` and glass IDs.
+- **Stop painting bars.** Don’t set custom bar backgrounds or blur overlays. Avoid `toolbarBackground(_:for:)` and similar patterns; rely on system bars and edge-effects for contrast.
+- **Search is a first-class destination.** Keep simple filtering in the toolbar via `.searchable(...)`, or create a dedicated **Search tab** with `Tab(role: .search)`. You can explicitly control activation with `.tabViewSearchActivation(...)`.
+- **Tabs can minimize** on scroll (iPhone only) with `.tabBarMinimizeBehavior(...)`. Persistent controls (mini-player/CTA) should live in `.tabViewBottomAccessory { ... }`.
+- **Morphing transitions** are built-in. Use `matchedTransitionSource(...)` with `.navigationTransition(.zoom(...))` for grid-to-detail zooms that feel native.
+- **Concentric corners** and **background extension** are formalized. Use `ConcentricRectangle` and `.containerShape(_:)` for shapes, and `.backgroundExtensionEffect()` to continue artwork under floating bars.
+- **Web content is native in SwiftUI.** Prefer `WebView` and `WebPage` on iOS 26+. Keep UIKit wrappers only under `#available` for older OS targets.
+- **Rich text is native.** `TextEditor` works with `AttributedString` for editing and formatting; drop heavy third-party editors when possible.
+- **Profile with Instruments (SwiftUI instrument).** Identify long/duplicate body updates, debounce state churn, and cache formatters.
+
+---
+
+## 1) How to use this file with codex cli (agent grounding block)
+Use this section as a preamble in your agent’s system/grounding prompt. It prevents 2024-era habits from resurfacing.
+
+### 1.1 mandate
+- You are implementing **iOS 26 SwiftUI UI** using **Liquid glass**. Use only APIs and patterns in this guide.
+- Do not paint or recolor bars. Avoid deprecated bar APIs.
+- Prefer **Search tab** for destination-style search, and `.searchable` in-tool for lightweight filtering.
+- Keep animations subtle, performant, and respectful of accessibility.
+
+### 1.2 guardrails (hard “do not” list)
+- Do **not** use `toolbarBackground(_:for:)` or paint/blur bars manually.
+- Do **not** add `UIVisualEffectView` overlays to simulate frosted bars.
+- Do **not** stack multiple translucent layers; maintain legibility.
+- Do **not** build custom WKWebView wrappers for iOS 26 targets unless under `#available` fallback.
+
+### 1.3 preferred toolbox (use these)
+- Liquid glass: `glassEffect(...)`, `GlassEffectContainer`, `glassEffectID(_:in:)`
+- Tabs: `.tabBarMinimizeBehavior(...)` (iPhone), `.tabViewBottomAccessory { ... }`
+- Search: `Tab(role: .search)`, `.tabViewSearchActivation(...)`, `.searchable(...)`
+- Transitions: `.matchedTransitionSource(...)`, `.navigationTransition(.zoom(...))`
+- Shapes/underlap: `ConcentricRectangle`, `.containerShape(_:)`, `.backgroundExtensionEffect()`
+- Web: `WebView`, `WebPage`
+- Rich text: `TextEditor` + `AttributedString`
+- Scroll legibility: `.scrollEdgeEffectStyle(_:, for:)`
+
+### 1.4 verification checklist (every PR)
+- [ ] No bar painting or custom blur overlays.
+- [ ] Custom cards/surfaces use `glassEffect(...)` (not manual materials) on iOS 26+.
+- [ ] Search pattern matches intent (toolbar vs. Search tab).
+- [ ] Mini-player/CTA lives in `tabViewBottomAccessory` (not safeArea hacks).
+- [ ] Zoom transitions use matched source IDs and compatible shapes.
+- [ ] Rich text uses `TextEditor` + `AttributedString`; no heavyweight 3P unless required.
+- [ ] Web is `WebView/WebPage` for 26+, fallback gated under `#available`.
+- [ ] Instruments profile added for hot screens; body work minimized.
+
+---
+
+## 2) Liquid glass: applying it correctly
+Controls and bars adopt Liquid glass automatically. Apply it to **custom** surfaces; coordinate related shapes for morphing.
+
+```swift
+import SwiftUI
+
+struct ActionRow: View {
+    @Namespace private var glassNS
+    @State private var liked = false
+
+    var body: some View {
+        GlassEffectContainer(namespace: glassNS) {
+            HStack(spacing: 12) {
+                Button {
+                    withAnimation(.spring) { liked.toggle() }
+                } label: {
+                    Image(systemName: liked ? "heart.fill" : "heart")
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.glass)
+                .glassEffectID("like.button", in: glassNS)
+
+                Button {
+                    // share
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.glassProminent)
+                .glassEffectID("share.button", in: glassNS)
+            }
+            .padding(12)
+            .glassEffect(.regular) // subtle container tint
+        }
+        .padding(.horizontal, 16)
+    }
+}
+```
+
+**Interactive glass (micro feedback).**
+```swift
+Text("Tap")
+    .padding(.horizontal, 16).padding(.vertical, 10)
+    .glassEffect(.regular.interactive())
+```
+
+**Common mistakes to avoid.**
+- Over-tinting the entire surface. Prefer icon tints and restrained container tints.
+- Stacking multiple translucent layers. Keep hierarchy shallow to preserve contrast.
+
+---
+
+## 3) Tabs: minimization and bottom accessory
+**Minimize on scroll (iPhone only).** Let content take priority while keeping context.
+
+```swift
+TabView {
+    Tab("Feed", systemImage: "list.bullet") { FeedView() }
+    Tab("Alerts", systemImage: "bell") { AlertsView() }
+    Tab("Library", systemImage: "books.vertical") { LibraryView() }
+}
+.tabBarMinimizeBehavior(.onScrollDown) // iPhone only
+```
+
+**Bottom accessory (mini-player/CTA).** Always prefer this over safe-area overlays.
+
+```swift
+struct RootTabs: View {
+    @State private var playing = false
+
+    var body: some View {
+        TabView {
+            Tab("Home", systemImage: "house") { HomeScreen() }
+            Tab("Explore", systemImage: "safari") { ExploreScreen() }
+        }
+        .tabViewBottomAccessory {
+            HStack(spacing: 12) {
+                Image(systemName: playing ? "pause.fill" : "play.fill")
+                Text("Now Playing — Liquid Mixes 03")
+                Spacer()
+                Button("Queue") { /* ... */ }
+            }
+            .padding(12)
+            .glassEffect(.regular)
+        }
+    }
+}
+```
+
+**Adapting to placement (optional).**
+```swift
+@Environment(\!.tabViewBottomAccessoryPlacement) private var accessoryPlacement
+```
+
+---
+
+## 4) Search patterns: toolbar vs. dedicated search tab
+### 4.1 Toolbar search (content-first screens)
+```swift
+NavigationStack {
+    ContentList()
+}
+.searchable(text: $query, placement: .automatic)
+.searchToolbarBehavior(.minimized) // when search is secondary
+```
+
+### 4.2 Dedicated Search tab (destination pattern)
+```swift
+@State private var query = ""
+
+TabView {
+    Tab("Home", systemImage: "house") { Home() }
+    Tab(role: .search) {
+        NavigationStack {
+            SearchSuggestions()
+                .searchable(text: $query)
+        }
+    }
+}
+.tabViewSearchActivation(.searchTabSelection) // explicit activation
+```
+
+**Choosing the pattern.**
+- Use toolbar search for inline filtering.
+- Use a Search tab when you have suggestions, history, facets, or search-driven navigation.
+
+---
+
+## 5) Transitions: native zoom morphs
+Pair source and destination carefully and keep timings short.
+
+```swift
+struct Gallery: View {
+    @Namespace private var ns
+    @State private var path: [Photo] = []
+    let items: [Photo]
+
+    var body: some View {
+        NavigationStack(path: $path) {
+            LazyVGrid(columns: [.init(.adaptive(minimum: 120), spacing: 12)]) {
+                ForEach(items) { item in
+                    Thumbnail(item)
+                        .matchedTransitionSource(id: item.id, in: ns)
+                        .onTapGesture { path.append(item) }
+                }
+            }
+            .navigationDestination(for: Photo.self) { item in
+                Detail(item)
+                    .navigationTransition(.zoom(sourceID: item.id, in: ns))
+            }
+            .padding(12)
+        }
+    }
+}
+```
+
+**Guardrails.**
+- Keep durations ~0.28–0.35 s; respect **Reduce motion**.
+- Use compatible shapes via `.containerShape(...)` to avoid corner glitches.
+- If interactive cancel flickers on 26.0, avoid cancellation or test on 26.1+.
+
+---
+
+## 6) Background extension and concentric corners
+### 6.1 Underlap artwork/content beneath bars
+```swift
+VStack(spacing: 0) {
+    HeaderImage("forest")
+        .frame(height: 240)
+        .backgroundExtensionEffect()
+
+    Content()
+}
+```
+
+### 6.2 Concentric corners (no manual math)
+```swift
+VStack {
+    ConcentricRectangle()
+        .fill(.ultraThinMaterial)
+        .frame(height: 140)
+        .padding(12)
+
+    // content...
+}
+.containerShape(RoundedRectangle(cornerRadius: 28))
+.padding()
+.background(.background)
+```
+
+**Tips.**
+- Ensure inner shapes intersect outer corners (padding/position) so concentric math engages.
+- Define the parent’s shape once with `.containerShape(...)` for consistent nesting.
+
+---
+
+## 7) Web content: SwiftUI-native
+Prefer `WebView` and `WebPage` on iOS 26+. Keep a simple `WKWebView` wrapper for older OS under `#available`.
+
+```swift
+import SwiftUI
+import WebKit
+
+struct DocsScreen: View {
+    @State private var page = WebPage(URL(string: "https://example.com/docs")!)
+
+    var body: some View {
+        WebView(page)
+            .toolbar {
+                ToolbarItemGroup(placement: .bottomBar) {
+                    Button { page.goBack() } label: { Image(systemName: "chevron.left") }
+                    Button { page.reload() }  label: { Image(systemName: "arrow.clockwise") }
+                }
+            }
+    }
+}
+```
+
+**Message bridge (optional).**
+```swift
+WebView(page)
+    .onWebMessage(ofType: String.self) { message in
+        // handle messages from JS
+    }
+```
+
+---
+
+## 8) Rich text: AttributedString editing
+Use `TextEditor` with `AttributedString` and lightweight toolbars.
+
+```swift
+struct RichNote: View {
+    @State private var text: AttributedString = "Start typing…"
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            FormatToolbar(text: $text)
+
+            TextEditor(text: $text)
+                .frame(minHeight: 220)
+                .textEditorStyle(.plain)
+                .padding(8)
+                .background(.background)
+                .containerShape(RoundedRectangle(cornerRadius: 16))
+        }
+        .padding()
+    }
+}
+
+struct FormatToolbar: View {
+    @Binding var text: AttributedString
+    var body: some View {
+        HStack(spacing: 12) {
+            Button("Bold")   { set(.stronglyEmphasized) }
+            Button("Italic") { set(.emphasized) }
+            Button("Code")   { set(.code) }
+        }
+        .buttonStyle(.glass)
+    }
+
+    private func set(_ intent: InlinePresentationIntent) {
+        if let range = text.runs.first?.range {
+            text[range].inlinePresentationIntent = [intent]
+        }
+    }
+}
+```
+
+**Practices.**
+- Build attribute sets via `AttributeContainer`; apply over current selection.
+- Keep editor body cheap; move parsing to background tasks.
+
+---
+
+## 9) Toolbars: what’s in vs out
+**In.**
+- Default glass bars; rely on system contrast.
+- Sparse iconography; `.tint` to signal emphasis.
+- `ToolbarItemGroup`, `ToolbarSpacer` for structure.
+
+**Out.**
+- Manual bar background painting or custom blur overlays.
+- Heavy color washes behind titles.
+
+**Edge legibility.**
+```swift
+ScrollView { /* ... */ }
+.scrollEdgeEffectStyle(.soft, for: .top)
+```
+
+---
+
+## 10) Accessibility and motion
+- Maintain **44×44 pt** hit targets; expand with `.contentShape` for non-rectangular regions.
+- Respect **Dynamic type**, **VoiceOver**, and **Reduce motion**.
+- Keep animations brief and reversible; avoid disorienting parallax on glass.
+
+---
+
+## 11) Back-compat (iOS 18–25) with graceful fallbacks
+Gate new visuals under `#available` and keep older-but-acceptable alternatives.
+
+```swift
+@ViewBuilder
+func GlassCard<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+    if #available(iOS 26, *) {
+        content().glassEffect(.regular)
+    } else {
+        content()
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+}
+```
+
+- Tabs: if `tabViewBottomAccessory` is missing, use `.safeAreaInset(edge: .bottom) { ... }`.
+- Search: fallback to a regular tab with a search screen for older OS.
+- Zoom transition: use matched-geometry or a fade/scale alternative.
+- Web: continue using a `WKWebView` wrapper under `#available`.
+
+---
+
+## 12) Performance and profiling (Xcode 26)
+- Use **SwiftUI instrument** to find: long body updates, unnecessary recomputation, diffing hot spots.
+- Debounce state changes and batch updates in transactions.
+- Cache formatters and precompute derived strings.
+- Keep view trees shallow around glass; avoid expensive backgrounds in scrolling lists.
+
+---
+
+## 13) Known 26.0 quirks (test on 26.1+)
+- Interactive **zoom cancel** can briefly desync source visibility; prefer non-interactive zoom or avoid cancel.
+- `WebView` safe-area/keyboard: test rotation and overlays in complex stacks.
+- Glass button tints: validate `.glassProminent` in light and dark modes on device.
+
+---
+
+## 14) Migration recipes (find & replace playbook)
+These “fix-its” help modernize older codebases quickly.
+
+**A) Remove painted bars.**
+- Find: `toolbarBackground(`, `UIVisualEffectView` overlays for bars, custom blur layers under `NavigationStack`/`TabView`.
+- Replace with: nothing. Let system bars render glass. If overlap is busy, tune content edge with `.scrollEdgeEffectStyle` or subtle content-side gradients (not bar-side).
+
+**B) Replace frosted cards.**
+- Find: `.background(.ultraThinMaterial)` on custom cards (iOS 26+ targets).
+- Replace with: `glassEffect(.regular)` and, if related, coordinate via a `GlassEffectContainer` and shared `.glassEffectID(...)`.
+
+**C) Mini-player/CTA.**
+- Find: `.safeAreaInset(edge: .bottom)` hacks for persistent controls in tabs.
+- Replace with: `.tabViewBottomAccessory { ... }`.
+
+**D) Search patterns.**
+- Find: multiple, conflicting search bars (toolbar + separate screen).
+- Replace with: either keep `.searchable(...)` in toolbar **or** create `Tab(role: .search)` with `.tabViewSearchActivation(...)`.
+
+**E) WKWebView wrappers.**
+- Find: `UIViewRepresentable` + `WKWebView` everywhere.
+- Replace with: `WebView`/`WebPage` on iOS 26+; keep wrappers only under `#available`.
+
+---
+
+## 15) Design heuristics for Liquid glass
+- **Hierarchy:** one container tint per cluster; avoid layering tinted glass on tinted glass.
+- **Depth:** use shadows sparingly; glass already conveys elevation. Favor micro-scale, opacity, and blur changes on interaction.
+- **Color:** communicate priority through `.tint`, not full-surface fills.
+- **Spacing:** keep generous padding on glass surfaces (e.g., 10–14 pt around controls) to avoid cramped translucency artifacts.
+- **Typography:** avoid ultra-thin weights over complex imagery; prefer semibold headings on glass.
+
+---
+
+## 16) Animation guidelines (safe defaults)
+- Durations: 0.22–0.32 s for control tap, 0.28–0.35 s for zoom/route changes.
+- Curves: `.easeInOut` or gentle `.spring(response: 0.30, dampingFraction: 0.9)`.
+- State coupling: use explicit `withAnimation` blocks; avoid implicit animation on frequently-mutating state.
+- Accessibility: check `UIAccessibility.isReduceMotionEnabled` if you bridge to UIKit APIs; in pure SwiftUI, prefer platform toggles and keep motion minimal on essential flows.
+
+---
+
+## 17) Prompt scaffolds for codex cli (copy/paste)
+Use these to steer generations toward correct iOS 26 patterns.
+
+**17.1 upgrade surface to liquid glass**
+```
+Goal: Replace manual frosted card with iOS 26 Liquid glass.
+Constraints: Do not paint bars; do not stack multiple translucent layers.
+
+Steps:
+1) Wrap related glass surfaces in `GlassEffectContainer` (if they morph together).
+2) Apply `glassEffect(.regular)` to the card; prefer icon `.tint` for emphasis.
+3) Replace old background materials with glass; remove legacy blur overlays.
+4) Keep padding 10–14 pt; verify legibility over complex imagery.
+5) Add snapshot tests for dark/light and content-underlap.
+```
+
+**17.2 implement search tab**
+```
+Goal: Introduce a dedicated Search tab for destination search.
+
+Steps:
+1) Add `Tab(role: .search)` with a `NavigationStack` inside.
+2) Apply `.searchable(text: $query)` within the tab content.
+3) Add `.tabViewSearchActivation(.searchTabSelection)` for explicit activation.
+4) Remove redundant toolbar search in the same flow.
+5) Add suggestions/history and test keyboard/rotation.
+```
+
+**17.3 bottom accessory mini-player**
+```
+Goal: Move persistent mini-player from safe-area inset to bottom accessory.
+
+Steps:
+1) Remove `.safeAreaInset(edge: .bottom)` hacks from tabs.
+2) Add `.tabViewBottomAccessory { MiniPlayer(...) }` to the root TabView.
+3) Use `.glassEffect(.regular)` on the accessory container.
+4) Verify iPhone-only tab minimization does not occlude controls.
+5) Add UI tests for play/pause/queue.
+```
+
+**17.4 zoom transition from grid to detail**
+```
+Goal: Grid-to-detail zoom using native morphing.
+
+Steps:
+1) Add `.matchedTransitionSource(id: item.id, in: namespace)` to grid items.
+2) On destination, set `.navigationTransition(.zoom(sourceID: item.id, in: namespace))`.
+3) Match container shapes with `.containerShape(...)` on both ends.
+4) Keep duration ~0.3 s; check Reduce motion.
+5) Avoid interactive cancel on 26.0 or test on 26.1+.
+```
+
+---
+
+## 18) Quick API reference
+- Liquid glass: `glassEffect(...)`, `GlassEffectContainer`, `glassEffectID(_:in:)`
+- Buttons: `.buttonStyle(.glass)`, `.buttonStyle(.glassProminent)`
+- Search: `Tab(role: .search)`, `.tabViewSearchActivation(...)`, `.searchToolbarBehavior(...)`, `.searchable(...)`
+- Tabs: `.tabBarMinimizeBehavior(...)` (iPhone-only), `.tabViewBottomAccessory { ... }`
+- Transitions: `.matchedTransitionSource(...)`, `.navigationTransition(.zoom(...))`
+- Shapes/underlap: `ConcentricRectangle`, `.containerShape(_:)`, `.backgroundExtensionEffect()`
+- Scroll legibility: `.scrollEdgeEffectStyle(_:, for:)`
+- Web: `WebView`, `WebPage`
+- Rich text: `TextEditor` + `AttributedString`
+
+---
+
+## 19) Minimal demo app shell
+```swift
+import SwiftUI
+import WebKit
+
+@main
+struct LiquidGlassDemoApp: App {
+    var body: some Scene {
+        WindowGroup { RootTabs() }
+    }
+}
+```
+
+---
+
+## 20) Shipping checklist
+- [ ] All bars unpainted; no custom blur overlays.
+- [ ] Custom surfaces use Liquid glass appropriately.
+- [ ] Search pattern chosen and consistent.
+- [ ] Bottom accessory used for persistent controls.
+- [ ] Transitions tested (zoom duration, shapes, cancel behavior).
+- [ ] Rich text and WebView implemented natively on 26+.
+- [ ] Accessibility (contrast, dynamic type, reduce motion) validated.
+- [ ] Instruments run; hot paths optimized.
+- [ ] Back-compat guarded with `#available`.
+
+---
+
+### End of comprehensive guide
+
 
 ## Xcode UI Guidance Mode
 
@@ -279,6 +842,44 @@ Use **context7** to pull current documentation:
 8. **Cleanup**: Remove temp files, stop log capture
 9. **Report**: Structured summary with next steps
 
+## Worktree-Specific Simulator Configuration
+
+**⚠️ IMPORTANT: This section is specific to the `feat/swift-markdown-migration` worktree.**
+**When working in other worktrees/branches, remove or update this section accordingly.**
+
+**This Worktree**: `feat/swift-markdown-migration`
+**Dedicated Simulator**: `NoteChat-MarkdownUI`
+**Simulator UUID**: `2E9235D3-A2E7-492A-B993-F903C0FB6BEE`
+**Purpose**: Dedicated simulator for Swift Markdown UI migration work to avoid conflicts with other worktrees
+
+When building/testing in this worktree, **ALWAYS** use this specific simulator:
+```bash
+# List simulators to verify it's available
+xcrun simctl list devices | grep NoteChat-MarkdownUI
+
+# Boot simulator if needed
+xcrun simctl boot 2E9235D3-A2E7-492A-B993-F903C0FB6BEE
+
+# Use in xcodebuild commands
+xcodebuild -scheme NoteChat -sdk iphonesimulator \
+  -destination 'platform=iOS Simulator,id=2E9235D3-A2E7-492A-B993-F903C0FB6BEE' \
+  build
+
+# Use in xcodebuildmcp commands (if available)
+xcodebuildmcp.build_run_sim({
+  scheme: "NoteChat",
+  simulatorId: "2E9235D3-A2E7-492A-B993-F903C0FB6BEE"
+})
+```
+
+**Recovery**: If simulator is deleted or unavailable, recreate with:
+```bash
+xcrun simctl create "NoteChat-MarkdownUI" "iPhone 16 Pro"
+# Then update this UUID in CLAUDE.md
+```
+
+**Reminder**: When switching to work in other worktrees (main, other feature branches), remove or update this simulator configuration section to avoid confusion.
+
 ## Simulator Refresh Workflow (After Significant Changes)
 
 **Important**: Reuse existing simulator. Do not create new devices unless user asks.
@@ -325,7 +926,7 @@ Use **context7** to pull current documentation:
 After any meaningful edit:
 - Build → run quick tests → fix small issues immediately
 - Refresh simulator app if UI or runtime behavior changed
-- Capture 1-2 screenshots and 10/10 log lines for report
+- Capture screenshots or log snippets only when they help demonstrate the outcome or regressions
 - Commit with Conventional Commit and push to main (unless disabled)
 - Offer next step options: "Run full UI tests?", "Add feature?", "Clean artifacts?"
 - Clean up: remove temp files, revert debug flags

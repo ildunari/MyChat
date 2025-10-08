@@ -6,15 +6,17 @@
 - Deployment target set to iOS 17.0 for the app target (macOS target not present).
 - `SettingsView` and its subviews refactored to use `@Environment(SettingsStore.self)` with `@Bindable` in bodies where needed.
 - Previews updated: `SettingsView` uses an in-memory `ModelContainer` and injects a preview `SettingsStore`.
-- Fixed UIPlayground preview build issues by scoping mock types and adding `import Combine` where `ObservableObject/@Published` are used (playground-only).
+- Removed the legacy UIPlayground scaffolding; designers now prototype directly in feature branches or component previews within the main target.
 - Build validated for iOS Simulator. Resolved a locked build DB by removing `DerivedData/.../XCBuildData` and retrying.
+- ChatHistory logging implemented with opt-in toggle in Settings → Advanced. Raw provider requests/responses now write per-chat JSON under `ChatHistory/<provider>/` in each worktree when enabled.
+- Chat and Note assistant flows both wrap provider calls in `ChatLoggingTaskLocal`; streaming deltas/reasoning append to the same session file.
 - Settings page adopts a glass-like material background for a modern, layered look; list rows use thin material with inset grouping.
 
 ## Artifacts
 - Built app: `~/Library/Developer/Xcode/DerivedData/.../Build/Products/Debug-iphonesimulator/NoteChat.app`
 
 ## Risks / Follow-ups
-- UIPlayground relies on Combine for `MockChat` preview types; consider wrapping in `#if DEBUG` or migrating to Observation if desired.
+- Ensure new preview-only experiments live alongside their owning views guarded with `#if DEBUG` rather than a standalone playground folder.
 - No test targets yet; add XCTest scaffolding and cover `SettingsStore.save()` behavior with Keychain interactions mocked.
 
 ## Next Steps

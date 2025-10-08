@@ -3,6 +3,8 @@ import UIKit
 import SwiftData
 
 struct ContentView: View {
+    var onOpenChat: ((Chat) -> Void)? = nil
+    var onDeleteChat: ((Chat) -> Void)? = nil
     @Environment(\.tokens) private var T
     @Environment(SettingsStore.self) private var store
     @Environment(\.modelContext) private var modelContext
@@ -17,7 +19,6 @@ struct ContentView: View {
     private let orderDefaultsKey = "home.sectionOrder"
     @State private var renamingChat: Chat? = nil
     @State private var newChatTitle: String = ""
-    @State private var navNewChat: Chat? = nil
     @State private var navBarHeight: CGFloat = 0
     @State private var scrollOffset: CGFloat = 0
     private var homeTitle: String {
@@ -96,9 +97,6 @@ struct ContentView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .navigationDestination(item: $navNewChat) { chat in
-            ChatView(chat: chat)
-        }
         .sheet(isPresented: $showingSettings) {
             SettingsView()
         }
@@ -162,10 +160,14 @@ struct ContentView: View {
                 GridItem(.flexible(), spacing: 12)
             ], spacing: 12) {
                 ForEach(chats.prefix(4)) { chat in
-                    ChatCard(chat: chat, fixedHeight: cardH) {
+                    ChatCard(chat: chat, fixedHeight: cardH, onRename: {
                         renamingChat = chat
                         newChatTitle = chat.title
-                    }
+                    }, onOpen: {
+                        openChat(chat)
+                    }, onDelete: {
+                        handleDeletion(of: chat)
+                    })
                 }
             }
             .padding(.vertical, 4)
@@ -235,7 +237,15 @@ struct ContentView: View {
         let newChat = Chat(title: "New Chat")
         modelContext.insert(newChat)
         try? modelContext.save()
-        navNewChat = newChat
+        onOpenChat?(newChat)
+    }
+
+    private func openChat(_ chat: Chat) {
+        onOpenChat?(chat)
+    }
+
+    private func handleDeletion(of chat: Chat) {
+        onDeleteChat?(chat)
     }
 }
 
@@ -376,6 +386,8 @@ struct ChatCard: View {
     let chat: Chat
     var fixedHeight: CGFloat? = nil
     let onRename: () -> Void
+    let onOpen: () -> Void
+    let onDelete: () -> Void
 
     @Environment(\.tokens) private var T
     @Environment(\.modelContext) private var modelContext
@@ -436,7 +448,7 @@ struct ChatCard: View {
     }
     
     var body: some View {
-        NavigationLink(destination: ChatView(chat: chat)) {
+        Button(action: onOpen) {
             LiquidGlassPanel(cornerRadius: T.radiusLarge,
                              padding: EdgeInsets(top: 18, leading: 18, bottom: 18, trailing: 18),
                              shadowRadius: scheme == .dark ? 8 : 12,
@@ -482,9 +494,10 @@ struct ChatCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .buttonStyle(PlainButtonStyle())
+        .contentShape(RoundedRectangle(cornerRadius: T.radiusLarge, style: .continuous))
         .contextMenu {
             Button("Open") {
-                // Navigation is handled by NavigationLink
+                onOpen()
             }
             
             Button("Rename") {
@@ -526,8 +539,7 @@ struct ChatCard: View {
     }
     
     private func deleteChat() {
-        modelContext.delete(chat)
-        try? modelContext.save()
+        onDelete()
     }
 }
 

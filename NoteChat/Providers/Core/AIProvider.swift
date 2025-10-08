@@ -55,6 +55,7 @@ protocol AIStreamingProvider {
         maxOutputTokens: Int?,
         reasoningEffort: String?,
         verbosity: String?,
-        onDelta: @escaping (String) -> Void
+        onDelta: @escaping (String) -> Void,
+        onReasoning: @escaping (String) -> Void
     ) async throws -> String
 }

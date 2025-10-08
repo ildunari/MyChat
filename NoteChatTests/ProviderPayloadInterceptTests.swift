@@ -87,6 +87,38 @@ final class ProviderPayloadInterceptTests: XCTestCase {
         XCTAssertEqual(text, "ok")
     }
 
+    func testOpenAIProvider_stripsSamplingParametersForGPT5Models() async throws {
+        MockURLProtocol.requestHandler = { request in
+            XCTAssertTrue(request.url?.absoluteString.contains("/v1/responses") == true)
+            XCTAssertEqual(request.httpMethod, "POST")
+            XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization")?.hasPrefix("Bearer "), true)
+            guard let body = request.httpBody else {
+                XCTFail("Missing body")
+                throw URLError(.badServerResponse)
+            }
+            let json = try XCTUnwrap(JSONSerialization.jsonObject(with: body) as? [String: Any])
+            XCTAssertEqual(json["model"] as? String, "gpt-5-nano")
+            XCTAssertNil(json["temperature"], "GPT-5 payload should not include temperature")
+            XCTAssertNil(json["top_p"], "GPT-5 payload should not include top_p")
+            XCTAssertNil(json["top_k"], "GPT-5 payload should not include top_k")
+            XCTAssertNil(json["verbosity"], "GPT-5 payload should not include verbosity")
+            let resp = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: ["Content-Type":"application/json"])!
+            let data = "{\n  \"output\": { \n    \"content\": [ { \"type\": \"output_text\", \"text\": \"ok\" } ]\n  }\n}".data(using: .utf8)!
+            return (resp, data)
+        }
+
+        let provider = OpenAIProvider(apiKey: "test-key")
+        let messages = [AIMessage(role: .user, content: "hello")]
+        _ = try await provider.sendChat(messages: messages,
+                                        model: "gpt-5-nano",
+                                        temperature: 0.25,
+                                        topP: 0.9,
+                                        topK: 32,
+                                        maxOutputTokens: 512,
+                                        reasoningEffort: nil,
+                                        verbosity: "medium")
+    }
+
     func testAnthropicProvider_sendsMessagesWithHeaders() async throws {
         MockURLProtocol.requestHandler = { request in
             XCTAssertTrue(request.url?.absoluteString.contains("/v1/messages") == true)

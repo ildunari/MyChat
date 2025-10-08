@@ -4,6 +4,7 @@ import PhotosUI
 import SwiftData
 import UniformTypeIdentifiers
 import UIKit
+import Foundation
 
 private let reasoningMessageRole = "assistant_reasoning"
 
@@ -24,32 +25,32 @@ struct ChatView: View {
     @State private var showPhotoPicker = false
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var attachments: [(data: Data, mime: String)] = []
-    @State private var streamingText: String? = nil
+    @StateObject private var streamingMarkdown = StreamingMarkdownState()
     @State private var editingMessage: Message? = nil
     @State private var currentSendTask: Task<Void, Never>? = nil
-    @State private var debugOffset: CGFloat = 0
+    @State private var activeTurnID: UUID?
+    @State private var pendingVersionIndex: Int = 1
+    @State private var retryingUserMessage: Message? = nil
+    @State private var hasNormalizedExistingMessages = false
 
     var body: some View {
         VStack(spacing: 0) {
-            if useWebCanvasFlag {
-                WebCanvasContainer(chat: chat,
-                                   messages: sortedMessages,
-                                   streamingText: streamingText,
-                                   isSending: isSending)
-            } else {
-                MessageListView(messages: sortedMessages,
-                                 streamingText: streamingText,
-                                 isSending: isSending,
-                                 aiDisplayName: effectiveAIDisplayName,
-                                 aiModel: currentModel,
-                                 userDisplayName: userDisplayName,
-                                 showReasoningSnippets: showReasoningSnippetsFlag,
-                                 bottomInset: dockController.currentHeight + 24,
-                                 onRetry: { msg in Task { await retryResponse(msg) } },
-                                 onCopy: { copyResponse($0) },
-                                 onEdit: { editMessage($0) },
-                                 onScroll: handleScrollChange)
-            }
+            MessageListView(messages: displayMessages,
+                             streamingSnapshot: activeStreamingSnapshot,
+                             isSending: isSending,
+                             aiDisplayName: effectiveAIDisplayName,
+                             aiModel: currentModel,
+                             userDisplayName: userDisplayName,
+                             showReasoningSnippets: showReasoningSnippetsFlag,
+                             bottomInset: dockController.currentHeight + 24,
+                             streamingVersionIndex: activeStreamingSnapshot != nil ? pendingVersionIndex : nil,
+                             versionMeta: assistantVersionMeta,
+                             onRetry: { msg in
+                                 currentSendTask = Task { await retryResponse(msg) }
+                             },
+                             onCopy: { copyResponse($0) },
+                             onEdit: { editMessage($0) },
+                             onScroll: handleScrollChange)
             if let error = errorMessage {
                 Text(error)
                     .foregroundStyle(.red)
@@ -61,14 +62,15 @@ struct ChatView: View {
             VStack(spacing: 0) {
                 InputBar(text: $inputText,
                          onSend: { currentSendTask = Task { await send() } },
-                         isStreaming: streamingText != nil,
+                         isStreaming: activeStreamingSnapshot != nil,
                          onStop: { stopStreaming() },
                          onMic: nil,
                          onLive: nil,
                          onPlus: { showPhotoPicker = true })
                     .padding(.top, 2)
+                    .padding(.bottom, dockController.currentHeight + 12)
             }
-            .safeAreaPadding(.bottom, dockController.currentHeight + 12)
+            .safeAreaPadding(.bottom, 0)
         }
         // Floating Liquid Glass navigation bar + thinking indicator
         .safeAreaInset(edge: .top, spacing: 12) {
@@ -107,49 +109,25 @@ struct ChatView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .onAppear {
+            normalizeExistingMessagesIfNeeded()
             if isDefaultTitle, let first = sortedMessages.first {
                 updateChatTitle(from: first.content)
             }
             showSuggestions = chat.messages.isEmpty
             dockController.expand(animated: false)
         }
-        .overlay(alignment: .topTrailing) {
-            Text(String(format: "offset %.1f", debugOffset))
-                .font(.caption2)
-                .padding(6)
-                .background(Color.black.opacity(0.3), in: Capsule())
-                .padding(12)
+        .onChange(of: chat.messages.count) { _, _ in
+            hasNormalizedExistingMessages = false
+            normalizeExistingMessagesIfNeeded()
         }
     }
 
     private func handleScrollChange(_ offset: CGFloat) {
         let distance = max(offset, 0)
-        debugOffset = distance
         dockController.nudge(withScrollOffset: distance)
         if distance < 12 {
             dockController.expand(animated: true)
         }
-    }
-
-    // MARK: - WebCanvas integration
-    private var useWebCanvasFlag: Bool {
-        let wantsWeb = settingsQuery.first?.useWebCanvas ?? true
-        return wantsWeb && hasWebCanvasAssets
-    }
-
-    private var hasWebCanvasAssets: Bool {
-        let b = Bundle.main
-        if b.url(forResource: "index", withExtension: "html", subdirectory: "WebCanvas/dist") != nil { return true }
-        if b.url(forResource: "index", withExtension: "html", subdirectory: "ChatApp/WebCanvas/dist") != nil { return true }
-        return false
-    }
-
-    private var currentThemeForCanvas: CanvasTheme {
-        // Simple mapping: defer to system for now
-        if let pref = settingsQuery.first?.interfaceTheme, pref == "dark" { return .dark }
-        if let pref = settingsQuery.first?.interfaceTheme, pref == "light" { return .light }
-        // Fall back to light; SwiftUI color scheme not available here without @Environment
-        return .light
     }
 
     private var showThinkingOverlayFlag: Bool {
@@ -158,6 +136,16 @@ struct ChatView: View {
 
     private var showReasoningSnippetsFlag: Bool {
         settingsQuery.first?.showReasoningSnippets ?? true
+    }
+
+    private var activeStreamingSnapshot: StreamingMarkdownSnapshot? {
+        let snapshot = streamingMarkdown.snapshot
+        return (snapshot.hasVisibleContent || snapshot.hasReasoningSummary) ? snapshot : nil
+    }
+
+    private var activeStreamingText: String? {
+        guard activeStreamingSnapshot != nil else { return nil }
+        return streamingMarkdown.combinedText.isEmpty ? nil : streamingMarkdown.combinedText
     }
 
     private var effectiveAIDisplayName: String {
@@ -178,55 +166,18 @@ struct ChatView: View {
         return "You"
     }
 
-    private struct WebCanvasContainer: View {
-        let chat: Chat
-        let messages: [Message]
-        let streamingText: String?
-        let isSending: Bool
-        @StateObject private var controller = ChatCanvasController()
-        @Environment(\.colorScheme) private var colorScheme
-        @State private var didStartStream = false
-        var body: some View {
-            ChatCanvasView(controller: controller, theme: (colorScheme == .dark ? .dark : .light))
-                .onAppear { loadAll() }
-                .onChange(of: messages.count) { _, _ in loadAll() }
-                .onChange(of: streamingText) { _, newVal in
-                    guard let partial = newVal else { return }
-                    // Start stream lazily only once
-                    if !didStartStream {
-                        controller.startStream(id: "current")
-                        didStartStream = true
-                    }
-                    controller.appendDelta(id: "current", delta: partial)
-                    controller.scrollToBottom()
-                }
-                .onChange(of: isSending) { _, sending in
-                    if sending == false {
-                        controller.endStream(id: "current")
-                        controller.scrollToBottom()
-                        didStartStream = false
-                    }
-                }
-        }
-        private func loadAll() {
-            let items: [CanvasMessage] = messages.map { m in
-                CanvasMessage(id: m.id.uuidString, role: m.role, content: m.content, createdAt: m.createdAt.timeIntervalSince1970)
-            }
-            controller.loadTranscript(items)
-            controller.scrollToBottom()
-        }
-    }
-
     // Split out heavy view builder to speed up type checking
     private struct MessageListView: View {
         let messages: [Message]
-        let streamingText: String?
+        let streamingSnapshot: StreamingMarkdownSnapshot?
         let isSending: Bool
         var aiDisplayName: String
         var aiModel: String
         var userDisplayName: String
         var showReasoningSnippets: Bool
         var bottomInset: CGFloat
+        var streamingVersionIndex: Int? = nil
+        var versionMeta: [UUID: AssistantVersionMeta] = [:]
         var onRetry: (Message) -> Void
         var onCopy: (Message) -> Void
         var onEdit: (Message) -> Void
@@ -237,11 +188,12 @@ struct ChatView: View {
                     LazyVStack(alignment: .leading, spacing: 12) {
                         ForEach(messages) { message in
                             switch message.role {
-                            case "assistant":
+                           case "assistant":
                                 MessageRow(message: message,
                                            aiDisplayName: aiDisplayName,
                                            aiModel: aiModel,
                                            userDisplayName: userDisplayName,
+                                           versionMeta: versionMeta[message.id],
                                            onRetry: { onRetry(message) },
                                            onCopy: { onCopy(message) })
                             case "user":
@@ -254,7 +206,8 @@ struct ChatView: View {
                                 if showReasoningSnippets {
                                     let snippet = message.content.trimmingCharacters(in: .whitespacesAndNewlines)
                                     if snippet.isEmpty == false {
-                                        ReasoningSnippetRow(text: snippet, aiDisplayName: aiDisplayName)
+                                        ReasoningSummaryDisclosure(title: "\(aiDisplayName) — Reasoning",
+                                                                   summary: snippet)
                                             .id(message.id)
                                     }
                                 }
@@ -268,8 +221,11 @@ struct ChatView: View {
                                            onEdit: { onEdit(message) })
                             }
                         }
-                        if let partial = streamingText, !partial.isEmpty {
-                            StreamingRow(partial: partial, aiDisplayName: aiDisplayName, aiModel: aiModel)
+                        if let snapshot = streamingSnapshot, (snapshot.hasVisibleContent || snapshot.hasReasoningSummary) {
+                            StreamingRow(snapshot: snapshot,
+                                         aiDisplayName: aiDisplayName,
+                                         aiModel: aiModel,
+                                         versionIndex: streamingVersionIndex)
                                 .id("streaming-row")
                         }
                     }
@@ -294,8 +250,12 @@ struct ChatView: View {
                         withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
                     }
                 }
-                .onChange(of: streamingText) { _, newValue in
-                    guard let partial = newValue, !partial.isEmpty else { return }
+                .onChange(of: streamingSnapshot?.stableMarkdown ?? "") { _, newValue in
+                    guard !newValue.isEmpty else { return }
+                    withAnimation { proxy.scrollTo("streaming-row", anchor: .bottom) }
+                }
+                .onChange(of: streamingSnapshot?.tailRaw ?? "") { _, newValue in
+                    guard !newValue.isEmpty else { return }
                     withAnimation { proxy.scrollTo("streaming-row", anchor: .bottom) }
                 }
                 .onChange(of: isSending) { _, sending in
@@ -350,6 +310,7 @@ struct ChatView: View {
         var aiModel: String = ""
         var userDisplayName: String = "You"
         @Environment(\.tokens) private var T
+        var versionMeta: AssistantVersionMeta? = nil
         var onRetry: (() -> Void)? = nil
         var onCopy: (() -> Void)? = nil
         var onEdit: (() -> Void)? = nil
@@ -380,7 +341,7 @@ struct ChatView: View {
                     }
                     .padding(.horizontal)
                 } else {
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: 12) {
                         HStack(spacing: 6) {
                             AppIcon.starsHeader(14)
                                 .foregroundStyle(T.textSecondary)
@@ -388,57 +349,88 @@ struct ChatView: View {
                                 .font(.footnote)
                                 .foregroundStyle(T.textSecondary)
                         }
-                        AIResponseView(content: message.content)
+                        .padding(.top, 2)
+
+                        AIResponseView(text: message.content)
                             .frame(maxWidth: .infinity, alignment: .leading)
+
                         HStack(spacing: 12) {
                             Button("Retry") { onRetry?() }
                             Button("Copy") { onCopy?() }
+                            if let meta = versionMeta, meta.total > 1 {
+                                Spacer(minLength: 8)
+                                HStack(spacing: 8) {
+                                    Button(action: meta.onPrevious) {
+                                        Image(systemName: "chevron.left")
+                                    }
+                                    .disabled(meta.current <= 1)
+                                    Text("<\(meta.current)/\(meta.total)>")
+                                        .font(.caption)
+                                        .monospacedDigit()
+                                        .foregroundStyle(T.textSecondary)
+                                    Button(action: meta.onNext) {
+                                        Image(systemName: "chevron.right")
+                                    }
+                                    .disabled(meta.current >= meta.total)
+                                }
+                            }
                         }
                         .font(.footnote)
-                        .padding(.top, 4)
+                        .foregroundStyle(T.textSecondary)
+                        .padding(.bottom, 2)
                     }
-                    .padding(.horizontal)
+                    .padding(.vertical, 6)
                 }
             }
         }
     }
 
-    private struct ReasoningSnippetRow: View {
-        let text: String
-        let aiDisplayName: String
+    private struct ReasoningSummaryDisclosure: View {
+        let title: String
+        let summary: String
         @Environment(\.tokens) private var T
+        @State private var expanded = false
+
         var body: some View {
             VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 6) {
-                    AppIcon.starsHeader(14)
-                        .foregroundStyle(T.accent)
-                    Text("\(aiDisplayName) — Reasoning")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(T.textSecondary)
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() }
+                } label: {
+                    HStack(spacing: 6) {
+                        AppIcon.starsHeader(14)
+                            .foregroundStyle(T.accent)
+                        Text(title)
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(T.textSecondary)
+                        Spacer(minLength: 8)
+                        Image(systemName: expanded ? "chevron.up" : "chevron.down")
+                            .font(.caption2)
+                            .foregroundStyle(T.textSecondary)
+                    }
                 }
-                Text(text)
+                .buttonStyle(.plain)
+
+                Text(summary)
                     .font(.callout)
                     .foregroundStyle(T.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(expanded ? nil : 3)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(T.surfaceElevated.opacity(0.78))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(T.borderSoft.opacity(0.8), lineWidth: 1)
-            )
-            .shadow(color: T.shadow.opacity(0.08), radius: 6, y: 3)
+            .padding(.leading, 12)
+            .padding(.vertical, 6)
+            .overlay(alignment: .leading) {
+                Rectangle()
+                    .fill(T.borderSoft.opacity(0.9))
+                    .frame(width: 2)
+            }
         }
     }
 
     private struct StreamingRow: View {
-        let partial: String
+        let snapshot: StreamingMarkdownSnapshot
         var aiDisplayName: String = "AI"
         var aiModel: String = ""
+        var versionIndex: Int? = nil
         @Environment(\.tokens) private var T
         var body: some View {
             VStack(alignment: .leading, spacing: 6) {
@@ -448,8 +440,14 @@ struct ChatView: View {
                     Text("\(aiDisplayName) \(aiModel)")
                         .font(.footnote)
                         .foregroundStyle(T.textSecondary)
+                    if let idx = versionIndex, idx > 1 {
+                        Text("v\(idx)")
+                            .font(.caption)
+                            .foregroundStyle(T.textSecondary)
+                            .monospacedDigit()
+                    }
                 }
-                AIResponseView(content: partial)
+                AIResponseView(streaming: snapshot)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.horizontal)
@@ -467,60 +465,66 @@ struct ChatView: View {
 
     @ViewBuilder
     private var floatingNavBar: some View {
-        GlassNavigationBar(title: chatDisplayTitle, showBack: shouldShowBackButton) {
-            HStack(spacing: 12) {
-                Menu {
-                    Section("Quick Models") {
-                        ForEach(quickModels(), id: \.self) { m in
-                            Button(action: { setDefaultModel(m) }) {
-                                HStack {
-                                    Text(m)
-                                    if m == (settingsQuery.first?.defaultModel ?? "") {
-                                        AppIcon.checkCircle(true, size: 14)
-                                    }
-                                }
+        HStack(spacing: 16) {
+            modelMenuPill
+                .accessibilityLabel("Model Picker")
+                .accessibilityValue(currentModelDisplay())
+
+            Spacer(minLength: 16)
+
+            if canCreateChat {
+                glassToolbarButton(systemName: "plus") {
+                    onNewChat?()
+                }
+                .accessibilityLabel("New Chat")
+            }
+        }
+    }
+
+    private var modelMenuPill: some View {
+        Menu {
+            Section("Quick Models") {
+                ForEach(quickModels(), id: \.self) { m in
+                    Button(action: { setDefaultModel(m) }) {
+                        HStack {
+                            Text(m)
+                            if m == (settingsQuery.first?.defaultModel ?? "") {
+                                AppIcon.checkCircle(true, size: 14)
                             }
                         }
                     }
-                    Button("Other models…") { showFullModelPicker = true }
-                    Button("Provider defaults…") { showModelEditor = true }
-                    Divider()
-                    Button("Chat Settings…") { showChatSettings = true }
-                } label: {
-                    HStack(spacing: 6) {
-                        Text(currentModelDisplay())
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(T.text)
-                            .lineLimit(1)
-                        AppIcon.chevronDown(10)
-                            .rotationEffect(.degrees(-90))
-                            .foregroundStyle(T.textSecondary)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(T.surfaceElevated.opacity(0.75))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .stroke(T.borderSoft.opacity(0.6))
-                            )
-                    )
-                }
-                .menuStyle(.borderlessButton)
-
-                if canCreateChat {
-                    Button(action: { onNewChat?() }) {
-                        AppIcon.plus(18)
-                            .foregroundStyle(T.accentOn)
-                            .frame(width: 44, height: 44)
-                            .background(Circle().fill(T.accent))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("New Chat")
                 }
             }
+            Button("Other models…") { showFullModelPicker = true }
+            Button("Provider defaults…") { showModelEditor = true }
+            Divider()
+            Button("Chat Settings…") { showChatSettings = true }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 14, weight: .semibold))
+                Text(currentModelDisplay())
+                    .font(.subheadline.weight(.semibold))
+                    .lineLimit(1)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 12, weight: .semibold))
+                    .baselineOffset(-2)
+            }
+            .foregroundStyle(T.text)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 10)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        Capsule(style: .continuous)
+                            .stroke(T.borderSoft.opacity(0.45), lineWidth: 0.7)
+                    )
+            )
         }
+        .menuStyle(.borderlessButton)
+        .buttonStyle(.plain)
+        .shadow(color: T.shadow.opacity(0.12), radius: 10, y: 6)
     }
 
     private func currentModelDisplay() -> String {
@@ -546,7 +550,7 @@ struct ChatView: View {
     private func setDefaultModel(_ m: String) {
         guard let s = settingsQuery.first else { return }
         s.defaultModel = m
-        try? modelContext.save()
+        persistContext()
     }
 
     private func quickModels() -> [String] {
@@ -561,6 +565,26 @@ struct ChatView: View {
         // Deduplicate and cap at 3
         var seen = Set<String>()
         return out.filter { seen.insert($0).inserted }.prefix(3).map { $0 }
+    }
+
+    @ViewBuilder
+    private func glassToolbarButton(systemName: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(T.text)
+                .frame(width: 38, height: 38)
+                .background(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(.ultraThinMaterial)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .stroke(T.borderSoft.opacity(0.45), lineWidth: 0.7)
+                        )
+                )
+        }
+        .buttonStyle(.plain)
+        .shadow(color: T.shadow.opacity(0.18), radius: 8, y: 6)
     }
 
     private var defaultSuggestions: [SuggestionChipItem] {
@@ -615,7 +639,7 @@ struct ChatView: View {
                     if let s = settingsQuery.first {
                         s.defaultProvider = provider
                         s.defaultModel = m
-                        try? modelContext.save()
+                        persist()
                     }
                     dismiss()
                 }) {
@@ -623,19 +647,25 @@ struct ChatView: View {
                 }
             }
         }
+
+        private func persist() {
+            do {
+                try modelContext.save()
+            } catch {
+                print("ModelContext save failed in FullModelPickerSheet: \(error)")
+            }
+        }
     }
 
     @MainActor
     private struct ChatSettingsSheet: View {
         @Environment(\.dismiss) private var dismiss
-        @Environment(\.modelContext) private var modelContext
-        @Query private var settingsQuery: [AppSettings]
+        @Environment(SettingsStore.self) private var settingsStore
         @State private var systemPrompt: String = ""
         @State private var temperature: Double = 1.0
-        @State private var maxTokens: Double = 1024
+        @State private var maxTokens: Double = 8192
         @State private var historyLimit: Int = -1 // -1 = All
         var body: some View {
-            let defaults = settingsQuery.first
             NavigationStack {
                 Form {
                     Section("System Instruction") {
@@ -657,23 +687,21 @@ struct ChatView: View {
                     }
                 }
                 .onAppear {
-                    systemPrompt = defaults?.defaultSystemPrompt ?? systemPrompt
-                    temperature = defaults?.defaultTemperature ?? temperature
-                    maxTokens = Double(defaults?.defaultMaxTokens ?? Int(maxTokens))
-                    historyLimit = defaults?.defaultHistoryLimit ?? -1
+                    systemPrompt = settingsStore.systemPrompt
+                    temperature = settingsStore.temperature
+                    maxTokens = Double(settingsStore.maxTokens)
+                    historyLimit = settingsStore.defaultHistoryLimit
                 }
                 .navigationTitle("Chat Settings")
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Save") {
-                            if let s = settingsQuery.first {
-                                s.defaultSystemPrompt = systemPrompt
-                                s.defaultTemperature = temperature
-                                s.defaultMaxTokens = Int(maxTokens)
-                                s.defaultHistoryLimit = historyLimit
-                                try? modelContext.save()
-                            }
+                            settingsStore.systemPrompt = systemPrompt
+                            settingsStore.temperature = temperature
+                            settingsStore.maxTokens = Int(maxTokens)
+                            settingsStore.defaultHistoryLimit = historyLimit
+                            settingsStore.save()
                             dismiss()
                         }
                     }
@@ -686,6 +714,62 @@ struct ChatView: View {
         chat.messages.sorted(by: { $0.createdAt < $1.createdAt })
     }
 
+    private var displayMessages: [Message] {
+        var output: [Message] = []
+        let userMessages = sortedMessages.filter { $0.role == "user" }
+        for user in userMessages {
+            let turnID = ensureTurnID(for: user)
+            output.append(user)
+            if let assistant = selectedAssistantMessage(for: user) {
+                output.append(assistant)
+                if showReasoningSnippetsFlag,
+                   let snippet = reasoningMessage(for: turnID, version: assistant.versionIndex) {
+                    output.append(snippet)
+                }
+            }
+        }
+        return output
+    }
+
+    private func normalizeExistingMessagesIfNeeded() {
+        guard hasNormalizedExistingMessages == false else { return }
+        let ordered = chat.messages.sorted(by: { $0.createdAt < $1.createdAt })
+        if normalizeTurnMetadata(in: ordered) {
+            persistContext()
+        }
+        hasNormalizedExistingMessages = true
+    }
+
+    private var assistantVersionMeta: [UUID: AssistantVersionMeta] {
+        var map: [UUID: AssistantVersionMeta] = [:]
+        let userMessages = sortedMessages.filter { $0.role == "user" }
+        for user in userMessages {
+            let turnID = ensureTurnID(for: user)
+            let assistants = assistantMessages(for: turnID)
+            guard !assistants.isEmpty else { continue }
+            let total = assistants.count
+            let currentIndex = normalizedSelectedIndex(for: user, total: total, messages: assistants)
+
+            let sortedAssistants = assistants.sorted { $0.versionIndex < $1.versionIndex }
+            guard let currentMessage = sortedAssistants.first(where: { $0.versionIndex == currentIndex }) ?? sortedAssistants.last else { continue }
+
+            map[currentMessage.id] = AssistantVersionMeta(
+                current: currentIndex,
+                total: total,
+                onPrevious: { stepVersion(for: turnID, delta: -1) },
+                onNext: { stepVersion(for: turnID, delta: 1) }
+            )
+        }
+        return map
+    }
+
+    private struct AssistantVersionMeta {
+        let current: Int
+        let total: Int
+        let onPrevious: () -> Void
+        let onNext: () -> Void
+    }
+
     private var isDefaultTitle: Bool {
         chat.title.isEmpty || chat.title == "New Chat"
     }
@@ -693,74 +777,120 @@ struct ChatView: View {
     @MainActor
     private func send() async {
         guard !isSending else { return }
-        let userText = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !userText.isEmpty else { return }
-        inputText = ""
+        defer { currentSendTask = nil }
+        let trimmed = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         errorMessage = nil
         withAnimation { showSuggestions = false }
 
-        // Insert or update user message
+        var userMessage: Message
+        var promptText: String
+        var attachmentsToSend = attachments
+
         if let editing = editingMessage {
-            editing.content = userText
+            promptText = trimmed
+            guard !promptText.isEmpty else { return }
+            editing.content = promptText
             editing.createdAt = Date()
-            let msgs = chat.messages.sorted(by: { $0.createdAt < $1.createdAt })
+            editing.selectedVersionIndex = 0
+            if editing.turnID == nil { editing.turnID = editing.id }
+            let msgs = sortedMessages
             if let idx = msgs.firstIndex(where: { $0.id == editing.id }) {
-                for m in msgs.suffix(from: idx + 1) { modelContext.delete(m) }
+                for msg in msgs.suffix(from: idx + 1) {
+                    modelContext.delete(msg)
+                }
             }
-            try? modelContext.save()
+            persistContext()
+            userMessage = editing
+            attachmentsToSend = []
         } else {
-            let userMsg = Message(role: "user", content: userText, chat: chat)
+            guard !trimmed.isEmpty else { return }
+            promptText = trimmed
+            let turnIdentifier = UUID()
+            let userMsg = Message(role: "user",
+                                  content: promptText,
+                                  chat: chat,
+                                  turnID: turnIdentifier,
+                                  versionIndex: 0,
+                                  selectedVersionIndex: 0)
             modelContext.insert(userMsg)
-            try? modelContext.save()
+            persistContext()
+            userMessage = userMsg
         }
 
+        inputText = ""
+        retryingUserMessage = nil
+
+        await performResponse(for: userMessage,
+                              prompt: promptText,
+                              attachments: attachmentsToSend)
+    }
+
+    @MainActor
+    private func performResponse(for userMessage: Message,
+                                 prompt: String,
+                                 attachments attachmentsToSend: [(data: Data, mime: String)]) async {
         isSending = true
-        defer { isSending = false; currentSendTask = nil; editingMessage = nil }
+        streamingMarkdown.reset()
+        errorMessage = nil
+        let turnID = turnID(for: userMessage)
+        activeTurnID = turnID
+        pendingVersionIndex = nextVersionIndex(for: userMessage)
+
+        let loggingEnabled = SettingsStore.shared?.logChatTranscripts ?? false
+        var loggingContext: ChatLoggingContext?
+
+        defer {
+            isSending = false
+            streamingMarkdown.reset()
+            currentSendTask = nil
+            editingMessage = nil
+            retryingUserMessage = nil
+            activeTurnID = nil
+            pendingVersionIndex = 1
+        }
 
         do {
-            // Resolve provider from settings
             let settings = settingsQuery.first ?? AppSettings()
             let providerID = settings.defaultProvider
             let model = effectiveModel(for: providerID)
 
+            loggingContext = ChatLoggingContext(chatID: chat.id,
+                                                turnID: turnID,
+                                                providerID: providerID,
+                                                modelID: model,
+                                                chatTitle: chat.title,
+                                                extraMetadata: [:])
+
             let provider = try makeProvider(id: providerID)
+
             var aiMessages: [AIMessage] = []
-            // Master system prompt first, then user-provided system prompt
             aiMessages.append(AIMessage(role: .system, content: MASTER_SYSTEM_PROMPT))
-            let sys = settings.defaultSystemPrompt
-            if sys.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false {
+            let sys = settings.defaultSystemPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
+            if sys.isEmpty == false {
                 aiMessages.append(AIMessage(role: .system, content: sys))
             }
 
-            // Use previous messages, optionally limiting to the last N per AppSettings
-            var previous = chat.messages.sorted(by: { $0.createdAt < $1.createdAt })
-            if editingMessage == nil, let last = previous.last, last.content == userText { previous.removeLast() }
+            var history = conversationHistory(before: userMessage)
             let historyLimit = settings.defaultHistoryLimit
-            if historyLimit > 0 && previous.count > historyLimit {
-                previous = Array(previous.suffix(historyLimit))
+            if historyLimit > 0 && history.count > historyLimit {
+                history = Array(history.suffix(historyLimit))
             }
-            aiMessages.append(contentsOf: previous.compactMap { m in
-                guard m.role != reasoningMessageRole else { return nil }
-                let role: AIMessage.Role = (m.role == "user") ? .user : .assistant
-                return AIMessage(role: role, content: m.content)
-            })
-
-            // Compose the current user message with optional image parts (preserve MIME) if not editing
-            if editingMessage == nil {
-                var parts: [AIMessage.Part] = [.text(userText)]
-                let capsSend = ModelCapabilitiesStore.get(provider: providerID, model: model)
-                let canSendImages = capsSend?.supportsImages ?? true
-                if canSendImages {
-                    parts += attachments.map { AIMessage.Part.imageData($0.data, mime: $0.mime) }
-                }
-                aiMessages.append(AIMessage(role: .user, parts: parts))
-                if !canSendImages && !attachments.isEmpty {
-                    errorMessage = "This model doesn’t support image inputs. Images were omitted from the request."
-                }
+            for item in history {
+                guard item.role != reasoningMessageRole else { continue }
+                let role: AIMessage.Role = (item.role == "user") ? .user : .assistant
+                aiMessages.append(AIMessage(role: role, content: item.content))
             }
 
-            // Apply per-model overrides from ModelCapabilitiesStore
+            var parts: [AIMessage.Part] = [.text(prompt)]
             var caps = ModelCapabilitiesStore.get(provider: providerID, model: model)
+            let canSendImages = caps?.supportsImages ?? true
+            if canSendImages {
+                parts += attachmentsToSend.map { .imageData($0.data, mime: $0.mime) }
+            } else if !attachmentsToSend.isEmpty {
+                errorMessage = "This model doesn’t support image inputs. Images were omitted from the request."
+            }
+            aiMessages.append(AIMessage(role: .user, parts: parts))
+
             let wantsPromptCaching = settingsQuery.first?.promptCachingEnabled ?? false
             if caps?.enablePromptCaching == nil, wantsPromptCaching {
                 var updated = caps ?? .fallback(id: model)
@@ -768,6 +898,7 @@ struct ChatView: View {
                 ModelCapabilitiesStore.putUser(provider: providerID, model: model, info: updated)
                 caps = updated
             }
+
             let tempEff = caps?.preferredTemperature ?? settings.defaultTemperature
             let topPEff = caps?.preferredTopP
             let topKEff = caps?.preferredTopK
@@ -777,62 +908,120 @@ struct ChatView: View {
             let reasoningEff = caps?.preferredReasoningEffort
             let verbosityEff = caps?.preferredVerbosity
 
-            let reply: String
-            if let streaming = provider as? AIStreamingProvider {
-                streamingText = ""
-                reply = try await streaming.streamChat(
-                    messages: aiMessages,
-                    model: model,
-                    temperature: tempEff,
-                    topP: topPEff,
-                    topK: topKEff,
-                    maxOutputTokens: finalMaxOut,
-                    reasoningEffort: reasoningEff,
-                    verbosity: verbosityEff
-                ) { delta in
-                    Task { @MainActor in
-                        self.streamingText = (self.streamingText ?? "") + delta
+            if loggingEnabled {
+                var instructionPieces: [String] = []
+                let masterTrimmed = MASTER_SYSTEM_PROMPT.trimmingCharacters(in: .whitespacesAndNewlines)
+                if masterTrimmed.isEmpty == false { instructionPieces.append(masterTrimmed) }
+                if sys.isEmpty == false { instructionPieces.append(sys) }
+                let instructionsText = instructionPieces.isEmpty ? nil : instructionPieces.joined(separator: "\n\n")
+                let envelope = LoggingEnvelope(provider: providerID,
+                                               model: model,
+                                               instructions: instructionsText,
+                                               temperature: tempEff,
+                                               topP: topPEff,
+                                               topK: topKEff,
+                                               maxOutputTokens: finalMaxOut,
+                                               reasoningEffort: reasoningEff,
+                                               verbosity: verbosityEff,
+                                               messages: aiMessages)
+                ChatHistoryLogging.logEnvelope(envelope)
+            }
+
+            let performChat = { () async throws -> String in
+                if let streaming = provider as? AIStreamingProvider {
+                    streamingMarkdown.reset()
+                    return try await streaming.streamChat(
+                        messages: aiMessages,
+                        model: model,
+                        temperature: tempEff,
+                        topP: topPEff,
+                        topK: topKEff,
+                        maxOutputTokens: finalMaxOut,
+                        reasoningEffort: reasoningEff,
+                        verbosity: verbosityEff
+                    ) { delta in
+                        Task { @MainActor in
+                            streamingMarkdown.append(delta)
+                        }
+                        if loggingEnabled {
+                            ChatHistoryLogging.logStreamChunk(delta, event: "delta")
+                        }
+                    } onReasoning: { summary in
+                        Task { @MainActor in
+                            streamingMarkdown.updateReasoningSummary(summary)
+                        }
+                        if loggingEnabled {
+                            ChatHistoryLogging.logReasoning(summary)
+                        }
                     }
+                } else if let adv = provider as? AIProviderAdvanced {
+                    return try await adv.sendChat(
+                        messages: aiMessages,
+                        model: model,
+                        temperature: tempEff,
+                        topP: topPEff,
+                        topK: topKEff,
+                        maxOutputTokens: finalMaxOut,
+                        reasoningEffort: reasoningEff,
+                        verbosity: verbosityEff
+                    )
+                } else {
+                    return try await provider.sendChat(messages: aiMessages, model: model)
                 }
-            } else if let adv = provider as? AIProviderAdvanced {
-                reply = try await adv.sendChat(
-                    messages: aiMessages,
-                    model: model,
-                    temperature: tempEff,
-                    topP: topPEff,
-                    topK: topKEff,
-                    maxOutputTokens: finalMaxOut,
-                    reasoningEffort: reasoningEff,
-                    verbosity: verbosityEff
-                )
+            }
+
+            let reply: String
+            if loggingEnabled, let context = loggingContext {
+                reply = try await ChatLoggingTaskLocal.$context.withValue(context) {
+                    ChatHistoryLogging.beginTurn(metadata: [
+                        "prompt": prompt,
+                        "historyCount": String(history.count),
+                        "attachments": String(attachmentsToSend.count)
+                    ])
+                    let responseText = try await performChat()
+                    ChatHistoryLogging.logResponse(text: responseText)
+                    return responseText
+                }
             } else {
-                reply = try await provider.sendChat(messages: aiMessages, model: model)
+                reply = try await performChat()
             }
 
-            // Add assistant message
-            streamingText = nil
-            insertAssistantReply(reply)
+            insertAssistantReply(reply, reasoningSummary: streamingMarkdown.snapshot.reasoningSummary)
 
-            // Update title if still default
             if isDefaultTitle {
-                updateChatTitle(from: userText)
+                updateChatTitle(from: prompt)
             }
 
-            try? modelContext.save()
+            persistContext()
             attachments.removeAll()
         } catch is CancellationError {
-            // User stopped streaming. Finalize partial text if any, without surfacing an error.
-            if let partial = streamingText, !partial.isEmpty {
-                streamingText = nil
-                insertAssistantReply(partial)
-                try? modelContext.save()
-            } else {
-                streamingText = nil
+            let partial = streamingMarkdown.combinedText
+            if loggingEnabled, let context = loggingContext {
+                if partial.isEmpty == false {
+                    ChatHistoryLogger.shared.log(direction: .incoming,
+                                                 kind: .response,
+                                                 payload: .text(partial),
+                                                 metadata: ["status": "cancelled"],
+                                                 context: context)
+                }
+                ChatHistoryLogger.shared.log(direction: .incoming,
+                                             kind: .info,
+                                             payload: .text("Streaming cancelled"),
+                                             metadata: ["reason": "user-initiated"],
+                                             context: context)
             }
+            if !partial.isEmpty {
+                let summary = streamingMarkdown.snapshot.reasoningSummary
+                streamingMarkdown.reset()
+                insertAssistantReply(partial, reasoningSummary: summary)
+                persistContext()
+            }
+            attachments.removeAll()
             errorMessage = nil
         } catch {
-            // Any non-cancellation error: clear streaming state and surface message
-            streamingText = nil
+            if loggingEnabled, let context = loggingContext {
+                ChatHistoryLogger.shared.logError((error as NSError).localizedDescription, context: context)
+            }
             errorMessage = (error as NSError).localizedDescription
         }
     }
@@ -843,12 +1032,12 @@ struct ChatView: View {
         // Cancel the in-flight send task, if any.
         currentSendTask?.cancel()
         // If there's partial streamed content, finalize it as a message for continuity.
-        if let partial = streamingText, !partial.isEmpty {
-            streamingText = nil
-            insertAssistantReply(partial)
-            try? modelContext.save()
-        } else {
-            streamingText = nil
+        let partial = streamingMarkdown.combinedText
+        if !partial.isEmpty {
+            let summary = streamingMarkdown.snapshot.reasoningSummary
+            streamingMarkdown.reset()
+            insertAssistantReply(partial, reasoningSummary: summary)
+            persistContext()
         }
         isSending = false
         attachments.removeAll()
@@ -864,14 +1053,41 @@ struct ChatView: View {
     }
 
     @MainActor
-    private func insertAssistantReply(_ rawText: String) {
-        let processed = extractReasoningSnippet(from: rawText)
+    private func insertAssistantReply(_ rawText: String, reasoningSummary: String? = nil) {
+        guard let turnID = activeTurnID ?? retryingUserMessage?.turnID ?? retryingUserMessage?.id ?? editingMessage?.turnID ?? editingMessage?.id else {
+            applyAssistantInsertion(rawText, turnID: UUID(), version: 1, reasoningSummary: reasoningSummary)
+            return
+        }
+        let version = pendingVersionIndex
+        applyAssistantInsertion(rawText, turnID: turnID, version: version, reasoningSummary: reasoningSummary)
+    }
+
+    @MainActor
+    private func applyAssistantInsertion(_ rawText: String, turnID: UUID, version: Int, reasoningSummary: String?) {
+        let processed: (snippet: String?, body: String)
+        if let reasoningSummary, reasoningSummary.isEmpty == false {
+            processed = (String(reasoningSummary.prefix(480)), rawText)
+        } else {
+            processed = extractReasoningSnippet(from: rawText)
+        }
         if showReasoningSnippetsFlag, let snippet = processed.snippet {
-            let reasoningMsg = Message(role: reasoningMessageRole, content: snippet, chat: chat)
+            let reasoningMsg = Message(role: reasoningMessageRole,
+                                       content: snippet,
+                                       chat: chat,
+                                       turnID: turnID,
+                                       versionIndex: version)
             modelContext.insert(reasoningMsg)
         }
-        let replyMessage = Message(role: "assistant", content: processed.body, chat: chat)
+        let replyMessage = Message(role: "assistant",
+                                   content: processed.body,
+                                   chat: chat,
+                                   turnID: turnID,
+                                   versionIndex: version)
         modelContext.insert(replyMessage)
+        if let user = userMessage(for: turnID) {
+            user.selectedVersionIndex = version
+            persistContext()
+        }
     }
 
     private func extractReasoningSnippet(from rawText: String) -> (snippet: String?, body: String) {
@@ -948,8 +1164,127 @@ struct ChatView: View {
         default: break
         }
         if fallback.isEmpty { fallback = allowed.first ?? configured }
-        if let s = settingsQuery.first { s.defaultModel = fallback; try? modelContext.save() }
+        if let s = settingsQuery.first { s.defaultModel = fallback; persistContext() }
         return fallback
+    }
+
+    private func turnID(for message: Message) -> UUID {
+        message.turnID ?? message.id
+    }
+
+    private func assistantMessages(for turnID: UUID) -> [Message] {
+        sortedMessages.filter { $0.role == "assistant" && self.turnID(for: $0) == turnID }
+            .sorted(by: { $0.versionIndex < $1.versionIndex })
+    }
+
+    private func reasoningMessage(for turnID: UUID, version: Int) -> Message? {
+        sortedMessages.first(where: { $0.role == reasoningMessageRole && self.turnID(for: $0) == turnID && $0.versionIndex == version })
+    }
+
+    private func selectedAssistantMessage(for user: Message) -> Message? {
+        let assistants = assistantMessages(for: turnID(for: user))
+        guard !assistants.isEmpty else { return nil }
+        let index = normalizedSelectedIndex(for: user, total: assistants.count, messages: assistants)
+        return assistants.first(where: { $0.versionIndex == index }) ?? assistants.last
+    }
+
+    private func normalizedSelectedIndex(for user: Message, total: Int, messages: [Message]) -> Int {
+        let indices = messages.map { $0.versionIndex }.sorted()
+        if total == 0 { return 0 }
+        let selected = user.selectedVersionIndex
+        if selected > 0, indices.contains(selected) {
+            return selected
+        }
+        return indices.last ?? total
+    }
+
+    @MainActor
+    private func stepVersion(for turnID: UUID, delta: Int) {
+        guard let user = userMessage(for: turnID) else { return }
+        let assistants = assistantMessages(for: turnID)
+        guard !assistants.isEmpty else { return }
+        let indices = assistants.map { $0.versionIndex }.sorted()
+        let current = normalizedSelectedIndex(for: user, total: assistants.count, messages: assistants)
+        guard let currentIdx = indices.firstIndex(of: current) else { return }
+        let nextIdx = currentIdx + delta
+        guard nextIdx >= 0, nextIdx < indices.count else { return }
+        user.selectedVersionIndex = indices[nextIdx]
+        persistContext()
+    }
+
+    private func userMessage(for turnID: UUID) -> Message? {
+        sortedMessages.first(where: { $0.role == "user" && self.turnID(for: $0) == turnID })
+    }
+
+    private func ensureTurnID(for message: Message) -> UUID {
+        if let turn = message.turnID { return turn }
+        let assigned = message.id
+        message.turnID = assigned
+        return assigned
+    }
+
+    private func nextVersionIndex(for userMessage: Message) -> Int {
+        let turnID = turnID(for: userMessage)
+        let existing = assistantMessages(for: turnID)
+        return (existing.map { $0.versionIndex }.max() ?? 0) + 1
+    }
+
+    private func conversationHistory(before target: Message) -> [Message] {
+        let userMessages = sortedMessages.filter { $0.role == "user" }
+        var history: [Message] = []
+        for user in userMessages {
+            if user.id == target.id { break }
+            history.append(user)
+            if let assistant = selectedAssistantMessage(for: user) {
+                history.append(assistant)
+            }
+        }
+        return history
+    }
+
+    @MainActor
+    private func normalizeTurnMetadata(in messages: [Message]) -> Bool {
+        var currentTurnID: UUID?
+        var currentVersionCounter: Int = 0
+        var didChange = false
+        for message in messages {
+            switch message.role {
+            case "user":
+                let turn = message.turnID ?? message.id
+                if message.turnID == nil { didChange = true }
+                message.turnID = turn
+                currentTurnID = turn
+                currentVersionCounter = 0
+                if message.selectedVersionIndex == 0 {
+                    message.selectedVersionIndex = 1
+                    didChange = true
+                }
+            case "assistant":
+                if message.turnID == nil {
+                    message.turnID = currentTurnID ?? UUID()
+                    didChange = true
+                }
+                if message.versionIndex == 0 {
+                    currentVersionCounter += 1
+                    message.versionIndex = currentVersionCounter
+                    didChange = true
+                } else {
+                    currentVersionCounter = max(currentVersionCounter, message.versionIndex)
+                }
+            case reasoningMessageRole:
+                if message.turnID == nil {
+                    message.turnID = currentTurnID ?? UUID()
+                    didChange = true
+                }
+                if message.versionIndex == 0 {
+                    message.versionIndex = max(1, currentVersionCounter)
+                    didChange = true
+                }
+            default:
+                continue
+            }
+        }
+        return didChange
     }
 
     @State private var showModelEditor: Bool = false
@@ -959,7 +1294,18 @@ struct ChatView: View {
     private func updateChatTitle(from text: String) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         chat.title = String(trimmed.prefix(40))
-        try? modelContext.save()
+        persistContext()
+    }
+
+    @MainActor
+    private func persistContext() {
+        do {
+            try modelContext.save()
+        } catch {
+            let nsError = error as NSError
+            errorMessage = nsError.localizedDescription
+            print("ModelContext save failed: \(nsError), userInfo: \(nsError.userInfo)")
+        }
     }
 
     private func makeProvider(id: String) throws -> AIProvider {
@@ -995,14 +1341,13 @@ struct ChatView: View {
 
     // MARK: - Message actions
     private func retryResponse(_ message: Message) async {
-        guard let idx = sortedMessages.firstIndex(where: { $0.id == message.id }) else { return }
-        modelContext.delete(message)
-        try? modelContext.save()
-        if let prevUser = sortedMessages[..<idx].last(where: { $0.role == "user" }) {
-            editingMessage = prevUser
-            inputText = prevUser.content
-            await send()
-        }
+        guard !isSending else { return }
+        let turn = turnID(for: message)
+        guard let user = userMessage(for: turn) else { return }
+        retryingUserMessage = user
+        await performResponse(for: user,
+                              prompt: user.content,
+                              attachments: [])
     }
 
     private func copyResponse(_ message: Message) {
@@ -1013,6 +1358,7 @@ struct ChatView: View {
         editingMessage = message
         inputText = message.content
     }
+
 }
 
 #Preview {

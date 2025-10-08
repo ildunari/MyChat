@@ -705,7 +705,10 @@ private struct NoteMarkdownPreview: View {
     @Environment(\.tokens) private var T
     let text: String
     var body: some View {
-        var attributed = renderMarkdownAttributed(text, linkColor: T.link, preferSystemStyling: true)
+        var attributed = renderMarkdownAttributed(text,
+                                                  linkColor: T.link,
+                                                  textColor: T.text,
+                                                  preferSystemStyling: true)
         attributed = attributed.applyingParagraphStyle(lineSpacing: 6, paragraphSpacing: 12)
 
         return Text(attributed)

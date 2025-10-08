@@ -143,40 +143,102 @@ final class NoteAssistantSession: ObservableObject {
         messages.append(AIMessage(role: .user,
                                   content: "Current note excerpt:\n\(contextExcerpt)\n\nUser request: \(prompt)"))
 
+        let loggingEnabled = settingsStore.logChatTranscripts
+        let loggingContext = ChatLoggingContext(chatID: note.id,
+                                                turnID: nil,
+                                                providerID: providerID,
+                                                modelID: model,
+                                                chatTitle: note.title,
+                                                extraMetadata: ["flow": "noteAssistant"])
+
+        if loggingEnabled {
+            let envelope = LoggingEnvelope(provider: providerID,
+                                           model: model,
+                                           instructions: systemPrompt.trimmingCharacters(in: .whitespacesAndNewlines),
+                                           temperature: nil,
+                                           topP: nil,
+                                           topK: nil,
+                                           maxOutputTokens: nil,
+                                           reasoningEffort: nil,
+                                           verbosity: nil,
+                                           messages: messages)
+            ChatHistoryLogging.logEnvelope(envelope)
+        }
+
+        let performChat: () async throws -> String = { [self] in
+            if let streaming = provider as? AIStreamingProvider {
+                var buffer = ""
+                streamingThought = ""
+                let response = try await streaming.streamChat(
+                    messages: messages,
+                    model: model,
+                    temperature: nil,
+                    topP: nil,
+                    topK: nil,
+                    maxOutputTokens: nil,
+                    reasoningEffort: nil,
+                    verbosity: nil
+                ) { delta in
+                    Task { @MainActor in
+                        buffer += delta
+                        if (self.streamingThought?.isEmpty ?? true) {
+                            self.streamingThought = buffer
+                        }
+                    }
+                    if loggingEnabled {
+                        ChatHistoryLogging.logStreamChunk(delta, event: "note-delta")
+                    }
+                } onReasoning: { summary in
+                    Task { @MainActor in
+                        let trimmed = summary.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if trimmed.isEmpty == false {
+                            self.streamingThought = trimmed
+                        }
+                    }
+                    if loggingEnabled {
+                        ChatHistoryLogging.logReasoning(summary)
+                    }
+                }
+                streamingThought = nil
+                return response
+            } else if let advanced = provider as? AIProviderAdvanced {
+                return try await advanced.sendChat(messages: messages,
+                                                   model: model,
+                                                   temperature: nil,
+                                                   topP: nil,
+                                                   topK: nil,
+                                                   maxOutputTokens: nil,
+                                                   reasoningEffort: nil,
+                                                   verbosity: nil)
+            } else {
+                return try await provider.sendChat(messages: messages, model: model)
+            }
+        }
+
         let reply: String
-        if let streaming = provider as? AIStreamingProvider {
-            var buffer = ""
-            streamingThought = ""
-            reply = try await streaming.streamChat(
-                messages: messages,
-                model: model,
-                temperature: nil,
-                topP: nil,
-                topK: nil,
-                maxOutputTokens: nil,
-                reasoningEffort: nil,
-                verbosity: nil
-            ) { delta in
-                Task { @MainActor in
-                    buffer += delta
-                    self.streamingThought = buffer
+        if loggingEnabled {
+            reply = try await ChatLoggingTaskLocal.$context.withValue(loggingContext) {
+                ChatHistoryLogging.beginTurn(metadata: [
+                    "prompt": prompt,
+                    "noteID": note.id.uuidString
+                ])
+                do {
+                    let response = try await performChat()
+                    ChatHistoryLogging.logResponse(text: response)
+                    return response
+                } catch {
+                    ChatHistoryLogging.logError((error as NSError).localizedDescription)
+                    throw error
                 }
             }
-            streamingThought = nil
-        } else if let advanced = provider as? AIProviderAdvanced {
-            reply = try await advanced.sendChat(messages: messages,
-                                                model: model,
-                                                temperature: nil,
-                                                topP: nil,
-                                                topK: nil,
-                                                maxOutputTokens: nil,
-                                                reasoningEffort: nil,
-                                                verbosity: nil)
         } else {
-            reply = try await provider.sendChat(messages: messages, model: model)
+            reply = try await performChat()
         }
 
         guard let jsonText = extractJSON(from: reply) else {
+            if loggingEnabled {
+                ChatHistoryLogger.shared.logError("Malformed JSON in note assistant response", context: loggingContext)
+            }
             throw NoteAssistantError.malformedJSON(reply)
         }
         let data = Data(jsonText.utf8)

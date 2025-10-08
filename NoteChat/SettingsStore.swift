@@ -65,6 +65,10 @@ final class SettingsStore {
     var personalInfo: String {
         didSet { if oldValue != personalInfo { hasUnsavedChanges = true } }
     }
+
+    var logChatTranscripts: Bool {
+        didSet { if oldValue != logChatTranscripts { hasUnsavedChanges = true } }
+    }
     
     // Track unsaved changes for settings that need explicit save
     var hasUnsavedChanges: Bool = false
@@ -88,6 +92,11 @@ final class SettingsStore {
             let s = AppSettings()
             context.insert(s)
             self.settings = s
+            try? context.save()
+        }
+
+        if settings.useWebCanvas {
+            settings.useWebCanvas = false
             try? context.save()
         }
 
@@ -123,7 +132,14 @@ final class SettingsStore {
         self.googleAPIKey = googleKeyLocal
         self.xaiAPIKey = xaiKeyLocal
 
-        self.systemPrompt = settings.defaultSystemPrompt
+        var systemPromptLocal = settings.defaultSystemPrompt
+        let trimmedPrompt = systemPromptLocal.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedPrompt.isEmpty || systemPromptLocal == "You are a helpful AI assistant." {
+            systemPromptLocal = MASTER_SYSTEM_PROMPT
+            settings.defaultSystemPrompt = MASTER_SYSTEM_PROMPT
+            try? context.save()
+        }
+        self.systemPrompt = systemPromptLocal
         self.temperature = settings.defaultTemperature
         self.maxTokens = settings.defaultMaxTokens
 
@@ -154,6 +170,7 @@ final class SettingsStore {
         self.userUsername = settings.userUsername
         self.aiName = settings.aiDisplayName
         self.personalInfo = settings.personalInfo
+        self.logChatTranscripts = UserDefaults.standard.bool(forKey: "logChatTranscripts")
 
         SettingsStore.shared = self
     }
@@ -188,6 +205,7 @@ final class SettingsStore {
         settings.userUsername = userUsername
         settings.aiDisplayName = aiName
         settings.personalInfo = personalInfo
+        UserDefaults.standard.set(logChatTranscripts, forKey: "logChatTranscripts")
         try? context.save()
 
         saveKeychain(key: OPENAI_KEY_KEYCHAIN, value: openAIAPIKey)

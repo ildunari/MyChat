@@ -1,0 +1,30 @@
+{
+  "output": {
+    "filePath": "repo.md"
+  },
+  "ignore": {
+    "customPatterns": [
+      "**/*.md",
+      "**/*.log",
+      "**/*.png",
+      "**/*.jpg",
+      "**/*.jpeg",
+      "build/**",
+      "docs/**",
+      ".codex/**",
+      ".githooks/**",
+      ".github/**",
+      ".claude/**",
+      ".factory/**",
+      ".vscode/**",
+      ".DS_Store",
+      "repomix.config.json",
+      "*.xcodeproj/xcuserdata/**",
+      "*.xcworkspace/xcuserdata/**",
+      "**/Assets.xcassets/**",
+      "NoteChatTests/**",
+      "NoteChatUITests/**"
+    ],
+    "useDefaultPatterns": false
+  }
+}

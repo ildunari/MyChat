@@ -7,6 +7,30 @@
 
 import SwiftUI
 import SwiftData
+import Foundation
+
+#if DEBUG
+// InjectionIII Hot Reload Support
+// Load the injection bundle on app startup for instant code updates without rebuilding
+// This is only active in DEBUG builds and has zero impact on release builds
+extension Bundle {
+    static let loadInjection: () = {
+        #if targetEnvironment(simulator)
+        let candidates: [String] = [
+            Bundle.main.path(forResource: "iOSInjection", ofType: "bundle"),
+            "/Applications/InjectionIII.app/Contents/Resources/iOSInjection.bundle"
+        ].compactMap { $0 }
+
+        for path in candidates {
+            if let bundle = Bundle(path: path) {
+                bundle.load()
+                break
+            }
+        }
+        #endif
+    }()
+}
+#endif
 
 @main
 struct NoteChatApp: App {
@@ -83,6 +107,10 @@ struct NoteChatApp: App {
     @State private var settingsStore: SettingsStore
 
     init() {
+        #if DEBUG
+        _ = Bundle.loadInjection
+        #endif
+        Self.purgeLegacyChatsIfNeeded(context: container.mainContext)
         _settingsStore = State(initialValue: SettingsStore(context: container.mainContext))
     }
 
@@ -92,5 +120,19 @@ struct NoteChatApp: App {
             .environment(settingsStore) // Make SettingsStore available to all views
         }
         .modelContainer(container) // Attach the SwiftData container
+    }
+
+    private static func purgeLegacyChatsIfNeeded(context: ModelContext) {
+        let key = "didPurgeChatsOct2025"
+        let defaults = UserDefaults.standard
+        guard defaults.bool(forKey: key) == false else { return }
+
+        let fetch = FetchDescriptor<Chat>()
+        if let chats = try? context.fetch(fetch), chats.isEmpty == false {
+            for chat in chats { context.delete(chat) }
+            try? context.save()
+        }
+
+        defaults.set(true, forKey: key)
     }
 }

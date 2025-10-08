@@ -11,8 +11,8 @@
         {
           "device" : {
             "platform" : "iOS Simulator",
-            "name" : "iPhone 16",
-            "id" : "F04E79C3-5634-474D-9D4B-64B2523130C1",
+            "name" : "NoteChat-MarkdownUI",
+            "id" : "2E9235D3-A2E7-492A-B993-F903C0FB6BEE",
             "os" : "iOS 26.0"
           }
         }

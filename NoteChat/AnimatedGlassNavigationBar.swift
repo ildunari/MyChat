@@ -1,11 +1,15 @@
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// Animated glass navigation bar that shrinks to Dynamic Island on scroll
 struct AnimatedGlassNavigationBar<Trailing: View>: View {
     @Environment(\.tokens) private var T
-    @Environment(\.colorScheme) private var scheme
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-    
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @State private var activeScreenBounds: CGRect = .zero
+
     let title: String
     let showBack: Bool
     let onBack: (() -> Void)?
@@ -15,7 +19,15 @@ struct AnimatedGlassNavigationBar<Trailing: View>: View {
     // Animation thresholds
     private let startShrinkOffset: CGFloat = -20
     private let fullCollapseOffset: CGFloat = -120
-    private let dynamicIslandHeight: CGFloat = 44 // iPhone Dynamic Island height
+    
+    // Dynamic sizing based on device
+    private var dynamicIslandHeight: CGFloat {
+        // Adapt to device size classes
+        if horizontalSizeClass == .regular && verticalSizeClass == .regular {
+            return 52 // iPad
+        }
+        return 44 // iPhone
+    }
     
     // Compute animation progress (0 = fully visible, 1 = collapsed to island)
     private var collapseProgress: CGFloat {
@@ -38,11 +50,39 @@ struct AnimatedGlassNavigationBar<Trailing: View>: View {
     }
     
     private var barWidth: CGFloat {
-        // Get screen width more safely
-        let screenWidth: CGFloat = 440 // Default iPhone width, will be overridden by GeometryReader
-        let fullWidth = screenWidth - 40 // 20 padding on each side
-        let collapsedWidth: CGFloat = 150 // Dynamic Island width
-        return fullWidth + (collapsedWidth - fullWidth) * collapseProgress
+        let screenWidth = currentScreenWidth
+        let horizontalPadding: CGFloat = 40
+        let fullWidth = max(0, screenWidth - horizontalPadding)
+        
+        // Scale collapsed width based on screen size
+        let minCollapsedWidth: CGFloat = 120
+        let collapsedRatio: CGFloat = horizontalSizeClass == .regular ? 0.35 : 0.45
+        let collapsedWidth = min(max(minCollapsedWidth, screenWidth * collapsedRatio), fullWidth)
+        
+        return lerp(fullWidth, collapsedWidth, collapseProgress)
+    }
+
+    private var collapsedIslandWidth: CGFloat {
+        let screenWidth = currentScreenWidth
+        let minCollapsedWidth: CGFloat = 120
+        let collapsedRatio: CGFloat = horizontalSizeClass == .regular ? 0.35 : 0.45
+        return max(minCollapsedWidth, screenWidth * collapsedRatio)
+    }
+
+    private var currentScreenWidth: CGFloat {
+        if activeScreenBounds.width > 0 {
+            return activeScreenBounds.width
+        }
+        return Self.primarySceneBounds()?.width ?? 0
+    }
+
+    private var contentInsets: EdgeInsets {
+        EdgeInsets(
+            top: lerp(18, 8, collapseProgress),
+            leading: lerp(20, 12, collapseProgress),
+            bottom: lerp(18, 8, collapseProgress),
+            trailing: lerp(20, 12, collapseProgress)
+        )
     }
     
     private var cornerRadius: CGFloat {
@@ -64,20 +104,10 @@ struct AnimatedGlassNavigationBar<Trailing: View>: View {
     
     private var verticalOffset: CGFloat {
         // Move up towards the Dynamic Island position
-        // Standard Dynamic Island is about 59pt from top on Pro models
-        let topSafeArea: CGFloat = 59
-        
-        // Dynamic Island is approximately at y: -8 from safe area top
-        let targetOffset: CGFloat = -topSafeArea + 8
+        // Adapt offset based on device safe area and size class
+        let baseSafeArea: CGFloat = verticalSizeClass == .regular && horizontalSizeClass == .regular ? 24 : 59
+        let targetOffset: CGFloat = -baseSafeArea + 8
         return targetOffset * collapseProgress
-    }
-    
-    private var horizontalPadding: CGFloat {
-        let fullPadding: EdgeInsets = EdgeInsets(top: 18, leading: 20, bottom: 18, trailing: 20)
-        let collapsedPadding: EdgeInsets = EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12)
-        
-        let leading = fullPadding.leading + (collapsedPadding.leading - fullPadding.leading) * collapseProgress
-        return leading
     }
     
     private var shadowOpacity: CGFloat {
@@ -111,12 +141,7 @@ struct AnimatedGlassNavigationBar<Trailing: View>: View {
             if collapseProgress < 0.99 {
                 LiquidGlassPanel(
                     cornerRadius: cornerRadius,
-                    padding: EdgeInsets(
-                        top: horizontalPadding,
-                        leading: horizontalPadding,
-                        bottom: horizontalPadding,
-                        trailing: horizontalPadding
-                    ),
+                    padding: contentInsets,
                     shadowRadius: 16,
                     shadowOpacity: shadowOpacity
                 ) {
@@ -163,14 +188,97 @@ struct AnimatedGlassNavigationBar<Trailing: View>: View {
             if collapseProgress > 0.8 {
                 RoundedRectangle(cornerRadius: 22, style: .continuous)
                     .fill(.black)
-                    .frame(width: 150, height: dynamicIslandHeight)
+                    .frame(width: collapsedIslandWidth, height: dynamicIslandHeight)
                     .offset(y: verticalOffset)
                     .opacity((collapseProgress - 0.8) / 0.2)
             }
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.85, blendDuration: 0), value: collapseProgress)
+        .background(
+            WindowScreenObserver { screen in
+                let bounds = screen.bounds
+                if activeScreenBounds != bounds {
+                    activeScreenBounds = bounds
+                }
+            }
+            .frame(width: 0, height: 0)
+            .allowsHitTesting(false)
+        )
     }
 }
+
+private extension AnimatedGlassNavigationBar {
+    func lerp(_ start: CGFloat, _ end: CGFloat, _ progress: CGFloat) -> CGFloat {
+        start + (end - start) * progress
+    }
+
+    static func primarySceneBounds() -> CGRect? {
+#if canImport(UIKit)
+        func connectedWindowScenes() -> [UIWindowScene] {
+            UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+        }
+
+        let scenes: [UIWindowScene]
+        if Thread.isMainThread {
+            scenes = connectedWindowScenes()
+        } else {
+            var fetched: [UIWindowScene] = []
+            DispatchQueue.main.sync {
+                fetched = connectedWindowScenes()
+            }
+            scenes = fetched
+        }
+
+        if let active = scenes.first(where: { $0.activationState == .foregroundActive }) {
+            return active.screen.bounds
+        }
+
+        if let foregroundInactive = scenes.first(where: { $0.activationState == .foregroundInactive }) {
+            return foregroundInactive.screen.bounds
+        }
+
+        return scenes.first?.screen.bounds
+#else
+        return nil
+#endif
+    }
+}
+
+#if canImport(UIKit)
+struct WindowScreenObserver: UIViewRepresentable {
+    let onScreenChange: (UIScreen) -> Void
+
+    func makeUIView(context: Context) -> WindowScreenObserverView {
+        let view = WindowScreenObserverView()
+        view.onScreenChange = onScreenChange
+        return view
+    }
+
+    func updateUIView(_ uiView: WindowScreenObserverView, context: Context) {
+        uiView.onScreenChange = onScreenChange
+        uiView.notifyIfNeeded()
+    }
+}
+final class WindowScreenObserverView: UIView {
+    var onScreenChange: ((UIScreen) -> Void)?
+
+    override func didMoveToWindow() {
+        super.didMoveToWindow()
+        notifyIfNeeded()
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        notifyIfNeeded()
+    }
+
+    func notifyIfNeeded() {
+        guard let screen = window?.windowScene?.screen else { return }
+        onScreenChange?(screen)
+    }
+}
+#endif
 
 // MARK: - Scroll Offset Tracker
 

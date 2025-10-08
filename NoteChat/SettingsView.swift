@@ -38,6 +38,20 @@ struct SettingsView: View {
                         }
                     }
                 }
+                Section("Advanced") {
+                    Toggle(isOn: $store.logChatTranscripts) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Log Chat Transcripts")
+                            Text("Save raw provider requests and responses to ChatHistory/")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .onChange(of: store.logChatTranscripts) { _, newValue in
+                        UserDefaults.standard.set(newValue, forKey: "logChatTranscripts")
+                        store.save()
+                    }
+                }
                 Section("Interface") {
                     NavigationLink {
                         InterfaceSettingsView()
@@ -61,13 +75,6 @@ struct SettingsView: View {
                             }
                         }
                     }
-                    Toggle(isOn: $store.useWebCanvas) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Use Web Canvas")
-                            Text("Faster rendering with streaming, math, tables, code, artifacts slot").font(.footnote).foregroundStyle(.secondary)
-                        }
-                    }
-                    .onChange(of: store.useWebCanvas) { _, _ in store.save() }
 
                     Toggle(isOn: $store.useLiquidGlass) {
                         VStack(alignment: .leading, spacing: 2) {
@@ -542,7 +549,7 @@ private struct DefaultChatSettingsView: View {
     @Environment(\.tokens) private var T
     @Environment(\.dismiss) private var dismiss
     @State private var tempLocal: Double = 1.0
-    @State private var tokensLocal: Double = 1024
+    @State private var tokensLocal: Double = 8192
 
     var body: some View {
         @Bindable var store = store

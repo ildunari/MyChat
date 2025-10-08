@@ -37,6 +37,39 @@ enum AppIcon {
             fallback
         }
     }
+    @ViewBuilder static func menu(_ size: CGFloat = 18) -> some View {
+        if usePhosphor {
+            #if canImport(PhosphorSwift)
+            Ph.list.fill.frame(width: size, height: size)
+            #else
+            sf("line.3.horizontal", size: size, weight: .bold)
+            #endif
+        } else {
+            sf("line.3.horizontal", size: size, weight: .bold)
+        }
+    }
+    @ViewBuilder static func search(_ size: CGFloat = 18) -> some View {
+        if usePhosphor {
+            #if canImport(PhosphorSwift)
+            Ph.magnifyingGlass.fill.frame(width: size, height: size)
+            #else
+            sf("magnifyingglass", size: size, weight: .bold)
+            #endif
+        } else {
+            sf("magnifyingglass", size: size, weight: .bold)
+        }
+    }
+    @ViewBuilder static func star(_ size: CGFloat = 18, filled: Bool = false) -> some View {
+        if usePhosphor {
+            #if canImport(PhosphorSwift)
+            (filled ? Ph.star.fill : Ph.star.bold).frame(width: size, height: size)
+            #else
+            sf(filled ? "star.fill" : "star", size: size, weight: .bold)
+            #endif
+        } else {
+            sf(filled ? "star.fill" : "star", size: size, weight: .bold)
+        }
+    }
     @ViewBuilder static func home(_ size: CGFloat = 18) -> some View {
         if usePhosphor {
             #if canImport(PhosphorSwift)
